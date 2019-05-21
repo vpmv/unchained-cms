@@ -1,0 +1,7 @@
+{% extends 'default.html.twig' %}
+
+{% block content %}
+    {% for catId,cat in applications %}
+        {% include 'main/blocks/link_category.html.twig' with {category: cat, include_apps: true} %}
+    {% endfor %}
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'main/dashboard.html.twig' %}
+{% trans_default_domain application.translation_domain %}
+
+{% block title %}
+    {{ application.meta.title|trans }} {#- {{ parent() }}#}
+{% endblock %}
+
+{% block content %}
+    {% if application.category.categoryId != '_default' %}
+        {% set categoryRoute = application.category.route(app.request.locale) %}
+        {% if categoryRoute %}
+            <a class="btn btn-light" href="{{ url('dash_app', {app: categoryRoute}) }}" style="float: right">
+                <i class="fa fa-arrow-left"></i>
+                {{ application.category.label|trans }}
+            </a>
+        {% endif %}
+    {% endif %}
+
+    <h2>{{ application.meta.title|trans }}</h2>
+
+    {# TODO move to base #}
+    {% block links %}
+        {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+            <div class="row">
+                <div class="btn-group" role="group">
+                    {% if not application.frontend.uniqueConstraint %}
+                        <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}">
+                            <i class="fa fa-plus"></i>
+                            {{ ('action.entity.create.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% endblock %}
+
+    {% if application.data %}
+        <div class="table-responsive">
+            <table class="table table-striped dashboard responsive">
+                <thead>
+                <tr>
+                    {% for cell in application.data|first %}
+                        {% if cell.visible and cell.field %}
+                            <th class="{{ cell.field.type }} {{ cell.field.module.class }}">{{ cell.field.labels.default|trans }}</th>
+                        {% endif %}
+                    {% endfor %}
+
+                    {# Edit column #}
+                    <th class="all"></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for row in application.data %}
+                    <tr {% if row.detail is defined %}data-detail-url="{{ url(row.detail.link.route, row.detail.link.params) }}"{% endif %}>
+                        {% for cell in row %}
+                            {% if cell.visible %}
+                                <td class="{{ cell.field.type }}">{% include 'applications/blocks/cell.html.twig' with {cell: cell} %}</td>
+                            {% endif %}
+                        {% endfor %}
+
+                        {# TODO links #}
+
+                        {# edit buttons #}
+                        <td>
+                            {% if row.detail is defined or is_granted('IS_AUTHENTICATED_FULLY') %}
+                                <div class="btn-group">
+                                    {% if row.detail is defined %}
+                                        <a class="btn btn-primary btn-sm"
+                                           href="{{ url(row.detail.link.route, row.detail.link.params) }}"><i
+                                                    class="fa fa-info"></i></a>
+                                    {% endif %}
+
+                                    {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                                        <a class="btn btn-light btn-sm"
+                                           href="{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'edit'}) }}"><i
+                                                    class="fa fa-edit"></i>
+                                        </a>
+                                        <a class="btn btn-danger btn-sm"
+                                           href="{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'delete'}) }}"><i
+                                                    class="fa fa-trash-alt"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        {% block placeholder %}
+            <b>{{ ('text.dashboard.empty.verbose')|trans({verbose: application.meta.verbose_name_plural|trans|lower }) }}</b>
+        {% endblock %}
+    {% endif %}
+{% endblock %}

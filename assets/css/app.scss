@@ -1,0 +1,133 @@
+@import "globals";
+
+body {
+    background-color: #fefefe;
+    color: #101010;
+}
+
+.main {
+    h2 {
+        @include media-breakpoint-down(sm) {
+            padding-left: 2.1rem;
+        }
+    }
+
+    &.dashboard {
+        margin-top: 1rem;
+    }
+}
+
+img.media {
+    width: 500px;
+}
+
+.table.dashboard img.media {
+    width: 100px;
+}
+
+.table {
+    &.dashboard {
+        .media-box {
+            max-width: 100px;
+        }
+
+        td {
+            vertical-align: middle;
+        }
+    }
+
+    td.image {
+        position: relative;
+
+        .media-box {
+            position: relative;
+
+            .media-title {
+                position: absolute;
+                width: 100%;
+                font-weight: bold;
+                font-size: 0.9em;
+                color: #fff;
+                background-color: rgba(0, 0, 0, 0.7);
+                text-align: center;
+                bottom: 5%;
+            }
+        }
+    }
+
+    th.date, th.datetime {
+        min-width: 110px;
+    }
+
+    th.rating {
+        min-width: 100px;
+    }
+
+    td.rating {
+        font-size: 0.8em;
+    }
+}
+
+/* DataTables */
+.dataTables_wrapper {
+    margin-top: 1rem;
+
+    table.dataTable.dtr-inline.collapsed {
+        // collapsed
+        & > tbody > tr[role="row"] > td:first-child:before,
+        & > tbody > tr[role="row"] > th:first-child:before {
+            font-family: "Font Awesome 5 Free", "Font\ Awesome\ 5\ Free", FontAwesome;
+            font-weight: 900; // required by FA
+            content: "\F0DD";
+
+            width: 10px;
+            height: auto;
+            top: 50%;
+            margin-top: -.5em;
+            background-color: transparent;
+            border: 0;
+            border-radius: 0;
+            color: #000;
+            -webkit-box-shadow: none;
+            -moz-box-shadow: none;
+            box-shadow: none;
+        }
+
+        & > tbody > tr[role="row"].no-child > td:first-child {
+            cursor: default;
+
+            &:before {
+                display: none;
+            }
+        }
+
+        // expanded
+        & > tbody > tr.parent > td:first-child:before,
+        & > tbody > tr.parent > th:first-child:before {
+            font-family: "Font Awesome 5 Free", "Font\ Awesome\ 5\ Free", FontAwesome;
+            font-weight: 900; // required by FA
+            content: "\F0DE";
+            margin-top: 0;
+        }
+
+
+        tr.child {
+            //display: table;
+            width: 100%;
+
+            ul.dtr-details > li {
+                display: table-row;
+
+                span.dtr-title, span.dtr-data {
+                    display: table-cell;
+                    border-bottom: 1px solid $lightgray;
+                    padding-right: 2rem;
+                }
+
+                span.dtr-data {
+                    width: 200px;
+                }
+            }
+        }
+    }
+}

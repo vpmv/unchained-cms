@@ -1,0 +1,32 @@
+{% if application is defined %}
+    {% set appId = appId is defined ? appId : application.appId %}
+    {% set title = title is defined ? title : application.config.meta.title %}
+    {% set path = path is defined ? path : application.route %}
+{% endif %}
+{% set domain = application is defined ? application.translation_domain  : 'messages' %}
+{% set class = class is defined ? class : "col-6" %}
+{% set image = image is defined ? image : false %}
+{% set links = links is defined ? links : [] %}
+
+<div class="app-block {{ class }} app-{{ appId }}">
+    <a class="app app-{{ appId }}" href="{{ url('dash_app', {app: path}) }}">
+        {% if image %}
+            <img src="/media/images/design/{{ appId }}.png">
+        {% endif %}
+        {# style this however you like #}
+        <div class="decorator"></div>
+        <span class="title">{{ title|trans([], domain) }}</span>
+    </a>
+
+    {% if links and links is iterable %}
+        <div class="app-links">
+            <ul>
+                {% for link in links %}
+                    <li>
+                        <a href="{{ url(link.route, {app: link.application}|merge(link.params)) }}">{{ link.label|trans([], domain) }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</div>

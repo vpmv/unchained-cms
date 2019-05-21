@@ -1,0 +1,18 @@
+{% extends 'main/dashboard.html.twig' %}
+{% trans_default_domain category.translation_domain %}
+
+{% block title %}
+    {{ category.label|trans }}
+{% endblock %}
+
+{% block content %}
+    <h2>{{ category.label|trans }}</h2>
+
+    <p>{{ category.description|trans }}</p>
+
+    <div class="row">
+        {% for a in applications[category.categoryId]['applications'] %}
+            {% include "main/blocks/link_application.html.twig" with {application: a} %}
+        {% endfor %}
+    </div>
+{% endblock %}

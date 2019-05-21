@@ -1,0 +1,21 @@
+.env.local
+
+/public/build/
+/node_modules
+
+/vendor/
+/var/
+
+# USER GENERATED CONTENT
+/user/assets/*
+/user/config/applications/*.yaml
+/user/config/system/*.yaml
+/user/config/framework/*.yaml
+/user/extensions/*
+/user/templates/*
+/user/translations/*
+
+!/user/config/**/*.dist
+!.gitignore
+/composer.phar
+Dockerfile

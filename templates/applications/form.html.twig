@@ -1,0 +1,110 @@
+{% extends 'main/dashboard.html.twig' %}
+{% trans_default_domain application.translation_domain %}
+
+{% block title %}
+    {% if application.hasData %}
+        {% if application.meta.exposes is iterable %}
+            {% for field in application.meta.exposes %}
+                {% include 'applications/blocks/title.html.twig' with {value: application.data[field].value, type: application.data[field].type} %}
+            {% endfor %}
+        {% else %}
+            {% include 'applications/blocks/title.html.twig' with {value: application.data[application.meta.exposes].value, type: application.data[application.meta.exposes].type} %}
+        {% endif %}
+        &laquo;
+        {{ ('text.entity.edit.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+
+    {% else %}
+        {{ ('text.entity.create.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {{ application.meta.title|trans }}
+        <small class="text-muted">
+            {% if application.hasData %}
+                {{ ('text.entity.edit.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+            {% else %}
+                {{ ('text.entity.create.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+            {% endif %}
+        </small>
+    </h2>
+
+
+    {# TODO move to base #}
+    {% block links %}
+        <div class="row no-gutters">
+            <div class="col-sm-12">
+                <a class="btn btn-secondary" href="{{ url('dash_app', {app: application.public_uri}) }}"><i
+                            class="fa fa-ban"></i> {{ 'label.cancel'|trans }}</a>
+                {% if application.hasData %}
+                    <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
+                        <i class="fa fa-plus"></i>
+                        {{ ('action.entity.create.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endblock %}
+
+
+    {{ form_start(application.form) }}
+    {% for f in application.form.children %}
+        {% if f.vars.name != '_token' %}
+            {% set source = f.vars.attr['data-source'] is defined ? f.vars.attr['data-source'] : '' %}  {# TODO #}
+
+            <div class="form-group row">
+                <div class="col-sm-2">{{ form_label(f) }}</div>
+                <div class="col-10 col-md-{{ source ? '9' : '10' }}">
+                    {% if application.data[f.vars.name] is defined %}
+                        {% set formField =  application.data[f.vars.name] %}
+
+                        {% if formField.type == 'file' %}
+                            {% if formField.displayType == 'image' %}
+                                <div class="image-preview">
+                                    <div class="media-box {{ formField.value ? '' : 'd-none' }}">
+                                        {% if formField.value %}
+                                            <img class="media" src="{{ absolute_url(formField.value) }}">
+                                        {% else %}
+                                            <img class="media" src="">
+                                        {% endif %}
+                                        <span class="media-edit"><i class="fa fa-pencil-alt"></i></span>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <span class="col-sm-2 btn btn-upload {{ formField.value ? 'd-none' : '' }}">
+                                    <i class="fa fa-upload"></i>
+                            </span>
+                            <span class="form-control d-none">
+                                {{ form_widget(f) }}
+                            </span>
+
+                        {% else %} {# not a file #}
+                            {{ form_widget(f) }}
+                        {% endif %}
+                    {% else %} {# no element data #}
+                        {{ form_widget(f) }}
+                    {% endif %}
+                </div>
+                {% if source %} {# TODO #}
+                    <div class="col-md-1 d-none d-md-block">
+                        <button class="btn btn-success trigger-modal" type="button"
+                                data-url="{{ url('admin_edit', {app: f.vars.attr['data-source'], category: f.vars.attr['data-source-category']}) }}">
+                            <i class="fa fa-plus"></i>
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endfor %}
+    {#{{ form_widget(application.form)  }}#}
+    <div class="form-group row">
+        <div class="col-sm-2"></div>
+        <div class="col-sm-10">
+            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> {{ 'Save'|trans }}</button>
+        </div>
+    </div>
+    {{ form_end(application.form) }}
+
+{% endblock %}

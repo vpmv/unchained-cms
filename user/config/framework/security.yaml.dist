@@ -1,0 +1,11 @@
+### DONT SAVE USER CREDENTIALS IN A PUBLIC VCS REPO
+# default user: admin/admin
+
+security:
+  providers:
+    in_memory:
+      memory:
+        users:
+          admin:
+            password: $2y$12$TQseg7X3CmtUlEc4ytTvVOQwSFPM5h8uIAxlcCs/EzqOVGi.RkQNK
+            roles: ROLE_ADMIN

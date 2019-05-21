@@ -1,0 +1,56 @@
+{% extends 'main/dashboard.html.twig' %}
+{% trans_default_domain application.translation_domain %}
+
+{% set exposedField = application.meta.exposes %}
+
+{% block title %}
+    {% if exposedField is iterable %}
+        {% for field in exposedField %}
+            {% include 'applications/blocks/title.html.twig' with {value: application.data[field].value, type: application.data[field].field.type} %}
+        {% endfor %}
+    {% else %}
+        {% include 'applications/blocks/title.html.twig' with {value: application.data[exposedField].value, type: application.data[exposedField].field.type} %}
+    {% endif %}
+    &laquo; {{ application.meta.title|trans }}
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {{ application.meta.title|trans }}
+        <small class="text-muted">
+            {% if exposedField is iterable %}
+                {% for field in exposedField %}
+                    {% include 'applications/blocks/cell.html.twig' with {cell: application.data[field]} %}
+                {% endfor %}
+            {% else %}
+                {% include 'applications/blocks/cell.html.twig' with {cell: application.data[exposedField]} %}
+            {% endif %}
+        </small>
+    </h2>
+
+    {# TODO move to base #}
+    {% block links %}
+            <div class="row">
+                <div class="col-sm-12 col-md-6 float-right">
+                    <a class="btn btn-secondary" href="{{ url('dash_app', {app: application.public_uri}) }}"><i class="fa fa-arrow-left"></i> {{ 'label.overview'|trans }}</a>
+
+                    {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                        <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId, uuid: application.data.pk.value, action: 'edit'}) }}"><i class="fa fa-edit"></i> {{ 'label.edit'|trans }}</a>
+                    {% endif %}
+                </div>
+            </div>
+    {% endblock %}
+
+    {% if application.data %}
+        <table class="table">
+            {% for column in application.data %}
+                {% if column.visible %}
+                    <tr>
+                        <td class="font-weight-bold">{{ column.field.labels.default|trans }}</td>
+                        <td class="{{ column.field.type }}">{% include 'applications/blocks/cell.html.twig' with {cell: column} %}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+    {% endif %}
+{% endblock %}

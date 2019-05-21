@@ -1,0 +1,16 @@
+{# time values #}
+{% if type == 'date' or type == 'datetime' %}
+    {{ ('value.date.year-mo-MO-day')|trans({year: value.format('Y'), mo: value.format('m'), MO: ('time.month.'~value.format('M'))|lower|trans, day: value.format('d'), DAY: ('time.dow.'~value.format('D'))|lower|trans}) }}
+
+    {# time values #}
+{% elseif type == 'time' %}
+    {{ value.format('H:i') }}
+
+    {# textual values #}
+{% else %}
+    {% if value is iterable %}
+        {{ value|join(', ') }}
+    {% else %}
+        {{ value }}
+    {% endif %}
+{% endif %}

@@ -1,0 +1,29 @@
+$brand-primary: #16064B;
+$primary: #0D116A;
+$secondary: #669BBC;
+$danger: #9E0031;
+$success: #A8C686;
+$lightgray: #ccc;
+
+//@import "~@fortawesome/fontawesome-free/css/all.min.css";
+@import "~bootstrap/scss/bootstrap";
+@import "~bootstrap-select/sass/bootstrap-select";
+@import "~bootstrap-toggle/css/bootstrap2-toggle.min.css";
+@import "~flag-icon-css/sass/flag-icon";
+
+[class$="-brand-primary"] {
+  background-color: $brand-primary;
+}
+
+/* Bootstrap Toggle v2.2.2 corrections for Bootsrtap 4*/
+.toggle-off {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
+}
+.toggle.off {
+  border-color: rgba(0, 0, 0, .25);
+}
+
+.toggle-handle {
+  background-color: white;
+  border: thin rgba(0, 0, 0, .25) solid;
+}

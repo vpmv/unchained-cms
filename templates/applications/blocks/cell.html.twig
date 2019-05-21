@@ -1,0 +1,85 @@
+{% if cell.field %}
+    {% if cell.field.type == 'image' and cell.value %}
+        {% if cell.link %}
+            {% include 'applications/blocks/link.html.twig' with {image: cell.value, link: url(cell.link.route, cell.link.params), title: cell.title} %}
+        {% else %}
+            <div class="media-box">
+                {% include 'applications/blocks/image_small.html.twig' with {source: cell.value, title: cell.title} %}
+                {% if cell.title %}
+                    <span class="media-title">{{ cell.title }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+
+    {% elseif cell.field.type == 'file' and cell.value %}
+        <a href="{{ absolute_url(cell.value) }}" title="Download {{ cell.field.labels.default }}" target="_blank">
+            <i class="fa fa-file-pdf"></i> {#fixme filetype#}
+        </a>
+
+    {% elseif cell.field.type == 'date' or cell.field.type == 'datetime' %}
+        {# fixme: twig pretty date filter #}
+        {% if cell.transformed %}
+            {{ cell.value }}
+        {% elseif cell.value is not null %}
+            <span title="{{ ('time.dow.'~cell.value.format('l')|lower)|trans }}">
+                {{ ('value.date.year-mo-MO-day')|trans({year: cell.value.format('Y'), mo: cell.value.format('m'), MO: ('time.month.'~cell.value.format('M'))|lower|trans, day: cell.value.format('d'), DAY: ('time.dow.'~cell.value.format('D'))|lower|trans}) }}
+            </span>
+
+        {% endif %}
+
+    {% elseif cell.field.type == 'time' %}
+        {# fixme: twig pretty date filter #}
+        {% if cell.transformed %}
+            {{ cell.value }}
+        {% elseif cell.value is not null %}
+            {{ cell.value.format('H:i') }}
+        {% endif %}
+
+    {% elseif cell.field.type == 'boolean' %}
+        <span class="text-center"><i class="fa fa-{{ cell.value ? 'check' : 'times' }}"></i></span>
+        <span class="d-none">{{ cell.value }}</span> {# hidden value for sorting #}
+
+    {% elseif cell.field.type == 'rating' %}
+        {% for i in 0..cell.value %}
+            <i class="fa fa-star"></i>
+        {% endfor %}
+
+    {% elseif cell.field.type == 'textbox' %}
+        {{ cell.value|nl2br }}
+    {% else %}
+
+        {% if cell.link or cell.field.type == 'url' %}
+            {% if cell.value is iterable and cell.link is iterable %}
+                {% for k,link in cell.link %}
+                    {% if link %}
+                        {% include 'applications/blocks/link.html.twig' with {text: cell.value[k], link: url(link.route, link.params)} %}
+                    {% else %}
+                        {{ cell.value[k] }}
+                    {% endif %}
+                {% endfor %}
+            {% elseif cell.field.type == 'url' and cell.value %}
+                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: cell.value, target: "blank"} %}
+            {% elseif cell.field.type != 'url' %}
+                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: url(cell.link.route, cell.link.params)} %}
+            {% endif %}
+        {% elseif cell.reference %}
+            {% if cell.reference.route is defined %}
+                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: url(cell.reference.route, cell.reference.params) ~ '#' ~ cell.reference.reference, icon: 'fa fa-search'} %}
+            {% else %}
+                {{ cell.value }}
+            {% endif %}
+        {% else %}
+            {#  todo: choice translations -> dash builder #}
+            {% if cell.value is iterable %}
+                {{ cell.value|join(', ') }}
+            {% else %}
+                {{ cell.value }}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+{% elseif cell.link %}
+    {% for p in cell %}
+        {# todo: pointers #}
+    {% endfor %}
+{% endif %}

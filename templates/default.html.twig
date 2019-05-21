@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+    <title>{% block title %}{{ render(controller("App\\Controller\\SystemController::getSystemTitle")) }}{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+
+    {% block meta %}{% endblock %}
+
+    {# CSS #}
+    <link rel="stylesheet" href="{{ asset('build/app.css') }}">
+    {% block styles %}{% endblock %}
+</head>
+<body>
+{% block body %}
+    <div id="wrapper">
+        {% block navigation %}
+            {% if app.request.pathInfo != '/login' %}
+                {% include 'navigation.html.twig' %}
+            {% endif %}
+        {% endblock %}
+
+        {% block content_container %}
+            <div class="main container {{ application is defined ? application.appId : 'dashboard' }}" style="overflow-x: auto">
+                {% block content %}{% endblock %}
+            </div>
+        {% endblock %}
+    </div>
+{% endblock %}
+
+{# SCRIPTS #}
+<script src="{{ asset('build/app.js') }}"></script>
+<script src="{{ asset('build/runtime.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
