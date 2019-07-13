@@ -9,7 +9,6 @@ use App\System\Application\Module\DetailModule;
 use App\System\Application\Module\FormModule;
 use App\System\Application\Module\RedirectModule;
 use App\System\Configuration\ConfigStore;
-use App\System\Helpers\Hash;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Intl\Exception\NotImplementedException;
