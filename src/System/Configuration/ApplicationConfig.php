@@ -220,7 +220,7 @@ class ApplicationConfig
     protected function prepareFields(ConfigStore $configStore)
     {
         foreach ($this->raw['fields'] as $id => $config) {
-            $this->fields[$id] = new Field($this->appId, $id, $config, $configStore, $this);
+            $this->fields[$id] = new Field($this->appId, $id, $config ?? [], $configStore, $this);
         }
     }
 
