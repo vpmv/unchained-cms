@@ -167,7 +167,7 @@ class ConfigStore extends Cacheable
 
             return [
                 'uri'        => $routes,
-                'authorized' => ($sysConfig['public'] ?? false) || $this->authenticated,
+                'authorized' => ($sysConfig['public'] ?? true) || $this->authenticated,
             ];
         });
     }
