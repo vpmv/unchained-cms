@@ -307,7 +307,10 @@ class Field
 
                 $choiceOptions  = $this->getChoiceOptions();
                 $multipleChoice = $this->moduleConfig['form']['multiple'] ?? false;
-                if (in_array($currentModule->getName(), ['dashboard', 'detail']) && $choiceOptions) {
+                if (in_array($currentModule->getName(), [
+                        'dashboard',
+                        'detail',
+                    ]) && $choiceOptions) {
                     $realValue = [];
                     foreach ($value as $idx) {
                         $translatable = $choiceOptions[$idx];
@@ -352,7 +355,10 @@ class Field
                     $this->setData('transformed', true);
 
                     if ($transformer['math_round'] && strlen(intval($value)) != strlen($value)) {
-                        $value = call_user_func_array($transformer['math_round'], [$value, $transformer['math_round_precision']]);
+                        $value = call_user_func_array($transformer['math_round'], [
+                            $value,
+                            $transformer['math_round_precision'],
+                        ]);
                     }
                     settype($value, $transformer['scalar']);
                     if ($transformer['suffix']) {
@@ -510,8 +516,14 @@ class Field
         if (!empty($config['source'])) {
             $sourceIdentifier = $config['source'];
             $visibleFields    = [];
-            if (strpos($sourceIdentifier, '.')) {
-                list($sourceIdentifier, $visibleFields) = explode('.', $sourceIdentifier);
+
+            if (is_array($sourceIdentifier)) {
+                $sourceIdentifier = $sourceIdentifier['source'];
+                $visibleFields    = $sourceIdentifier['fields'] ?? [];
+            } else {
+                if (strpos($sourceIdentifier, '.')) {
+                    list($sourceIdentifier, $visibleFields) = explode('.', $sourceIdentifier);
+                }
             }
             $contextSourceConfig = $context->getSource($sourceIdentifier);
             $foreignColumn       = $contextSourceConfig['foreign_column'];
@@ -546,12 +558,19 @@ class Field
                 if (is_string($visibleFields) && !empty($sourceAppConfig['fields'][$visibleFields])) {
                     $sourceField = $sourceAppConfig['fields'][$visibleFields];
                 } elseif (is_array($visibleFields)) {
-                    if ($sourceAppConfig['meta']['exposes']) {
-                        $sourceField = (array)$sourceAppConfig['meta']['exposes'];
-                    } else {
-                        $sourceField = (array)array_filter($sourceAppConfig['fields'], function ($field) {
-                            return filter_var($field['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                        })[0];
+                    if ($visibleFields) {
+                        if ($sourceAppConfig['meta']['exposes']) {
+                            $sourceField = (array)$sourceAppConfig['meta']['exposes'];
+                        } else {
+                            $sourceField = (array)array_filter($sourceAppConfig['fields'], function ($field) {
+                                return filter_var($field['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                            })[0];
+                        }
+                        //} else {
+                        //    $sourceField = (array)array_filter($visibleFields, function ($field) use ($sourceAppConfig) {
+                        //        return isset($sourceAppConfig['fields'][$field]) && filter_var($sourceAppConfig['fields'][$field]['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                        //    })[0];
+                        //}
                     }
                     if (count($sourceField) > 1) {
                         return; // combined fields are always textual
@@ -583,7 +602,10 @@ class Field
                 if ($config['type'] == 'datetime') {
                     $this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMddHHii';
                 }
-                $yearsRange = [date('Y') - 10, date('Y') + 10];
+                $yearsRange = [
+                    date('Y') - 10,
+                    date('Y') + 10,
+                ];
 
                 if (isset($config['year_min'])) {
                     $yearsRange[0] = strlen($config['year_min']) <= 3 ? date('Y') - $config['year_min'] : $config['year_min'];
