@@ -1,0 +1,54 @@
+text.dashboard.empty.verbose: "No known verbose"
+action.entity.create.verbose: "Create verbose"
+text.entity.create.verbose: Create
+text.entity.edit.verbose: Edit
+
+label.new: New
+label.edit: Edit
+label.editing: Editing
+label.save: Save
+label.cancel: Cancel
+label.select...: Choose...
+label.back: Back
+label.overview: Overview
+
+value.date.year-mo-MO-day-DAY: DAY year-mo-day
+value.date.year-mo-MO-day: year-mo-day
+value.time.year.nn: nn year
+value.time.year_plural.nn: nn years
+value.time.month.nn: nn mo.
+value.time.month_plural.nn: nn mo.
+value.time.day.nn: nn day
+value.time.day_plural.nn: nn days.
+value.time.minute.nn: nn min
+value.time.minute_plural.nn: nn mins
+value.time.just_now: seconds ago
+
+time.month.jan: jan
+time.month.feb: feb
+time.month.mar: mar
+time.month.apr: apr
+time.month.may: may
+time.month.jun: jun
+time.month.jul: jul
+time.month.aug: aug
+time.month.sep: sep
+time.month.oct: oct
+time.month.nov: nov
+time.month.dec: dec
+
+time.dow.mon: Mo
+time.dow.tue: Tu
+time.dow.wed: We
+time.dow.thu: Th
+time.dow.fri: Fr
+time.dow.sat: Sa
+time.dow.sun: Su
+
+time.dow.monday: monday
+time.dow.tuesday: tuesday
+time.dow.wednesday: wednesday
+time.dow.thursday: thursday
+time.dow.friday: friday
+time.dow.saturday: saturday
+time.dow.sunday: sunday
