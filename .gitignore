@@ -15,7 +15,7 @@
 /user/templates/*
 /user/translations/*
 
-!/user/config/**/*.dist
+!*.dist
 !.gitignore
 /composer.phar
 Dockerfile
