@@ -226,6 +226,9 @@ class Repository extends Cacheable
         if ($foreignKey === null) {
             // fixme: reverse application keys -> get query for this
             $this->timer->stop('column-junction.' . $field);
+            if (!$value instanceof ValueInterface) {
+                $value = new Column('');
+            }
 
             return $value;
         }
@@ -592,6 +595,19 @@ class Repository extends Cacheable
                     ];
                     if ($source['function'] == 'count_in') {
                         $result['subQueries'][$alias]['conditions']['id'] = ['in' => $source['column']];
+                    }
+                    continue;
+                }
+                if (in_array($source['function'], ['find_in', 'find_in_max'])) {
+                    $result['subQueries'][$alias] = [
+                        'from'       => Property::schemaName($source['application']),
+                        'conditions' => [
+                            'id' => ['in' => $source['column']],
+                        ],
+                        'alias'      => 'find_in',
+                    ];
+                    if ($source['function'] == 'find_in_max') {
+                        $result['subQueries'][$alias]['function'] = 'max';
                     }
                     continue;
                 }
