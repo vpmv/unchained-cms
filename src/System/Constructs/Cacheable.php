@@ -3,18 +3,19 @@
 
 namespace App\System\Constructs;
 
-use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Contracts\Cache\ItemInterface;
 
 class Cacheable
 {
-    /** @var \Psr\SimpleCache\CacheInterface */
+    /** @var \Symfony\Component\Cache\Adapter\FilesystemAdapter */
     protected $cache;
     /** @var string|null */
     private $cacheKey;
 
-    public function __construct(CacheInterface $cache, ?string $cacheKey = null)
+    public function __construct(?string $cacheKey = null)
     {
-        $this->cache    = $cache;
+        $this->cache    = new FilesystemAdapter();
         $this->cacheKey = $cacheKey;
     }
 
@@ -23,11 +24,15 @@ class Cacheable
      * @param mixed  $contents
      * @param int    $ttl Defaults to 1 week
      *
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     protected function writeCache(string $key, $contents, int $ttl = 886400 * 7)
     {
-        $this->cache->set($this->cacheKey . $key, $contents, $ttl);
+        $this->cache->get($this->cacheKey . $key, function (ItemInterface $item) use ($contents, $ttl) {
+            $item->expiresAfter($ttl);
+
+            return $contents;
+        });
     }
 
 
@@ -36,16 +41,20 @@ class Cacheable
      * @param mixed  $default
      *
      * @return mixed
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     protected function getCache(string $key, $default = null)
     {
-        return $this->cache->get($this->cacheKey . $key, $default);
+        /** @var \Psr\Cache\CacheItemInterface $item */
+        $item =  $this->cache->getItem($this->cacheKey . $key);
+        if (!$item->isHit()) {
+            return $default;
+        }
+        return $item->get();
     }
 
     protected function remember(string $key, callable $callback, int $ttl = 886400 * 7)
     {
-
         if ($cache = $this->getCache($key)) {
             return $cache;
         }
@@ -61,7 +70,7 @@ class Cacheable
         $keys = array_map(function ($v) {
             return strpos($v, $this->cacheKey) === 0 ? $v : $this->cacheKey . $v;
         }, $keys);
-        $this->cache->deleteMultiple($keys);
+        $this->cache->deleteItems($keys);
     }
 
     protected function clearCache(): void

@@ -11,9 +11,7 @@ use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use App\System\RepositoryManager;
 use Cocur\Slugify\Slugify;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class Repository extends Cacheable
@@ -44,7 +42,10 @@ class Repository extends Cacheable
     private $primaryKey = 0;
     private $iterator   = 0;
 
-    public function __construct(RepositoryManager $repositoryManager, EntityManagerInterface $entityManager, CacheInterface $cache, Timer $timer, ConfigStore $configStore, ApplicationConfig $applicationConfig)
+    /** @var \App\System\Helpers\Timer */
+    private $timer;
+
+    public function __construct(RepositoryManager $repositoryManager, EntityManagerInterface $entityManager, Timer $timer, ConfigStore $configStore, ApplicationConfig $applicationConfig)
     {
         $this->appId             = $applicationConfig->appId;
         $this->auth              = $repositoryManager->isAuthorizedFully();
@@ -52,7 +53,7 @@ class Repository extends Cacheable
         $this->timer             = $timer;
         $this->configStore       = $configStore;
 
-        parent::__construct($cache, 'repo.' . $applicationConfig->appId . '.auth-' . intval($this->auth) . '.');
+        parent::__construct('repo.' . $applicationConfig->appId . '.auth-' . intval($this->auth) . '.');
 
         $this->sortBy                    = $applicationConfig->sort;
         $this->config['exposed_columns'] = (array)$applicationConfig->meta['exposes'];
@@ -412,7 +413,7 @@ class Repository extends Cacheable
             switch ($field->getFormType()) {
                 case 'file':
                     if ($value instanceof UploadedFile) {
-                        $fileName = md5($value->getClientOriginalName()) . '.' . $value->getClientOriginalExtension();
+                        $fileName = md5($value->getClientOriginalName().time()) . '.' . $value->getClientOriginalExtension();
                         $fileType = $field->getDisplayType() == 'image' ? ConfigStore::DIR_IMAGES : ConfigStore::DIR_FILES;
                         $value->move($this->configStore->getDirectory($fileType, $this->appId, null, true), $fileName);
 
