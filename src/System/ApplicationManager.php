@@ -254,7 +254,7 @@ class ApplicationManager
 
     private function isAuthorizedFully(): bool
     {
-        return !empty($this->container->get('security.token_storage')->getToken()->getRoles());
+        return !empty($this->container->get('security.token_storage')->getToken()->getRoleNames());
     }
 
     private function getFormBuilder(string $applicationId)

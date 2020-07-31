@@ -3,18 +3,19 @@
 
 namespace App\System\Constructs;
 
-use \Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Contracts\Cache\ItemInterface;
 
 class Md5Cacheable
 {
-    /** @var \Psr\SimpleCache\CacheInterface */
+    /** @var \Symfony\Contracts\Cache\CacheInterface */
     protected $cache;
     /** @var string|null */
     private $cacheKey;
 
-    public function __construct(CacheInterface $cache, ?string $cacheKey = null)
+    public function __construct(?string $cacheKey = null)
     {
-        $this->cache    = $cache;
+        $this->cache    = new FilesystemAdapter();
         $this->cacheKey = $cacheKey;
     }
 
@@ -23,11 +24,15 @@ class Md5Cacheable
      * @param mixed  $contents
      * @param int    $ttl Defaults to 1 week
      *
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     protected function writeCache(string $key, $contents, int $ttl = 886400 * 7)
     {
-        $this->cache->set(md5($this->cacheKey . $key), $contents, $ttl);
+        $this->cache->get(md5($this->cacheKey . $key), function (ItemInterface $item) use ($contents, $ttl) {
+            $item->expiresAfter($ttl);
+
+            return $contents;
+        });
     }
 
 
@@ -36,11 +41,14 @@ class Md5Cacheable
      * @param mixed  $default
      *
      * @return mixed
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     protected function getCache(string $key, $default = null)
     {
-        return $this->cache->get(md5($this->cacheKey . $key), $default);
+        /** @var \Psr\Cache\CacheItemInterface $item */
+        $item = $this->cache->getItem(md5($this->cacheKey . $key));
+
+        return $item->isHit() ? $item->get() : $default;
     }
 
     protected function remember(string $key, callable $callback)
@@ -51,6 +59,7 @@ class Md5Cacheable
 
         $contents = $callback($this->cacheKey . $key);
         $this->writeCache($key, $contents);
+
         return $contents;
     }
 }
