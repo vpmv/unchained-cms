@@ -11,10 +11,10 @@
             {% include 'applications/blocks/title.html.twig' with {value: application.data[application.meta.exposes].value, type: application.data[application.meta.exposes].type} %}
         {% endif %}
         &laquo;
-        {{ ('text.entity.edit.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+        {{ ('text.entity.edit.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
 
     {% else %}
-        {{ ('text.entity.create.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+        {{ ('text.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
     {% endif %}
 {% endblock %}
 
@@ -23,9 +23,9 @@
         {{ application.meta.title|trans }}
         <small class="text-muted">
             {% if application.hasData %}
-                {{ ('text.entity.edit.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+                {{ ('text.entity.edit.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
             {% else %}
-                {{ ('text.entity.create.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+                {{ ('text.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
             {% endif %}
         </small>
     </h2>
@@ -40,7 +40,7 @@
                 {% if application.hasData %}
                     <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
                         <i class="fa fa-plus"></i>
-                        {{ ('action.entity.create.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+                        {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
                     </a>
                 {% endif %}
             </div>

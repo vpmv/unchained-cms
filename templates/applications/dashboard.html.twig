@@ -26,7 +26,7 @@
                     {% if not application.frontend.uniqueConstraint %}
                         <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}">
                             <i class="fa fa-plus"></i>
-                            {{ ('action.entity.create.verbose')|trans({verbose: application.meta.verbose_name|trans}) }}
+                            {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
                         </a>
                     {% endif %}
                 </div>
@@ -77,7 +77,7 @@
                                         </a>
                                         <a class="btn btn-danger btn-sm"
                                            href="{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'delete'}) }}"><i
-                                                    class="fa fa-trash-alt"></i>
+                                                    class="fa fa-trash-alt" onclick="return confirm('{{ ('dialog.delete_warning')|trans }}')" ></i>
                                         </a>
                                     {% endif %}
                                 </div>
@@ -90,7 +90,7 @@
         </div>
     {% else %}
         {% block placeholder %}
-            <b>{{ ('text.dashboard.empty.verbose')|trans({verbose: application.meta.verbose_name_plural|trans|lower }) }}</b>
+            <b>{{ ('text.dashboard.empty.verbose')|trans({verbose: ('entity.verbose_plural')|trans|lower }) }}</b>
         {% endblock %}
     {% endif %}
 {% endblock %}
