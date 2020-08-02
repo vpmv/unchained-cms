@@ -4,6 +4,7 @@ namespace App\System\Configuration;
 
 use App\System\Application\Field;
 use App\System\Application\Property;
+use InvalidArgumentException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
 
@@ -32,8 +33,8 @@ class ApplicationConfig
     {
         $this->basePath = $container->getParameter('kernel.project_dir') . '/config/';
 
-        $this->appId      = $appId;;
-        $this->raw        = $configuration + ['appId' => $appId, 'name' => $appId];
+        $this->appId = $appId;
+        $this->raw = $configuration + ['appId' => $appId, 'name' => $appId];
 
         $this->setSources();
         $this->setModules();
@@ -58,7 +59,8 @@ class ApplicationConfig
         return $this->category;
     }
 
-    private function setCategory(ConfigStore $configStore) {
+    private function setCategory(ConfigStore $configStore)
+    {
         $this->category = $configStore->getCategoryConfig($this->raw['category'] ?? 'default');
     }
 
@@ -67,7 +69,8 @@ class ApplicationConfig
      *
      * @return array
      */
-    public function getConstraint(string $type): array {
+    public function getConstraint(string $type): array
+    {
         return $this->config['constraints'][$type] ?? [];
     }
 
@@ -77,7 +80,7 @@ class ApplicationConfig
     public function getField(string $field): Field
     {
         if (!isset($this->fields[$field])) {
-            throw new \InvalidArgumentException("Unconfigured field $field in application " . $this->getAppId());
+            throw new InvalidArgumentException("Unconfigured field $field in application " . $this->getAppId());
         }
 
         return $this->fields[$field];
@@ -125,7 +128,7 @@ class ApplicationConfig
     public function getSource(string $alias): array
     {
         if (!isset($this->sources[$alias])) {
-            throw new \InvalidArgumentException('Unknown source alias: ' . $alias);
+            throw new InvalidArgumentException('Unknown source alias: ' . $alias);
         }
 
         return $this->sources[$alias];
@@ -172,11 +175,12 @@ class ApplicationConfig
                 continue;
             }
 
-            $source['function'] = $source['function'] ?? null;
-            $source['fields']   = $source['fields'] ?? [];
-            $source['pointer']  = $source['pointer'] ?? 'detail';
-            $foreignColumn      = $source['foreign_column'] ?? Property::foreignKey($source['application']);
-            $localColumn        = $source['column'] ?? ($source['function'] ? Property::foreignKey($this->appId) : 'id');
+            $source['join_source'] = $source['join_source'] ?? null;
+            $source['function']    = $source['function'] ?? null;
+            $source['fields']      = $source['fields'] ?? [];
+            $source['pointer']     = $source['pointer'] ?? 'detail';
+            $foreignColumn         = $source['foreign_column'] ?? Property::foreignKey($source['application']);
+            $localColumn           = $source['column'] ?? ($source['function'] ? Property::foreignKey($this->appId) : 'id');
 
             if ($source['invert_join'] ?? false) {
                 $localColumn   = Property::foreignKey($this->appId);

@@ -2,10 +2,10 @@
 
 namespace App\System\Application;
 
+use App\System\Application\Database\ApplicationReference;
 use App\System\Application\Database\Column;
 use App\System\Application\Database\Junction;
 use App\System\Application\Database\JunctionList;
-use App\System\Application\Database\ApplicationReference;
 use App\System\Application\Database\ValueInterface;
 use App\System\Application\Module\ApplicationModuleInterface;
 use App\System\Application\Module\FormModule;
@@ -13,7 +13,6 @@ use App\System\Application\Translation\TranslatableChoice;
 use App\System\Configuration\ApplicationConfig;
 use App\System\Configuration\ConfigStore;
 use App\System\Constructs\Translatable;
-use Cocur\Slugify\Slugify;
 
 class Field
 {
@@ -522,7 +521,7 @@ class Field
                 $visibleFields    = $sourceIdentifier['fields'] ?? [];
             } else {
                 if (strpos($sourceIdentifier, '.')) {
-                    list($sourceIdentifier, $visibleFields) = explode('.', $sourceIdentifier);
+                    [$sourceIdentifier, $visibleFields] = explode('.', $sourceIdentifier);
                 }
             }
             $contextSourceConfig = $context->getSource($sourceIdentifier);
@@ -544,7 +543,7 @@ class Field
             ];
             $this->schema['column']                     = $foreignColumn;
 
-            if ($contextSourceConfig['function']) {
+            if ($contextSourceConfig['function'] || $contextSourceConfig['join_source']) {
                 $this->extra['ignored'] = true;
 
                 return; // stop reconfiguration
@@ -595,6 +594,10 @@ class Field
             ],
         ];
 
+        if ($this->extra['ignored']) {
+            return;
+        }
+
         switch ($this->config['form_type']) {
             case 'date':
             case 'datetime':
@@ -622,11 +625,11 @@ class Field
                 break;
             case 'rating': // fixme
             case 'choice':
-                $this->moduleConfig['form']['required'] = filter_var($config['required'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
-                $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
-                $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
-                $this->moduleConfig['unique']           = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN); // fixme: different position
+                    $this->moduleConfig['form']['required'] = filter_var($config['required'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                    $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
+                    $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
+                    $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
+                    $this->moduleConfig['unique']           = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN); // fixme: different position
                 break;
             case 'boolean':
             case 'checkbox':

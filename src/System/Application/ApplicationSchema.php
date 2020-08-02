@@ -60,15 +60,15 @@ class ApplicationSchema
 
         foreach ($joins as $alias => $join) {
             if ($join['joinType'] == 'inner') {
-                $b->innerJoin('_curr', $join['from'], $alias, $alias . '.' . $join['schema_column'] . ' = _curr.' . $join['column']);
+                $b->innerJoin($join['table'] ?? '_curr', $join['from'], $alias, sprintf('%s.%s = %s.%s', $alias, $join['schema_column'], $join['table'] ?? '_curr', $join['column']));
             } elseif ($join['joinType'] == 'left') {
-                $b->leftJoin('_curr', $join['from'], $alias, $alias . '.' . $join['schema_column'] . ' = _curr.' . $join['column']);
+                $b->leftJoin($join['table'] ?? '_curr', $join['from'], $alias, sprintf('%s.%s = %s.%s', $alias, $join['schema_column'], $join['table'] ?? '_curr', $join['column']));
             } elseif ($join['joinType'] == 'right') {
-                $b->rightJoin('_curr', $join['from'], $alias, $alias . '.' . $join['schema_column'] . ' = _curr.' . $join['column']);
+                $b->rightJoin($join['table'] ?? '_curr', $join['from'], $alias, sprintf('%s.%s = %s.%s', $alias, $join['schema_column'], $join['table'] ?? '_curr', $join['column']));
             }
 
             foreach ($join['select'] as $joinColumn) {
-                $joinColumn = $this->concatSelector($joinColumn['columns'], $alias . '__' . $joinColumn['alias'], $alias); // horses__name,
+                $joinColumn = $this->concatSelector($joinColumn['columns'], $alias . '__' . $joinColumn['alias'], $alias); // bookshelf__title,
                 $b->addSelect($joinColumn);
             }
         }
