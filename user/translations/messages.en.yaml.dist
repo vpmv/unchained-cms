@@ -12,6 +12,8 @@ label.select...: Choose...
 label.back: Back
 label.overview: Overview
 
+dialog.delete_warning: Are you sure, you want to delete this?
+
 value.date.year-mo-MO-day-DAY: DAY year-mo-day
 value.date.year-mo-MO-day: year-mo-day
 value.time.year.nn: nn year
