@@ -464,9 +464,18 @@ class Repository extends Cacheable
 
             $slugContext = [];
             foreach ($slugField->getPointer()['fields'] as $fieldId) {
+                $field         = $this->configStore->getApplicationField($this->appId, $fieldId);
                 $slugFieldData = $data[$fieldId] ?? null;
                 if ($slugFieldData instanceof DateTime) {
-                    $slugFieldData = $slugFieldData->format('Y-m-d');
+                    switch ($field->getFormType()) {
+                        case 'date':
+                        case 'datetime':
+                            $slugFieldData = $slugFieldData->format('Y-m-d');
+                            break;
+                        case 'time':
+                            $slugFieldData = $slugFieldData->format('H-i-s');
+                            break;
+                    }
                 }
                 $slugContext[] = $slugFieldData;
             }
