@@ -437,13 +437,14 @@ class Repository extends Cacheable
                     break;
                 case 'datetime':
                     if ($value instanceof DateTime) {
-                        $value = $value->format('Y-m-d H:m:i');
+                        $value = $value->format('Y-m-d H:i:s');
                     }
                     break;
                 case 'time':
                     if ($value instanceof DateTime) {
-                        $value = $value->format('H:m:i');
+                        $value = $value->format('H:i:s');
                     }
+                    dump($value);
                     break;
             }
             $persistData[$field->getSchema(true)['column']] = $value;
