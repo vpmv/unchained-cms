@@ -11,9 +11,10 @@ use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use App\System\RepositoryManager;
 use Cocur\Slugify\Slugify;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\SimpleCache\CacheInterface;
+use InvalidArgumentException;
+use LogicException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class Repository extends Cacheable
@@ -44,7 +45,10 @@ class Repository extends Cacheable
     private $primaryKey = 0;
     private $iterator   = 0;
 
-    public function __construct(RepositoryManager $repositoryManager, EntityManagerInterface $entityManager, CacheInterface $cache, Timer $timer, ConfigStore $configStore, ApplicationConfig $applicationConfig)
+    /** @var \App\System\Helpers\Timer */
+    private $timer;
+
+    public function __construct(RepositoryManager $repositoryManager, EntityManagerInterface $entityManager, Timer $timer, ConfigStore $configStore, ApplicationConfig $applicationConfig)
     {
         $this->appId             = $applicationConfig->appId;
         $this->auth              = $repositoryManager->isAuthorizedFully();
@@ -52,7 +56,7 @@ class Repository extends Cacheable
         $this->timer             = $timer;
         $this->configStore       = $configStore;
 
-        parent::__construct($cache, 'repo.' . $applicationConfig->appId . '.auth-' . intval($this->auth) . '.');
+        parent::__construct('repo.' . $applicationConfig->appId . '.auth-' . intval($this->auth) . '.');
 
         $this->sortBy                    = $applicationConfig->sort;
         $this->config['exposed_columns'] = (array)$applicationConfig->meta['exposes'];
@@ -99,7 +103,7 @@ class Repository extends Cacheable
     public function getActiveRecord()
     {
         if (!$this->activeRow) {
-            throw new \LogicException('No data selected');
+            throw new LogicException('No data selected');
         }
 
         return $this->activeRow;
@@ -191,7 +195,7 @@ class Repository extends Cacheable
     public function getColumn(string $field, ?string $source = null, $default = null): ValueInterface
     {
         if (!$this->activeRow) {
-            throw new \LogicException('No data selected');
+            throw new LogicException('No data selected');
         }
 
         $this->timer->start($this->appId . '.column.' . $field . '-' . $source);
@@ -222,7 +226,6 @@ class Repository extends Cacheable
         $repo          = $this->repositoryManager->getRepository($application);
         $foreignColumn = $repo->getForeignColumn();
         $foreignKey    = $this->activeRow[$foreignColumn] ?? null;
-        //dump($source, $field, $fieldColumn, $foreignColumn, $foreignKey, $value ?? null);
         if ($foreignKey === null) {
             // fixme: reverse application keys -> get query for this
             $this->timer->stop('column-junction.' . $field);
@@ -305,7 +308,7 @@ class Repository extends Cacheable
     public function getColumns(array $columns, $default = null)
     {
         if (!$this->activeRow) {
-            throw new \LogicException('No data selected');
+            throw new LogicException('No data selected');
         }
 
         $result = [];
@@ -319,7 +322,7 @@ class Repository extends Cacheable
     public function getApplicationReference(string $field): ?ApplicationReference
     {
         if (!$this->activeRow) {
-            throw new \LogicException('No data selected');
+            throw new LogicException('No data selected');
         }
 
         if (($source = ($this->fields[$field]['subQuery'] ?? null)) && ($exposed = $this->getExposedData())) {
@@ -364,10 +367,10 @@ class Repository extends Cacheable
     public function getExposedData($default = null)
     {
         if (!$this->activeRow) {
-            throw new \LogicException('No data selected');
+            throw new LogicException('No data selected');
         }
         if (!$this->exposedField) {
-            throw new \LogicException('Application doesnt support exposed field');
+            throw new LogicException('Application doesnt support exposed field');
         }
 
         return $this->activeRow['_exposed'] ?? $default;
@@ -412,7 +415,7 @@ class Repository extends Cacheable
             switch ($field->getFormType()) {
                 case 'file':
                     if ($value instanceof UploadedFile) {
-                        $fileName = md5($value->getClientOriginalName()) . '.' . $value->getClientOriginalExtension();
+                        $fileName = md5($value->getClientOriginalName() . time()) . '.' . $value->getClientOriginalExtension();
                         $fileType = $field->getDisplayType() == 'image' ? ConfigStore::DIR_IMAGES : ConfigStore::DIR_FILES;
                         $value->move($this->configStore->getDirectory($fileType, $this->appId, null, true), $fileName);
 
@@ -428,18 +431,18 @@ class Repository extends Cacheable
                     $value = intval($value);
                     break;
                 case 'date':
-                    if ($value instanceof \DateTime) {
+                    if ($value instanceof DateTime) {
                         $value = $value->format('Y-m-d');
                     }
                     break;
                 case 'datetime':
-                    if ($value instanceof \DateTime) {
-                        $value = $value->format('Y-m-d H:m:i');
+                    if ($value instanceof DateTime) {
+                        $value = $value->format('Y-m-d H:i:s');
                     }
                     break;
                 case 'time':
-                    if ($value instanceof \DateTime) {
-                        $value = $value->format('H:m:i');
+                    if ($value instanceof DateTime) {
+                        $value = $value->format('H:i:s');
                     }
                     break;
             }
@@ -455,15 +458,24 @@ class Repository extends Cacheable
             $slugField = $this->configStore->getApplicationField($this->appId, $this->slugField);
             try {
                 $currentValue = $this->getColumn($this->slugField)->getValue();
-            } catch (\LogicException $e) {
+            } catch (LogicException $e) {
                 $currentValue = null;
             }
 
             $slugContext = [];
             foreach ($slugField->getPointer()['fields'] as $fieldId) {
+                $field         = $this->configStore->getApplicationField($this->appId, $fieldId);
                 $slugFieldData = $data[$fieldId] ?? null;
-                if ($slugFieldData instanceof \DateTime) {
-                    $slugFieldData = $slugFieldData->format('Y-m-d');
+                if ($slugFieldData instanceof DateTime) {
+                    switch ($field->getFormType()) {
+                        case 'date':
+                        case 'datetime':
+                            $slugFieldData = $slugFieldData->format('Y-m-d');
+                            break;
+                        case 'time':
+                            $slugFieldData = $slugFieldData->format('H-i-s');
+                            break;
+                    }
                 }
                 $slugContext[] = $slugFieldData;
             }
@@ -471,7 +483,7 @@ class Repository extends Cacheable
             if ($currentValue != $newValue) {
                 $cacheKeys[] = 'record.slug.' . $newValue;
                 if (isset($this->dataBySlug[$newValue])) {
-                    throw new \InvalidArgumentException("There's already a record with this value for " . $this->slugField); // fixme
+                    throw new InvalidArgumentException("There's already a record with this value for " . $this->slugField); // fixme
                 }
                 $persistData[$this->slugField] = $newValue;
             }
@@ -486,7 +498,7 @@ class Repository extends Cacheable
     public function deleteBy(array $params): void
     {
         if (!$this->schema->delete($params)) {
-            throw new \InvalidArgumentException('Could not delete records with given params');
+            throw new InvalidArgumentException('Could not delete records with given params');
         }
 
         $this->clearCacheKeys(['data']);
@@ -495,11 +507,11 @@ class Repository extends Cacheable
     public function deleteRecord(int $primaryKey): void
     {
         if (!$this->getRecord($primaryKey)) {
-            throw new \InvalidArgumentException('There is no record with ID ' . $primaryKey);
+            throw new InvalidArgumentException('There is no record with ID ' . $primaryKey);
         }
 
         if (!$this->schema->delete(['id' => $primaryKey])) {
-            throw new \InvalidArgumentException('Could not delete records with given params');
+            throw new InvalidArgumentException('Could not delete records with given params');
         }
 
         $this->clearCacheKeys(['data']);
@@ -530,9 +542,6 @@ class Repository extends Cacheable
         $this->data       = $data['_default'];
         $this->dataByPk   = $data['_by_pk'];
         $this->dataBySlug = $data['_by_slug'];
-
-        //dump($this->data);
-        //dump($this->dataBySlug);
     }
 
     private function getAuthorizedColumns(): array
@@ -584,6 +593,8 @@ class Repository extends Cacheable
                 'subQueries' => [],
                 'joins'      => [],
             ];
+
+            $i = 0;
             foreach ($sources as $alias => $source) {
                 if (in_array($source['function'], ['count', 'count_in'])) {
                     $result['subQueries'][$alias] = [
@@ -616,11 +627,23 @@ class Repository extends Cacheable
                     'application'   => $source['application'],
                     'from'          => Property::schemaName($source['application']),
                     'joinType'      => 'left',
+                    'table'         => null,
                     'column'        => $source['foreign_column'],
                     'schema_column' => $source['column'],
                     'select'        => [],
+                    'position'      => $i,
                 ];
+
+                if ($source['join_source']) {
+                    $result['joins'][$alias]['table']    = $source['join_source'];
+                    $result['joins'][$alias]['position'] = count($sources); // make sure it's last to prevent unknown aliases
+                }
+                $i++;
             }
+
+            uasort($result['joins'], function ($a, $b) {
+                return $a['position'] <=> $b['position'];
+            });
 
             return $result;
         });
@@ -643,7 +666,7 @@ class Repository extends Cacheable
 
             return 'id';
         });
-        $raw = $this->remember('fields_calculated', function () use ($fields) {
+        $raw             = $this->remember('fields_calculated', function () use ($fields) {
             $result = [
                 'config'   => $this->config,
                 'joins'    => $this->joins,
@@ -702,7 +725,7 @@ class Repository extends Cacheable
         $this->joins    = $raw['joins'];
         $this->subQuery = $raw['subQuery'];
 
-        $raw_fields       = $raw['fields'];
+        $raw_fields   = $raw['fields'];
         $this->fields = $this->remember('fields_pointers', function () use ($raw_fields) {
             $fields = $raw_fields;
 
@@ -772,7 +795,7 @@ class Repository extends Cacheable
     private function getForeignRepository(string $source): Repository
     {
         if (!$this->hasSource($source)) {
-            throw new \InvalidArgumentException('This application has no connection to a source aliased: ' . $source);
+            throw new InvalidArgumentException('This application has no connection to a source aliased: ' . $source);
         }
 
         return $this->repositoryManager->getRepository($this->config['sources'][$source]['application']);
@@ -785,7 +808,7 @@ class Repository extends Cacheable
         }
 
         if (!isset($this->fields[$fieldId])) {
-            throw new \InvalidArgumentException('Unknown field alias "' . $fieldId . '"');
+            throw new InvalidArgumentException('Unknown field alias "' . $fieldId . '"');
         }
 
         if ($this->fields[$fieldId]['source'] && $virtualColumn) {

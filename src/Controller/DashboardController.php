@@ -4,8 +4,8 @@ namespace App\Controller;
 
 use App\System\Application\Category;
 use App\System\ApplicationManager;
-use Psr\SimpleCache\CacheInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -20,13 +20,13 @@ class DashboardController extends AbstractController
 {
     /**
      * @Route(path="/refresh")
-     * @param \Psr\SimpleCache\CacheInterface $cache
      *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public function clearCache(CacheInterface $cache)
+    public function clearCache()
     {
         $this->denyAccessUnlessGranted(['IS_AUTHENTICATED_FULLY', 'IS_AUTHENTICATED_REMEMBERED']);
+        $cache = new FilesystemAdapter();
         $cache->clear();
 
         return $this->redirect('/');

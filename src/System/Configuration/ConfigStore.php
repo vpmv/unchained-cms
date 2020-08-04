@@ -7,7 +7,6 @@ use App\System\Application\Property;
 use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use Psr\Log\LoggerInterface;
-use Psr\SimpleCache\CacheInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
 
@@ -39,9 +38,9 @@ class ConfigStore extends Cacheable
     private $paths         = [];
     private $authenticated = false;
 
-    public function __construct(ContainerInterface $container, CacheInterface $cache, LoggerInterface $logger, Timer $timer)
+    public function __construct(ContainerInterface $container, LoggerInterface $logger, Timer $timer)
     {
-        parent::__construct($cache, 'config.');
+        parent::__construct('config.');
         $this->container = $container;
         $this->basePath  = $container->getParameter('kernel.project_dir') . '/user/config/';
         $this->logger    = $logger;
@@ -51,7 +50,7 @@ class ConfigStore extends Cacheable
             'root'   => $container->getParameter('kernel.project_dir'),
             'public' => $container->getParameter('kernel.public_dir'),
         ];
-        $this->authenticated = !empty($this->container->get('security.token_storage')->getToken()->getRoles());
+        $this->authenticated = !empty($this->container->get('security.token_storage')->getToken()->getRoleNames());
     }
 
     /**

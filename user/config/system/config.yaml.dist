@@ -1,0 +1,4 @@
+# system wide configurations
+config:
+    # application name in menu's and title
+    title: Unchained

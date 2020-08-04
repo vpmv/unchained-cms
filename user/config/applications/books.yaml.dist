@@ -1,0 +1,21 @@
+application:
+  fields:
+    author:
+      source: author
+      required: true
+    title:
+      type: text
+      required: true
+    rating:
+      type: rating
+      options: [ 1,2,3,4,5 ]
+    comment:
+      type: textbox
+      public: false
+
+  meta:
+    exposes: [author, title]
+
+  sources:
+    author:
+      application: authors
