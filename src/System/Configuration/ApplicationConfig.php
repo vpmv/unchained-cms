@@ -254,7 +254,19 @@ class ApplicationConfig
         }
 
         // add slug field
-        if ($this->meta['exposes'] != 'id') {
+        if ($this->meta['slug'] ?? null) {
+            $this->fields['_slug'] = new Field($this->appId, '_slug', [
+                'dashboard' => false,
+                'detail'    => false,
+                'public'    => false,
+                'type'      => 'text',
+                'length'    => 100,
+                'pointer'   => [
+                    'fields' => (array)$this->meta['slug'],
+                    'type'   => 'slug',
+                ],
+            ], $configStore);
+        } else if ($this->meta['exposes'] != 'id') {
             $this->fields['_slug'] = new Field($this->appId, '_slug', [
                 'dashboard' => false,
                 'detail'    => false,
