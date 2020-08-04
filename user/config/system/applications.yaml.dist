@@ -1,0 +1,19 @@
+categories:
+  cooking:
+    routes:
+      en: cooking
+      nl: koken
+    public: true
+
+applications:
+  cooking:
+    label: Cooking
+    routes:
+      en: recipes
+      nl: recepten
+    public: true
+    order: -1
+
+  authors:
+    public: false
+  books: ~

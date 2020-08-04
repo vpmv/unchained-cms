@@ -1,0 +1,63 @@
+# reference value
+application:
+    name: cooking
+    category: cooking
+    routes:
+        en: recipes
+        nl: recepten
+
+    # symfony style form definition
+    #   input identifier => config
+    fields:
+        photo:
+            type: image
+            required: false
+            default: ~
+            # allow specifying field type with configuration
+            _configuration:
+                max_file_size: 500k
+        course:
+            type: choice
+            options: [breakfast, lunch, dinner, dessert,snack]
+        name:
+            type: text
+            required: true
+        source:
+            type: choice
+            options:
+                - book
+                - magazine
+                - web
+        issue:
+            type: text
+            required: false
+            dashboard:
+                visibility: large
+        author:
+            type: text
+            required: false
+            dashboard:
+                visibility: detail
+        link:
+            type: url
+            required: false
+        ingredients:
+            type: textbox
+            required: false
+            dashboard:
+                visibility: detail
+        recipe:
+            type: textbox
+            required: false
+            dashboard:
+                visibility: detail
+
+    # Django style meta configuration for model
+    meta:
+        # primary identifier when used in other applications
+        # and detail pages
+        exposes: [name, source]
+
+    modules:
+        dashboard:
+            sort: [name]
