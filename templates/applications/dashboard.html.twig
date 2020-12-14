@@ -76,8 +76,8 @@
                                                     class="fa fa-edit"></i>
                                         </a>
                                         <a class="btn btn-danger btn-sm"
-                                           href="{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'delete'}) }}"><i
-                                                    class="fa fa-trash-alt" onclick="return confirm('{{ ('dialog.delete_warning')|trans }}')" ></i>
+                                           href="javascript:;"><i
+                                                    class="fa fa-trash-alt" onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'delete'}) }}'; }"></i>
                                         </a>
                                     {% endif %}
                                 </div>
