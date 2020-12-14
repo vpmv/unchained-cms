@@ -74,8 +74,8 @@ img.media {
 
     table.dataTable.dtr-inline.collapsed {
         // collapsed
-        & > tbody > tr[role="row"] > td:first-child:before,
-        & > tbody > tr[role="row"] > th:first-child:before {
+        & > tbody > tr[role="row"] > td.dtr-control:before,
+        & > tbody > tr[role="row"] > th.dtr-control:before {
             font-family: "Font Awesome 5 Free", "Font\ Awesome\ 5\ Free", FontAwesome;
             font-weight: 900; // required by FA
             content: "\F0DD";
@@ -102,8 +102,7 @@ img.media {
         }
 
         // expanded
-        & > tbody > tr.parent > td:first-child:before,
-        & > tbody > tr.parent > th:first-child:before {
+        & > tbody > tr.parent > th.dtr-control:before {
             font-family: "Font Awesome 5 Free", "Font\ Awesome\ 5\ Free", FontAwesome;
             font-weight: 900; // required by FA
             content: "\F0DE";
@@ -125,7 +124,9 @@ img.media {
                 }
 
                 span.dtr-data {
-                    width: 200px;
+                    @include media-breakpoint-down(sm) {
+                        width: 200px;
+                    }
                 }
             }
         }
