@@ -7,7 +7,7 @@
         "bootstrap-toggle": "^2.2.2",
         "flag-icon-css": "^3.0.0",
         "fontawesome": "^4.7.2",
-        "jquery": "^3.3.1",
+        "jquery": "^3.5.0",
         "node-sass": "^4.9.3",
         "popper.js": "^1.14.4",
         "sass-loader": "^7.1.0",
