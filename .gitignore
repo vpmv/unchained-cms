@@ -14,8 +14,8 @@
 /user/extensions/*
 /user/templates/*
 /user/translations/*
+/user/README.md
 
 !*.dist
 !.gitignore
 /composer.phar
-Dockerfile

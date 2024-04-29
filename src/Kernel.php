@@ -30,10 +30,10 @@ class Kernel extends BaseKernel
             new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
             new \Symfony\Bundle\SecurityBundle\SecurityBundle(),
             new \Symfony\Bundle\MonologBundle\MonologBundle(),
-            new \Symfony\Bundle\DebugBundle\DebugBundle(),
         ];
-
+        
         if ($this->getEnvironment() == 'dev') {
+            $bundles[] = new \Symfony\Bundle\DebugBundle\DebugBundle();
             $bundles[] = new \Symfony\Bundle\WebProfilerBundle\WebProfilerBundle();
         }
 
