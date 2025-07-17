@@ -8,8 +8,8 @@ Encore
     // only needed for CDN's or sub-directory deploy
     //.setManifestKeyPrefix('build/')
 
-    .addEntry('app', './assets/js/app.js')
-    // .addEntry('app', './user/assets/user.js')
+    // .addEntry('app', './assets/js/app.js')
+    .addEntry('app', './user/assets/user.js')
 
     /*
      * For a full list of features, see:

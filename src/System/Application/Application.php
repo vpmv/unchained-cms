@@ -86,7 +86,7 @@ class Application
         return $translation;
     }
 
-    public function getPublicUri(string $source = null, bool $getPath = false, array $parameters = [])
+    public function getPublicUri(?string $source = null, bool $getPath = false, array $parameters = [])
     {
         if (!$this->configStore->isAuthorized($this->appId, $source)) {
             return null;
@@ -130,7 +130,7 @@ class Application
      *
      * @return string
      */
-    public function isModuleEnabled(string $name = null): bool
+    public function isModuleEnabled(?string $name = null): bool
     {
         return null !== $this->config->getModule($name);
     }
@@ -193,7 +193,7 @@ class Application
         return $this->repository->getDistinct($column);
     }
 
-    public function getFieldOptions(Field $field, int $currentValue = null)
+    public function getFieldOptions(Field $field, ?int $currentValue = null)
     {
         if ($field->getSourceIdentifier()) {
             $rawData = $this->getRepository()->getForeignData($field->getSourceIdentifier());

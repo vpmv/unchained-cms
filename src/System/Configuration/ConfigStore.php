@@ -196,7 +196,7 @@ class ConfigStore extends Cacheable
         return $this->authenticated;
     }
 
-    public function getApplicationUri(string $applicationId, ?string $sourceAlias = null, string $locale = null)
+    public function getApplicationUri(string $applicationId, ?string $sourceAlias = null, ?string $locale = null)
     {
         if ($sourceAlias) {
             $applicationId = $this->getSourceConfigByAlias($this->getApplicationConfig($applicationId), $sourceAlias)->appId;
@@ -222,7 +222,7 @@ class ConfigStore extends Cacheable
         return $config->getField($field);
     }
 
-    public function getCategoryUri(string $categoryId, string $locale = null): ?string
+    public function getCategoryUri(string $categoryId, ?string $locale = null): ?string
     {
         if (!isset($this->applicationCategories[$categoryId])) {
             try {
