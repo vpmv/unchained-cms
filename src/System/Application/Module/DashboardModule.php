@@ -5,7 +5,7 @@ namespace App\System\Application\Module;
 
 class DashboardModule extends AbstractModule
 {
-    public function prepare()
+    public function prepare(): void
     {
         if ($this->container->isModuleEnabled('detail')) {
             foreach ($this->data as &$row) {

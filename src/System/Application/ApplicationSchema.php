@@ -3,23 +3,18 @@
 namespace App\System\Application;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception;
 
 class ApplicationSchema
 {
-    private $connection;
-    /** @var string */
-    private $table;
 
-    /** @var \App\System\Application\Field[] */
-    private $fields = [];
-
-    public function __construct(Connection $connection, $table, $fields)
+    /**
+     * @param \Doctrine\DBAL\Connection       $connection
+     * @param string                          $table
+     * @param \App\System\Application\Field[] $fields
+     */
+    public function __construct(private Connection $connection, private string $table, private array $fields)
     {
-        $this->connection = $connection;
-        $this->table      = $table;
-        $this->fields     = $fields;
-
         $this->validateTable();
     }
 
@@ -28,7 +23,7 @@ class ApplicationSchema
         $columns = $columns ?: ['*'];
 
         $b = $this->connection->createQueryBuilder()
-                              ->from($this->table, '_curr');
+            ->from($this->table, '_curr');
 
         foreach ($columns as $column) {
             if (is_array($column) && !empty($column['fields'])) {
@@ -99,7 +94,7 @@ class ApplicationSchema
 
         try {
             $this->connection->delete($this->table, $params);
-        } catch (DBALException $e) {
+        } catch (Exception $e) {
             return false;
         } catch (\InvalidArgumentException $e) {
             return false;
@@ -118,7 +113,7 @@ class ApplicationSchema
             if ($v instanceof \DateTime) {
                 $v = $v->format('Y-m-d H:i:s');
             }
-            $keys[]   = "`$k`";
+            $keys[] = "`$k`";
             $values[] = $this->connection->quote($v);
         }
 
@@ -143,7 +138,7 @@ class ApplicationSchema
             return;
         }
 
-        $res     = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAll();
+        $res = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAll();
         $columns = array_column($res, 'Field');
         foreach ($this->fields as $name => $field) {
             $def = $this->getColumnDefinition($name, $field);
@@ -179,7 +174,7 @@ class ApplicationSchema
     private function getColumnDefinition(string $name, Field $field): array
     {
         if ($schema = $field->getSchema()) {
-            $result        = $schema;
+            $result = $schema;
             $result['fmt'] = sprintf('`%s` %s%s %s %s %s',
                 $schema['column'] ?? $name,
                 $schema['type'],

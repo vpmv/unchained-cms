@@ -4,10 +4,9 @@ namespace App\System\Application\Module;
 
 class RedirectModule extends AbstractModule
 {
-    public function prepare()
+    public function prepare(): void
     {
         $this->output = $this->data;
-        return;
     }
 
     public function getName(): string

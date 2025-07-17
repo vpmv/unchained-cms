@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.4",
         "ext-json": "*",
+        "ext-pdo": "*",
         "doctrine/annotations": "^2.0",
         "symfony/asset": "^7.3",
         "symfony/cache": "^7.3",

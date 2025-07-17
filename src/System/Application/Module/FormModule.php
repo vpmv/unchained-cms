@@ -13,9 +13,7 @@ use Symfony\Component\HttpFoundation\File\File;
 
 class FormModule extends AbstractModule
 {
-    private $errors = [];
-
-    public function prepare()
+    public function prepare(): void
     {
         foreach ($this->data as $fieldId => $data) {
             if (!$data['visible']) {

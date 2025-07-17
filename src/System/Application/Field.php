@@ -37,10 +37,13 @@ class Field
 
     private $data = [];
 
-    public function __construct(string $appId, string $identifier, array $config, ConfigStore $configStore, ?ApplicationConfig $context = null)
+    public function __construct(
+        private readonly string $appId, // fixme
+        string $identifier,
+        array $config,
+        ConfigStore $configStore,
+        ?ApplicationConfig $context = null)
     {
-        $this->appId = $appId; // fixme
-
         $this->id = $identifier;
 
         $this->setConfiguration($config);
@@ -395,7 +398,7 @@ class Field
      *
      * @deprecated To be factored out
      */
-    public function setModuleVisibility(ApplicationModuleInterface $module, bool $isAuthenticated = false)
+    public function setModuleVisibility(ApplicationModuleInterface $module, bool $isAuthenticated = false): void
     {
         if ($this->visibility[$module->getName()] && !$this->visibility['public']) {
             $this->visibility[$module->getName()] = $isAuthenticated;
@@ -606,15 +609,15 @@ class Field
                     $this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMddHHii';
                 }
                 $yearsRange = [
-                    date('Y') - 10,
-                    date('Y') + 10,
+                    (int)date('Y') - 10,
+                    (int)date('Y') + 10,
                 ];
 
                 if (isset($config['year_min'])) {
-                    $yearsRange[0] = strlen($config['year_min']) <= 3 ? date('Y') - $config['year_min'] : $config['year_min'];
+                    $yearsRange[0] = strlen($config['year_min']) <= 3 ? (int)date('Y') - $config['year_min'] : $config['year_min'];
                 }
                 if (isset($config['year_max'])) {
-                    $yearsRange[1] = strlen($config['year_max']) <= 3 ? date('Y') + $config['year_max'] : $config['year_max'];
+                    $yearsRange[1] = strlen($config['year_max']) <= 3 ? (int)date('Y') + $config['year_max'] : $config['year_max'];
                 }
                 $this->moduleConfig['form']['years'] = range(...$yearsRange);
                 break;

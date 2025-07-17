@@ -4,14 +4,8 @@ namespace App\System\Application\Database;
 
 class Column implements ValueInterface
 {
-    /** @var string */
-    private $name;
-    /** @var mixed|null */
-    private $value = null;
-
-    public function __construct(string $name, $value = null)
+    public function __construct(private string $name, private mixed $value = null)
     {
-        $this->name  = $name;
         $this->setValue($value);
     }
 

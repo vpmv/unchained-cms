@@ -8,60 +8,46 @@ use App\System\Application\Module\DashboardModule;
 use App\System\Application\Module\DetailModule;
 use App\System\Application\Module\FormModule;
 use App\System\Application\Module\RedirectModule;
+use App\System\Configuration\ApplicationConfig;
 use App\System\Configuration\ConfigStore;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Intl\Exception\NotImplementedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class Application
 {
     /** @var \App\System\Configuration\ApplicationConfig */
-    private   $config;
-    protected $data     = [];
-    protected $accepted = true;
+    private ApplicationConfig $config;
+    protected array           $data     = [];
+    protected bool            $accepted = true;
 
-    /** @var string */
-    public    $appId;
-    protected $isPublic        = true;
-    protected $isAuthenticated = false;
-
-    /** @var \Symfony\Component\HttpFoundation\RequestStack */
-    protected $requestStack;
+    protected bool $isPublic        = true;
+    protected bool $isAuthenticated = false;
 
     /** @var \App\System\Application\Module\ApplicationModuleInterface */
-    protected $module;
-    /** @var \App\System\Application\Database\Repository */
-    protected $repository;
-
-    /** @var \Symfony\Component\Form\FormBuilderInterface */
-    public $formBuilder; // fixme
-    /** @var \Symfony\Contracts\Translation\TranslatorInterface */
-    protected $translator;
-    /**
-     * @var \App\System\Configuration\ConfigStore
-     */
-    private ConfigStore $configStore;
+    protected ApplicationModuleInterface $module;
 
     /**
      * Application constructor.
      *
-     * @param array                                        $configuration
-     * @param \App\System\Application\ApplicationSchema    $schema
-     * @param \Symfony\Component\Form\FormBuilderInterface $formBuilder
+     * @param string                                             $applicationId
+     * @param \Symfony\Component\HttpFoundation\RequestStack     $requestStack
+     * @param \App\System\Configuration\ConfigStore              $configStore
+     * @param \App\System\Application\Database\Repository        $repository
+     * @param \Symfony\Component\Form\FormBuilderInterface       $formBuilder
+     * @param \Symfony\Contracts\Translation\TranslatorInterface $translator
      */
-    public function __construct(string $applicationId, RequestStack $requestStack, ConfigStore $configStore, Repository $repository, FormBuilderInterface $formBuilder, TranslatorInterface $translator)
-    {
-        $this->appId           = $applicationId;
-        $this->config          = $configStore->getApplicationConfig($applicationId);
-        $this->isPublic        = $configStore->isAuthorized($applicationId);
+    public function __construct(
+        public string $appId,
+        protected RequestStack $requestStack,
+        protected ConfigStore $configStore,
+        protected Repository $repository,
+        public FormBuilderInterface $formBuilder, // fixme: ?
+        protected TranslatorInterface $translator,
+    ) {
+        $this->config = $configStore->getApplicationConfig($this->appId);
+        $this->isPublic = $configStore->isAuthorized($this->appId);
         $this->isAuthenticated = $configStore->isAuthenticated();
-
-        $this->requestStack = $requestStack;
-        $this->repository   = $repository;
-        $this->formBuilder  = $formBuilder;
-        $this->translator   = $translator;
-        $this->configStore  = $configStore;
     }
 
     public function getRepository(): Repository
@@ -80,7 +66,7 @@ class Application
      */
     public function translate(string $message, array $arguments = [])
     {
-        $translation   = $this->translator->trans($message, $arguments, Property::schemaName($this->appId));
+        $translation = $this->translator->trans($message, $arguments, Property::schemaName($this->appId));
         $defaultOutput = str_replace(array_keys($arguments), array_values($arguments), $message);
 
         if ($translation == $message || $translation == $defaultOutput) {
@@ -178,37 +164,37 @@ class Application
 
     public function getIdField(): Field
     {
-        return new Field('id', [
+        return new Field($this->appId, 'id', [
             'type'      => 'number',
             'public'    => false,
             'dashboard' => false,
             'detail'    => false,
             'ignored'   => true,
-        ]);
+        ], $this->configStore, $this->config);
     }
 
-    public function getData(array $columns = [])
+    public function getData(array $columns = []): array
     {
         return $this->repository->getData($columns);
     }
 
-    public function getDistinctData(string $column)
+    public function getDistinctData(string $column): array
     {
         return $this->repository->getDistinct($column);
     }
 
-    public function getFieldOptions(Field $field, ?int $currentValue = null)
+    public function getFieldOptions(Field $field, ?int $currentValue = null): array
     {
         if ($field->getSourceIdentifier()) {
             $rawData = $this->getRepository()->getForeignData($field->getSourceIdentifier());
-            $data    = array_combine(array_column($rawData, 'pk'), array_column($rawData, '_exposed'));
+            $data = array_combine(array_column($rawData, 'pk'), array_column($rawData, '_exposed'));
         } else {
             $data = $field->getChoiceOptions();
         }
         if ($field->getConstraint() == 'unique') {
             if ($field->getSourceIdentifier()) {
                 $foreignColumn = $this->configStore->getForeignColumn($this->appId, $field->getSourceIdentifier());
-                $used          = $this->getRepository()->getDistinct($foreignColumn);
+                $used = $this->getRepository()->getDistinct($foreignColumn);
             } else {
                 $used = $this->getRepository()->getDistinct($field->getSchema()['column']);
             }
@@ -237,17 +223,11 @@ class Application
             return;
         }
 
-        switch ($module) {
-            case 'detail':
-                $this->module = new DetailModule($this, $this->getRequest());
-                break;
-            case 'form':
-                $this->module = new FormModule($this, $this->getRequest());
-                break;
-            case 'dashboard':
-            default:
-                $this->module = new DashboardModule($this, $this->getRequest());
-        }
+        $this->module = match ($module) {
+            'detail' => new DetailModule($this, $this->getRequest()),
+            'form' => new FormModule($this, $this->getRequest()),
+            default => new DashboardModule($this, $this->getRequest()),
+        };
     }
 
     public function apply(array $params = []): void
@@ -275,10 +255,8 @@ class Application
                 $this->module->prepare();
 
                 return;
-                break;
             case 'duplicate':
-                throw new NotImplementedException('Can\'t duplicate yet');
-                break;
+                throw new \LogicException('Can\'t duplicate yet');
             case 'edit':
             default: // dashboard / detail
                 if ($query = $this->getRequest()->query->get('q')) {
@@ -304,14 +282,14 @@ class Application
         $uniqueConstraint = false;
         if ($this->module instanceof DashboardModule && ($constraints = $this->config->getConstraint('unique'))) {
             foreach ($constraints as $fieldId) {
-                $field            = $this->getField($fieldId);
-                $values           = $this->getUniqueValues($field);
-                $column           = $this->getConstraintColumn($field);
+                $field = $this->getField($fieldId);
+                $values = $this->getUniqueValues($field);
+                $column = $this->getConstraintColumn($field);
                 $uniqueConstraint = empty(array_diff($values, array_column($this->data, $column)));
             }
         }
 
-        $data       = [
+        $data = [
             'appId'              => $this->appId,
             'category'           => $this->config->getCategory(),
             'categoryId'         => $this->config->getCategory()->getCategoryId(),
@@ -331,7 +309,7 @@ class Application
         return $data;
     }
 
-    protected function prepareData()
+    protected function prepareData(): void
     {
         $this->data = [];
 
@@ -363,7 +341,7 @@ class Application
         }
     }
 
-    private function addDataRow(array $sqlData, bool $includeField = false)
+    private function addDataRow(array $sqlData, bool $includeField = false): void
     {
         $row = [
             'pk' => [
@@ -398,7 +376,6 @@ class Application
 
     protected function getUniqueValues(Field $field): ?array
     {
-        $result = null;
         if ($field->getSourceIdentifier()) {
             $result = array_keys($this->repository->getForeignData($field->getSourceIdentifier()));
         } else {
@@ -429,17 +406,16 @@ class Application
      * @param string|\DateTime $datetime
      * @param string           $round
      * @param string|null      $suffix
-     * @param int              $level
+     * @param string           $transformTo
      *
      * @return string
-     * @throws \LogicException
-     *
+     * @throws \DateMalformedStringException
      * @todo move to Helpers
      */
-    public function timeElapsedString($datetime, $round = 'floor', $suffix = null, $transformTo = 'auto'): string
+    public function timeElapsedString(string|\DateTime $datetime, string $round = 'floor', ?string $suffix = null, string $transformTo = 'auto'): string
     {
-        $now  = new \DateTime();
-        $ago  = !$datetime instanceof \DateTime ? new \DateTime($datetime) : $datetime;
+        $now = new \DateTime();
+        $ago = !$datetime instanceof \DateTime ? new \DateTime($datetime) : $datetime;
         $diff = $now->diff($ago);
 
         if (false === $diff) {
@@ -454,8 +430,8 @@ class Application
             throw new \LogicException('"' . $round . '" is not a valid Math function');
         }
 
-        $diff->w = call_user_func($round, $diff->d / 7);
-        $diff->d -= $diff->w * 7;
+        $diffWeeks = call_user_func($round, $diff->d / 7);
+        $diff->d -= $diffWeeks * 7;
 
         $dateSlices = [
             'year'   => 'y',
@@ -497,11 +473,9 @@ class Application
      * @return mixed|null
      * @throws \LogicException
      */
-    public function resolveExtension($fieldId, array $context)
+    public function resolveExtension($fieldId, array $context): mixed
     {
-        $result = null;
-
-        $className  = str_replace(' ', '', ucwords(preg_replace('/[\W]+/', ' ', $this->appId)));
+        $className = str_replace(' ', '', ucwords(preg_replace('/[\W]+/', ' ', $this->appId)));
         $methodName = 'transform' . str_replace(' ', '', ucwords(preg_replace('/[^a-zA-Z]/', ' ', $fieldId)));
 
         if (!is_callable("$className::$methodName")) {
@@ -512,7 +486,7 @@ class Application
         return $result;
     }
 
-    private function getRequest()
+    private function getRequest(): ?\Symfony\Component\HttpFoundation\Request
     {
         return $this->requestStack->getMainRequest();
     }

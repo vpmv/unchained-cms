@@ -4,15 +4,9 @@ namespace App\System\Application\Database;
 
 class ApplicationReference implements ValueInterface
 {
-    /** @var string */
-    private $applicationAlias;
-    /** @var mixed|null */
-    private $value = null;
 
-    public function __construct(string $sourceAlias, $value = null)
+    public function __construct(private string $applicationAlias, private mixed $value = null)
     {
-        $this->applicationAlias = $sourceAlias;
-        $this->value            = $value;
     }
 
     /**
