@@ -19,8 +19,6 @@ RUN set -xe \
 RUN curl -sL https://deb.nodesource.com/setup_22.x | bash - && \
     apt update && apt install -y nodejs && \
     npm i -g yarn
-#RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
-#    echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
 
 RUN docker-php-ext-install intl \
     && docker-php-ext-install zip \
@@ -61,6 +59,7 @@ RUN mkdir -p public/media && \
     chown -R www-data: public/media \
 ;
 
+RUN if [ -z "user/assets/user.js" ]; then ln -s user/assets/user.dist.js user/assets/user.js fi
 RUN yarn install && yarn encore $env
 
 RUN mkdir vendor/ && \

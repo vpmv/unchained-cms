@@ -2,17 +2,17 @@
 
 namespace App\System;
 
+use App\System\Application\Application;
 use App\System\Application\Category;
 use App\System\Application\Property;
 use App\System\Configuration\ConfigStore;
-use App\System\Application\Application;
 use App\System\Helpers\Timer;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -20,48 +20,28 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 class ApplicationManager
 {
-    /** @var \App\System\RepositoryManager|array */
-    private $repositoryManager = [];
     /** @var array */
-    private $applications = [];
-
-    /** @var ContainerInterface */
-    private $container;
-
-    /** @var ConfigStore */
-    private $configStore;
-
-    /** @var \App\System\Helpers\Timer */
-    private $timer;
-    /** @var \Symfony\Component\Form\FormFactory */
-    private $forms;
-    /** @var \Symfony\Component\HttpFoundation\RequestStack */
-    private $requestStack;
+    private array $applications = [];
 
     /**
-     * ApplicationManager constructor.
-     *
-     * @param \Symfony\Component\HttpFoundation\RequestStack            $requestStack
-     * @param \App\System\RepositoryManager                             $repositoryManager
-     * @param \App\System\Helpers\Timer                                 $timer
-     * @param \Symfony\Component\Form\FormFactoryInterface              $formFactory
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-     * @param \Symfony\Component\Translation\TranslatorInterface        $translator
-     * @param \App\System\Configuration\ConfigStore                     $configStore
-     *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @param \Symfony\Component\HttpFoundation\RequestStack                       $requestStack
+     * @param \App\System\RepositoryManager                                        $repositoryManager
+     * @param \App\System\Helpers\Timer                                            $timer
+     * @param \Symfony\Component\Form\FormFactoryInterface                         $forms
+     * @param \Symfony\Contracts\Translation\TranslatorInterface                   $translator
+     * @param \App\System\Configuration\ConfigStore                                $configStore
+     * @param \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface $tokenStorage,
      */
-    public function __construct(RequestStack $requestStack, RepositoryManager $repositoryManager, Timer $timer, FormFactoryInterface $formFactory, ContainerInterface $container, TranslatorInterface $translator, ConfigStore $configStore)
-    {
-        $this->timer = $timer;
+    public function __construct(
+        private RequestStack $requestStack,
+        private RepositoryManager $repositoryManager,
+        private Timer $timer,
+        private FormFactoryInterface $forms,
+        private TranslatorInterface $translator,
+        private ConfigStore $configStore,
+        private TokenStorageInterface $tokenStorage,
+    ) {
         $this->timer->setCategory('factory.application');
-
-        $this->requestStack      = $requestStack;
-        $this->repositoryManager = $repositoryManager;
-        $this->forms             = $formFactory;
-        $this->translator        = $translator;
-        $this->container         = $container;
-        $this->configStore       = $configStore;;
     }
 
     /**
@@ -72,7 +52,7 @@ class ApplicationManager
     public function loadApplicationExtension(string $appId): void
     {
         $appPath = $this->configStore->getDirectory(ConfigStore::DIR_EXTENSION, $appId);
-        $app     = $appPath . '/' . Property::schemaName($appId) . '.php';
+        $app = $appPath . '/' . Property::schemaName($appId) . '.php';
         if (file_exists($app)) {
             require_once $app;
         }
@@ -90,7 +70,7 @@ class ApplicationManager
     {
         $this->configureApplications();
 
-        $category    = $this->applications[$categoryId] ?? [];
+        $category = $this->applications[$categoryId] ?? [];
         $application = $this->applications[$categoryId]['applications'][$appId] ?? [];
         if (!$application) {
             throw new NotFoundHttpException('Application does not exist');
@@ -100,7 +80,7 @@ class ApplicationManager
         }
 
         $imagesPath = $this->configStore->getDirectory(ConfigStore::DIR_IMAGES, $appId, null, true);
-        $filesPath  = $this->configStore->getDirectory(ConfigStore::DIR_FILES, $appId, null, true);
+        $filesPath = $this->configStore->getDirectory(ConfigStore::DIR_FILES, $appId, null, true);
         if (!file_exists($imagesPath)) {
             mkdir($imagesPath, 0777, true);
         };
@@ -108,7 +88,7 @@ class ApplicationManager
             mkdir($filesPath, 0777, true);
         };
 
-        $app = new Application($appId, $this->container->get('request_stack'), $this->configStore, $this->repositoryManager->getRepository($appId), $this->getFormBuilder($appId), $this->translator);
+        $app = new Application($appId, $this->requestStack, $this->configStore, $this->repositoryManager->getRepository($appId), $this->getFormBuilder($appId), $this->translator);
         $this->loadApplicationExtension($appId);
 
         return $app;
@@ -124,7 +104,7 @@ class ApplicationManager
     public function getApplicationByPath($path): ?Application
     {
         $this->configureApplications();
-        $locale = $this->requestStack->getMasterRequest()->getLocale();
+        $locale = $this->requestStack->getMainRequest()->getLocale();
         foreach ($this->applications as $categoryId => $category) {
             $categoryRoute = $this->configStore->getCategoryUri($categoryId, $locale);
             if ($categoryRoute && preg_match('/^' . str_replace('/', '\/', $categoryRoute) . '(\/(charts))?$/', $path) && true === $category['visible']) {
@@ -153,10 +133,10 @@ class ApplicationManager
         }
 
         $routeParams = array_filter(explode('/', ltrim(str_replace($matchedRoute, '', $path), '/')));
-        $module      = null;
+        $module = null;
         if (!empty($routeParams)) {  // fixme
             if ($routeParams == 'charts') {
-                $module      = 'charts';
+                $module = 'charts';
                 $routeParams = [];
             } else {
                 $module = 'detail';
@@ -218,10 +198,10 @@ class ApplicationManager
         if ($this->applications) {
             return;
         }
-        $locale = $this->requestStack->getMasterRequest()->getLocale();
+        $locale = $this->requestStack->getMainRequest()->getLocale();
 
         $this->applications = [];
-        $appConfig          = $this->configStore->readSystemConfig('applications');
+        $appConfig = $this->configStore->readSystemConfig('applications');
         foreach ($appConfig['applications'] as $appId => $app) {
             try {
                 $config = $this->configStore->getApplicationConfig($appId);
@@ -254,7 +234,7 @@ class ApplicationManager
 
     private function isAuthorizedFully(): bool
     {
-        return !empty($this->container->get('security.token_storage')->getToken()->getRoleNames());
+        return !empty($this->tokenStorage->getToken()?->getRoleNames());
     }
 
     private function getFormBuilder(string $applicationId)

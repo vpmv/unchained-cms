@@ -7,22 +7,22 @@ use App\System\ApplicationManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Main application parser
  *
  * @package App\Controller
  *
- * @Route(name="dash_")
  */
+#[Route(name: "dash_")]
 class DashboardController extends AbstractController
 {
     /**
-     * @Route(path="/refresh")
      *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
+    #[Route("/refresh")]
     public function clearCache()
     {
         $this->denyAccessUnlessGranted(['IS_AUTHENTICATED_FULLY', 'IS_AUTHENTICATED_REMEMBERED']);
@@ -32,19 +32,14 @@ class DashboardController extends AbstractController
         return $this->redirect('/');
     }
 
-    /**
-     * @Route(path="/", name="main")
-     */
+    #[Route("/", name: "main")]
     public function dashboard(ApplicationManager $factory)
     {
         $applications = $factory->getApplications(true);
 
         return $this->render('main/dashboard.html.twig', ['applications' => $applications]);
     }
-
-    /**
-     * @Route(name="app", path="/{app}", requirements={"app"="[0-9a-z\-\/]{3,}"})
-     */
+    #[Route("/{app}", name: "app", requirements: ['app' => "[0-9a-z\-\/]{3,}"])]
     public function application($app, ApplicationManager $factory)
     {
         $application = $factory->getApplicationByPath($app);

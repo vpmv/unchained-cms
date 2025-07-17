@@ -8,7 +8,9 @@ use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class ConfigStore extends Cacheable
 {
@@ -18,14 +20,6 @@ class ConfigStore extends Cacheable
     public const DIR_FILES     = 'files';
     public const DIR_IMAGES    = 'images';
     public const DIR_EXTENSION = 'extension';
-
-    /** @var \Symfony\Component\DependencyInjection\ContainerInterface */
-    private $container;
-
-    /** @var \Psr\Log\LoggerInterface */
-    private $logger;
-    /** @var \App\System\Helpers\Timer */
-    private $timer;
 
     /** @var \App\System\Configuration\ApplicationConfig[] */
     private $applications      = [];
@@ -38,19 +32,21 @@ class ConfigStore extends Cacheable
     private $paths         = [];
     private $authenticated = false;
 
-    public function __construct(ContainerInterface $container, LoggerInterface $logger, Timer $timer)
-    {
+    public function __construct(
+        private ContainerInterface $container,
+        private RequestStack $requestStack,
+        private LoggerInterface $logger,
+        private Timer $timer,
+        private TokenStorageInterface $tokenStorage,
+    ) {
         parent::__construct('config.');
-        $this->container = $container;
-        $this->basePath  = $container->getParameter('kernel.project_dir') . '/user/config/';
-        $this->logger    = $logger;
-        $this->timer     = $timer;
+        $this->basePath = $container->getParameter('kernel.project_dir') . '/user/config/';
 
-        $this->paths         = [
+        $this->paths = [
             'root'   => $container->getParameter('kernel.project_dir'),
             'public' => $container->getParameter('kernel.public_dir'),
         ];
-        $this->authenticated = !empty($this->container->get('security.token_storage')->getToken()->getRoleNames());
+        $this->authenticated = !empty($this->tokenStorage->getToken()?->getRoleNames());
     }
 
     /**
@@ -143,39 +139,40 @@ class ConfigStore extends Cacheable
         if (!array_key_exists($applicationId, $applications)) {
             throw new NoConfigurationException('Application not configured');
         }
-        $userLocale = $this->container->get('request_stack')->getMasterRequest()->getLocale();
+        $userLocale = $this->requestStack->getMainRequest()->getLocale();
 
-        $this->applicationConfig[$applicationId] = $this->remember('sysconfig.' . $applicationId . '.' . $userLocale . '-' . intval($this->authenticated), function () use ($applicationId, $applications, $userLocale) {
-            $sysConfig = $applications[$applicationId];
-            $appConfig = $this->applications[$applicationId];
+        $this->applicationConfig[$applicationId] = $this->remember('sysconfig.' . $applicationId . '.' . $userLocale . '-' . intval($this->authenticated),
+            function () use ($applicationId, $applications, $userLocale) {
+                $sysConfig = $applications[$applicationId];
+                $appConfig = $this->applications[$applicationId];
 
-            $routePrefix = null;
-            if ($categoryId = $appConfig->getCategory()->getCategoryId()) {
-                try {
-                    $categoryConfig = $this->getCategoryConfig($categoryId);
-                    $routePrefix    = $categoryConfig->getRoute($userLocale, true);
-                } catch (NoConfigurationException $e) {
-                    $this->logger->warning(sprintf('No configuration for category "%s"', $categoryId));
+                $routePrefix = null;
+                if ($categoryId = $appConfig->getCategory()->getCategoryId()) {
+                    try {
+                        $categoryConfig = $this->getCategoryConfig($categoryId);
+                        $routePrefix = $categoryConfig->getRoute($userLocale, true);
+                    } catch (NoConfigurationException $e) {
+                        $this->logger->warning(sprintf('No configuration for category "%s"', $categoryId));
+                    }
                 }
-            }
 
-            $routes = $appConfig->getRoutes() + ['_active' => $appConfig->getRoutes($userLocale)];
-            foreach ($routes as &$route) {
-                $route = $routePrefix . $route;
-            }
+                $routes = $appConfig->getRoutes() + ['_active' => $appConfig->getRoutes($userLocale)];
+                foreach ($routes as &$route) {
+                    $route = $routePrefix . $route;
+                }
 
-            return [
-                'uri'        => $routes,
-                'authorized' => ($sysConfig['public'] ?? true) || $this->authenticated,
-            ];
-        });
+                return [
+                    'uri'        => $routes,
+                    'authorized' => ($sysConfig['public'] ?? true) || $this->authenticated,
+                ];
+            });
     }
 
     public function isAuthorized(string $applicationId, ?string $sourceAlias = null, ?string $module = null): bool
     {
         $config = $this->getApplicationConfig($applicationId);
         if ($sourceAlias) {
-            $config        = $this->getSourceConfigByAlias($config, $sourceAlias);
+            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
             $applicationId = $config->getAppId();
         }
 

@@ -10,17 +10,15 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Annotation\Route as ARoute;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Requirement\Requirement;
 
-/**
- * @Route(name="admin_")
- */
+#[Route(name: "admin_")]
 class AdminController extends AbstractController
 {
-    /**
-     * @Route(path="/admin/{category}/{app}/{uuid}", requirements={"app"="[a-z\-]+", "uuid"="[\w]+"}, defaults={"uuid"=null}, name="edit")
-     */
+    #[Route("/admin/{category}/{app}/{uuid}", requirements: ["app" => "[a-z\-]+", "uuid" => Requirement::UUID], defaults:["uuid"=>null], name: "edit")]
     public function edit($category, $app, $uuid, ApplicationManager $applicationManager)
     {
         try {
@@ -43,9 +41,7 @@ class AdminController extends AbstractController
         return $this->render('applications/form.html.twig', ['applications' => $applications, 'application' => $data]);
     }
 
-    /**
-     * @Route("/login", name="login")
-     */
+    #[Route("/login", name: "login")]
     public function login(AuthenticationUtils $utils)
     {
         $error = $utils->getLastAuthenticationError();

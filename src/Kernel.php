@@ -2,12 +2,16 @@
 
 namespace App;
 
+use App\Twig\TranslationExtension;
+use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
-use Symfony\Component\Routing\RouteCollectionBuilder;
+use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 
 class Kernel extends BaseKernel
 {
@@ -22,84 +26,79 @@ class Kernel extends BaseKernel
         $this->publicDir = $publicDir;
     }
 
-    public function registerBundles()
+    public function registerBundles(): iterable
     {
-        $bundles = [
-            new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
-            new \Symfony\Bundle\TwigBundle\TwigBundle(),
-            new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
-            new \Symfony\Bundle\SecurityBundle\SecurityBundle(),
-            new \Symfony\Bundle\MonologBundle\MonologBundle(),
-        ];
-        
-        if ($this->getEnvironment() == 'dev') {
-            $bundles[] = new \Symfony\Bundle\DebugBundle\DebugBundle();
-            $bundles[] = new \Symfony\Bundle\WebProfilerBundle\WebProfilerBundle();
-        }
+        yield new \Symfony\Bundle\FrameworkBundle\FrameworkBundle();
+        yield new \Symfony\Bundle\TwigBundle\TwigBundle();
+        yield new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle();
+        yield new \Symfony\Bundle\SecurityBundle\SecurityBundle();
+        yield new \Symfony\Bundle\MonologBundle\MonologBundle();
 
-        return $bundles;
+        if ($this->getEnvironment() == 'dev') {
+            yield new \Symfony\Bundle\DebugBundle\DebugBundle();
+            yield new \Symfony\Bundle\WebProfilerBundle\WebProfilerBundle();
+        }
     }
 
-    protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader)
+    protected function configureContainer(ContainerConfigurator $container): void
     {
-        $c->setParameter('kernel.public_dir', $this->publicDir);
+        $container->parameters()->set('kernel.public_dir', $this->publicDir);
+        $container->import(__DIR__.'/../config/framework.yaml');
+        $container->import(__DIR__.'/../config/services.yaml');
+        $container->import(__DIR__.'/../config/packages/doctrine.yaml');
+        $container->import(__DIR__.'/../config/packages/security.yaml');
+        $container->import(__DIR__.'/../config/packages/twig.yaml');
 
-        $configDirs  = [
-            __DIR__ . '/../config/packages',
-            __DIR__ . '/../config/packages/' . $this->getEnvironment(),
-            __DIR__ . '/../user/config/framework',
-        ];
-
-        $loader->load($configDirs[0].'/../framework.yaml');
-        $loader->load($configDirs[0].'/../services.yaml');
-        $loader->load($configDirs[0].'/doctrine.yaml');
-        $loader->load($configDirs[0].'/security.yaml');
-        $loader->load($configDirs[0].'/twig.yaml');
-
-        $envConfig = Finder::create()->files()->in($configDirs[1])->name('*.yaml');
+        $envConfig = Finder::create()->files()->in(__DIR__ . '/../config/packages/' . $this->getEnvironment())->name('*.yaml');
         foreach ($envConfig as $file) {
-            $loader->load($file->getRealPath());
+            $container->import($file->getRealPath());
         }
-        $userConfig = Finder::create()->files()->in($configDirs[2])->name('*.yaml');
+        $userConfig = Finder::create()->files()->in(__DIR__ . '/../user/config/framework')->name('*.yaml');
         if ($userConfig->hasResults()) {
             foreach ($userConfig as $file) {
-                $loader->load($file->getRealPath());
+                $container->import($file->getRealPath());
             }
         }
 
+        // register all classes in /src/ as service
+        $container->services()
+            ->load('App\\', __DIR__.'/*')
+            ->autowire()
+            ->autoconfigure()
+        ;
+
         // configure WebProfilerBundle only if the bundle is enabled
         if (isset($this->bundles['WebProfilerBundle'])) {
-            $c->loadFromExtension('web_profiler', [
-                'toolbar'             => true,
+            $container->extension('web_profiler', [
+                'toolbar' => true,
                 'intercept_redirects' => false,
             ]);
-            $c->loadFromExtension('framework', [
-                'profiler' => ['only_exceptions' => false],
-            ]);
+            //$container->loadFromExtension('framework', [
+            //    'profiler' => ['only_exceptions' => false],
+            //]);
         }
     }
 
-    protected function configureRoutes(RouteCollectionBuilder $routes)
+    protected function configureRoutes(RoutingConfigurator $routes): void
     {
         // import the WebProfilerRoutes, only if the bundle is enabled
         if (isset($this->bundles['WebProfilerBundle'])) {
-            $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.xml', '/_wdt');
-            $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.xml', '/_profiler');
+            $routes->import('@WebProfilerBundle/Resources/config/routing/wdt.php', 'php')->prefix('/_wdt');
+            $routes->import('@WebProfilerBundle/Resources/config/routing/profiler.php', 'php')->prefix('/_profiler');
         }
 
-        // load the annotation routes
-        $routes->import(__DIR__ . '/../src/Controller/', '/', 'annotation');
-        $routes->add('/logout', null, 'logout');
+        // load the routes defined as PHP attributes
+        // (use 'annotation' as the second argument if you define routes as annotations)
+        $routes->import(__DIR__.'/Controller/', 'attribute');
     }
-
     // optional, to use the standard Symfony cache directory
-    public function getCacheDir()
+    public function getCacheDir(): string
     {
         return __DIR__ . '/../var/cache/' . $this->getEnvironment();
     }
 
     // optional, to use the standard Symfony logs directory
-    public function getLogDir()
+    public function getLogDir(): string
     {
         return __DIR__ . '/../var/log';
     }

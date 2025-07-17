@@ -29,14 +29,16 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-
-    App\Twig\TranslationExtension:
-      tags: ['twig.extension']
-      arguments: ["@translator.default"] # required; twig translation extension doesn't include translator anymore as of sf 4.2
-
-
     App\EventListener\LocaleListener:
       arguments: ["%kernel.default_locale%"]
+
+
+    App\Twig\TranslationExtension:
+        tags: [ 'twig.extension' ]
+        arguments: [ "@translator.default" ] # required; twig translation extension doesn't include translator anymore as of sf 4.2
+
+
+    Symfony\Component\DependencyInjection\ContainerInterface: '@service_container'
 
     # Uncomment any lines below to activate that Twig extension
     Twig\Extensions\DateExtension: ~

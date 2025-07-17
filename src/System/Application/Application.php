@@ -38,6 +38,10 @@ class Application
     public $formBuilder; // fixme
     /** @var \Symfony\Contracts\Translation\TranslatorInterface */
     protected $translator;
+    /**
+     * @var \App\System\Configuration\ConfigStore
+     */
+    private ConfigStore $configStore;
 
     /**
      * Application constructor.
@@ -510,6 +514,6 @@ class Application
 
     private function getRequest()
     {
-        return $this->requestStack->getMasterRequest();
+        return $this->requestStack->getMainRequest();
     }
 }

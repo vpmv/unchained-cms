@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use LogicException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 class Repository extends Cacheable
 {
@@ -479,7 +480,7 @@ class Repository extends Cacheable
                 }
                 $slugContext[] = $slugFieldData;
             }
-            $newValue = Slugify::create()->slugify(implode('-', $slugContext));
+            $newValue = (new AsciiSlugger())->slug(implode('-', $slugContext))->toString();
             if ($currentValue != $newValue) {
                 $cacheKeys[] = 'record.slug.' . $newValue;
                 if (isset($this->dataBySlug[$newValue])) {

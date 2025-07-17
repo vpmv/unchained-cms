@@ -4,14 +4,12 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 class LocaleController extends AbstractController
 {
-    /**
-     * @Route("/_locale/{_locale}", name="locale_switch", requirements={"_locale"="[a-z]{2}"})
-     */
+    #[Route("/_locale/{_locale}", name: "locale_switch", requirements: ["_locale" => "[a-z]{2}"])]
     public function changeLocale(Request $request)
     {
         $redirect = $this->generateUrl('dash_main');
