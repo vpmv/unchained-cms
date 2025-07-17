@@ -7,12 +7,12 @@ use App\System\Application\Category;
 use App\System\Application\Property;
 use App\System\Configuration\ConfigStore;
 use App\System\Helpers\Timer;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -24,22 +24,22 @@ class ApplicationManager
     private array $applications = [];
 
     /**
-     * @param \Symfony\Component\HttpFoundation\RequestStack                       $requestStack
-     * @param \App\System\RepositoryManager                                        $repositoryManager
-     * @param \App\System\Helpers\Timer                                            $timer
-     * @param \Symfony\Component\Form\FormFactoryInterface                         $forms
-     * @param \Symfony\Contracts\Translation\TranslatorInterface                   $translator
-     * @param \App\System\Configuration\ConfigStore                                $configStore
-     * @param \Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface $tokenStorage,
+     * @param \Symfony\Component\HttpFoundation\RequestStack     $requestStack
+     * @param \App\System\RepositoryManager                      $repositoryManager
+     * @param \App\System\Helpers\Timer                          $timer
+     * @param \Symfony\Component\Form\FormFactoryInterface       $forms
+     * @param \Symfony\Contracts\Translation\TranslatorInterface $translator
+     * @param \App\System\Configuration\ConfigStore              $configStore
+     * @param \Symfony\Bundle\SecurityBundle\Security           $security
      */
     public function __construct(
-        private RequestStack $requestStack,
-        private RepositoryManager $repositoryManager,
-        private Timer $timer,
-        private FormFactoryInterface $forms,
-        private TranslatorInterface $translator,
-        private ConfigStore $configStore,
-        private TokenStorageInterface $tokenStorage,
+        private readonly RequestStack $requestStack,
+        private readonly RepositoryManager $repositoryManager,
+        private readonly Timer $timer,
+        private readonly FormFactoryInterface $forms,
+        private readonly TranslatorInterface $translator,
+        private readonly ConfigStore $configStore,
+        private readonly Security $security,
     ) {
         $this->timer->setCategory('factory.application');
     }
@@ -60,11 +60,9 @@ class ApplicationManager
 
     /**
      * @param string $appId
-     * @param array  $extra
+     * @param string $categoryId
      *
      * @return \App\System\Application\Application
-     * @throws \InvalidArgumentException
-     * @throws \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
      */
     public function getApplication(string $appId, string $categoryId = '_default'): Application
     {
@@ -83,7 +81,8 @@ class ApplicationManager
         $filesPath = $this->configStore->getDirectory(ConfigStore::DIR_FILES, $appId, null, true);
         if (!file_exists($imagesPath)) {
             mkdir($imagesPath, 0777, true);
-        };
+        }
+
         if (!file_exists($filesPath)) {
             mkdir($filesPath, 0777, true);
         };
@@ -234,7 +233,7 @@ class ApplicationManager
 
     private function isAuthorizedFully(): bool
     {
-        return !empty($this->tokenStorage->getToken()?->getRoleNames());
+        return !empty($this->security->getToken()?->getRoleNames());
     }
 
     private function getFormBuilder(string $applicationId)

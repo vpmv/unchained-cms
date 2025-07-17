@@ -7,18 +7,17 @@ use App\System\Configuration\ConfigStore;
 use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class RepositoryManager extends Cacheable
 {
     private $repositories = [];
 
     public function __construct(
-        private ConfigStore $configStore,
-        private EntityManagerInterface $em,
-        private Timer $timer,
-        private TokenStorageInterface $tokenStorage,
+        private readonly ConfigStore $configStore,
+        private readonly EntityManagerInterface $em,
+        private readonly Timer $timer,
+        private readonly Security $security,
     ) {
         parent::__construct('repoman.');
         $this->initialize();
@@ -55,6 +54,6 @@ class RepositoryManager extends Cacheable
 
     public function isAuthorizedFully(): bool
     {
-        return !empty($this->tokenStorage->getToken()?->getRoleNames());
+        return !empty($this->security->getToken()?->getRoleNames());
     }
 }

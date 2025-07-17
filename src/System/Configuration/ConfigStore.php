@@ -7,10 +7,10 @@ use App\System\Application\Property;
 use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use Psr\Log\LoggerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class ConfigStore extends Cacheable
 {
@@ -37,7 +37,7 @@ class ConfigStore extends Cacheable
         private RequestStack $requestStack,
         private LoggerInterface $logger,
         private Timer $timer,
-        private TokenStorageInterface $tokenStorage,
+        Security $security,
     ) {
         parent::__construct('config.');
         $this->basePath = $container->getParameter('kernel.project_dir') . '/user/config/';
@@ -46,17 +46,17 @@ class ConfigStore extends Cacheable
             'root'   => $container->getParameter('kernel.project_dir'),
             'public' => $container->getParameter('kernel.public_dir'),
         ];
-        $this->authenticated = !empty($this->tokenStorage->getToken()?->getRoleNames());
+        $this->authenticated = !empty($security->getToken()?->getRoleNames());
     }
 
     /**
      * @param string      $name
      * @param null|string $attribute
+     * @param null|mixed  $default
      *
      * @return mixed
-     * @throws \InvalidArgumentException
      */
-    public function readSystemConfig(string $name, ?string $attribute = null, $default = null)
+    public function readSystemConfig(string $name, ?string $attribute = null, mixed $default = null): mixed
     {
         $this->systemConfig[$name] = $this->remember('system.' . $name, function () use ($name) {
             return $this->readYamlFile('system/' . $name . '.yaml');
@@ -125,11 +125,11 @@ class ConfigStore extends Cacheable
     }
 
     /**
-     * @param $applicationId
+     * @param string $applicationId
      *
      * @throws \Symfony\Component\Routing\Exception\NoConfigurationException   Application not defined
      */
-    private function setApplicationSystemConfig($applicationId)
+    private function setApplicationSystemConfig(string $applicationId): void
     {
         if (isset($this->applicationConfig[$applicationId])) {
             return;
@@ -151,7 +151,7 @@ class ConfigStore extends Cacheable
                     try {
                         $categoryConfig = $this->getCategoryConfig($categoryId);
                         $routePrefix = $categoryConfig->getRoute($userLocale, true);
-                    } catch (NoConfigurationException $e) {
+                    } catch (NoConfigurationException) {
                         $this->logger->warning(sprintf('No configuration for category "%s"', $categoryId));
                     }
                 }
@@ -224,7 +224,7 @@ class ConfigStore extends Cacheable
         if (!isset($this->applicationCategories[$categoryId])) {
             try {
                 $this->getCategoryConfig($categoryId);
-            } catch (NoConfigurationException $e) {
+            } catch (NoConfigurationException) {
                 return null;
             }
         }

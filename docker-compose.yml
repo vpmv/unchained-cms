@@ -14,7 +14,10 @@ services:
       - .env.local:/var/www/.env.local
       - build:/var/www/public/build
       - media:/var/www/public/media
-#      - ./user:/var/www/user
+      - ./user:/var/www/user
+      - ./config:/var/www/config
+      - ./src:/var/www/src
+      - ./vendor:/var/www/vendor
     depends_on:
       - mariadb
 

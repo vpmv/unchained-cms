@@ -11,6 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route as ARoute;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Requirement\Requirement;
@@ -19,6 +20,7 @@ use Symfony\Component\Routing\Requirement\Requirement;
 class AdminController extends AbstractController
 {
     #[Route("/admin/{category}/{app}/{uuid}", requirements: ["app" => "[a-z\-]+", "uuid" => Requirement::UUID], defaults:["uuid"=>null], name: "edit")]
+    #[IsGranted('ROLE_ADMIN')]
     public function edit($category, $app, $uuid, ApplicationManager $applicationManager)
     {
         try {
