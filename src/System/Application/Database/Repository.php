@@ -185,7 +185,7 @@ class Repository extends Cacheable
      *
      * @return \App\System\Application\Database\Column
      */
-    public function getColumn(string $field, ?string $source = null, $default = null): Column
+    public function getColumn(string $field, ?string $source = null, $default = null): Column|Junction
     {
         if (!$this->activeRow) {
             throw new LogicException('No data selected');
@@ -734,7 +734,7 @@ class Repository extends Cacheable
         });
     }
 
-    private function getFieldSource(Field $field): array
+    private function getFieldSource(Field $field): ?array
     {
         $source = null;
         if ($field->getSourceIdentifier() && isset($this->joins[$field->getSourceIdentifier()])) {

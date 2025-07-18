@@ -19,7 +19,7 @@ use Symfony\Component\Routing\Requirement\Requirement;
 #[Route(name: "admin_")]
 class AdminController extends AbstractController
 {
-    #[Route("/admin/{category}/{app}/{uuid}", requirements: ["app" => "[a-z\-]+", "uuid" => Requirement::UUID], defaults:["uuid"=>null], name: "edit")]
+    #[Route("/admin/{category}/{app}/{uuid}", requirements: ["app" => "[a-z\-]+", "uuid" => "[\w]+"], defaults:["uuid"=>null], name: "edit")]
     #[IsGranted('ROLE_ADMIN')]
     public function edit($category, $app, $uuid, ApplicationManager $applicationManager)
     {

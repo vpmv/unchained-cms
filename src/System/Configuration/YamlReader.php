@@ -7,7 +7,7 @@ use Symfony\Component\Yaml\Yaml;
 
 trait YamlReader
 {
-    protected $basePath;
+    protected string $basePath;
 
     /**
      * @param string $path

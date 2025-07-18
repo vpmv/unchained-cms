@@ -8,7 +8,6 @@ use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
 
@@ -33,18 +32,21 @@ class ConfigStore extends Cacheable
     private $authenticated = false;
 
     public function __construct(
-        private ContainerInterface $container,
+        private string $projectDir,
+        private string $publicDir,
         private RequestStack $requestStack,
         private LoggerInterface $logger,
         private Timer $timer,
         Security $security,
     ) {
         parent::__construct('config.');
-        $this->basePath = $container->getParameter('kernel.project_dir') . '/user/config/';
+
+        dump($this->projectDir, $this->publicDir);
+        $this->basePath = $this->projectDir . '/user/config/';
 
         $this->paths = [
-            'root'   => $container->getParameter('kernel.project_dir'),
-            'public' => $container->getParameter('kernel.public_dir'),
+            'root'   => $this->projectDir,
+            'public' => $this->publicDir,
         ];
         $this->authenticated = !empty($security->getToken()?->getRoleNames());
     }
@@ -97,7 +99,7 @@ class ConfigStore extends Cacheable
             $this->timer->start('config.' . $appId);
             $this->applications[$appId] = $this->remember('application.' . $appId, function () use ($appId) {
                 $config = $this->readApplicationConfig($appId);
-                $config = new ApplicationConfig($this->container, $this, $config, $appId);
+                $config = new ApplicationConfig($this, $config, $appId, $this->projectDir);
 
                 return $config;
             });

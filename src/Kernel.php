@@ -2,16 +2,14 @@
 
 namespace App;
 
-use App\Twig\TranslationExtension;
-use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
+use App\EventListener\LocaleListener;
+use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
-use Symfony\Bundle\TwigBundle\TwigBundle;
-use Symfony\Component\Config\Loader\LoaderInterface;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\env;
 
 class Kernel extends BaseKernel
 {
@@ -43,11 +41,12 @@ class Kernel extends BaseKernel
     protected function configureContainer(ContainerConfigurator $container): void
     {
         $container->parameters()->set('kernel.public_dir', $this->publicDir);
-        $container->import(__DIR__.'/../config/framework.yaml');
-        $container->import(__DIR__.'/../config/services.yaml');
-        $container->import(__DIR__.'/../config/packages/doctrine.yaml');
-        $container->import(__DIR__.'/../config/packages/security.yaml');
-        $container->import(__DIR__.'/../config/packages/twig.yaml');
+        $container->parameters()->set('locale', env('LOCALE'));
+
+        $container->import(__DIR__ . '/../config/framework.yaml');
+        $container->import(__DIR__ . '/../config/packages/doctrine.yaml');
+        $container->import(__DIR__ . '/../config/packages/security.yaml');
+        $container->import(__DIR__ . '/../config/packages/twig.yaml');
 
         $envConfig = Finder::create()->files()->in(__DIR__ . '/../config/packages/' . $this->getEnvironment())->name('*.yaml');
         foreach ($envConfig as $file) {
@@ -60,23 +59,45 @@ class Kernel extends BaseKernel
             }
         }
 
-        // register all classes in /src/ as service
-        $container->services()
-            ->load('App\\', __DIR__.'/*')
-            ->autowire()
-            ->autoconfigure()
-        ;
-
         // configure WebProfilerBundle only if the bundle is enabled
         if (isset($this->bundles['WebProfilerBundle'])) {
             $container->extension('web_profiler', [
-                'toolbar' => true,
+                'toolbar'             => true,
                 'intercept_redirects' => false,
             ]);
             //$container->loadFromExtension('framework', [
             //    'profiler' => ['only_exceptions' => false],
             //]);
         }
+
+        //$container->import(__DIR__ . '/../config/services.yaml');
+        $services = $container->services();
+        $services->defaults()
+            ->autowire()
+            ->autoconfigure()
+            ->private()
+            ->bind('$projectDir', $this->getProjectDir())
+            ->bind('$publicDir', $this->publicDir);
+
+        // 2️⃣ Load all services under src/, excluding Kernel
+        $services->load('App\\', __DIR__ . '/../src')
+            ->exclude([__DIR__ . '/../src/Kernel.php']);
+
+        // 3️⃣ Controllers: load + tag so Symfony injects container/route args
+        $services->load('App\\Controller\\', __DIR__ . '/../src/Controller')
+            ->tag('controller.service_arguments');
+
+        // 4️⃣ Explicit definitions for services needing specific args or tags
+
+        // LocaleListener needs the default locale
+        $services->set(LocaleListener::class)
+            ->args([env('LOCALE')])
+            ->autoconfigure(); // ensure it gets dispatcher listener tag if needed
+
+        // Twig extension: just needs to be tagged
+        //$services->set(TranslationExtension::class)
+        //    ->tag('twig.extension');
+
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
@@ -89,8 +110,9 @@ class Kernel extends BaseKernel
 
         // load the routes defined as PHP attributes
         // (use 'annotation' as the second argument if you define routes as annotations)
-        $routes->import(__DIR__.'/Controller/', 'attribute');
+        $routes->import(__DIR__ . '/Controller/', 'attribute');
     }
+
     // optional, to use the standard Symfony cache directory
     public function getCacheDir(): string
     {

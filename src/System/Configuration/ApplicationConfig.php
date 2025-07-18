@@ -5,7 +5,6 @@ namespace App\System\Configuration;
 use App\System\Application\Field;
 use App\System\Application\Property;
 use InvalidArgumentException;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
 
 class ApplicationConfig
@@ -13,25 +12,26 @@ class ApplicationConfig
     use YamlReader;
 
     /** @var string Application identifier */
-    public $appId;
+    public string $appId;
     /** @var \App\System\Configuration\ApplicationCategory */
-    private $category;
+    private ApplicationCategory $category;
     /** @var array Configuration */
-    private $config = [];
+    private array $config = [];
 
     /** @var Field[] */
-    public $fields  = [];
-    public $sort    = [];
-    public $sources = [];
-    public $modules = [];
-    public $meta    = [];
+    public array $fields  = [];
+    public array $sort    = [];
+    public array $sources = [];
+    public array $modules = [];
+    public array $meta    = [];
 
     /** @var array Raw config */
-    private $raw;
+    private array $raw;
 
-    public function __construct(ContainerInterface $container, ConfigStore $configStore, array $configuration, string $appId)
+    public function __construct(ConfigStore $configStore, array $configuration, string $appId, string $projectDir)
     {
-        $this->basePath = $container->getParameter('kernel.project_dir') . '/config/';
+        dump($projectDir);
+        $this->basePath = $projectDir . '/config/';
 
         $this->appId = $appId;
         $this->raw = $configuration + ['appId' => $appId, 'name' => $appId];
@@ -59,7 +59,7 @@ class ApplicationConfig
         return $this->category;
     }
 
-    private function setCategory(ConfigStore $configStore)
+    private function setCategory(ConfigStore $configStore): void
     {
         $this->category = $configStore->getCategoryConfig($this->raw['category'] ?? 'default');
     }
@@ -75,6 +75,8 @@ class ApplicationConfig
     }
 
     /**
+     * @param string $field
+     *
      * @return \App\System\Application\Field
      */
     public function getField(string $field): Field
@@ -99,7 +101,7 @@ class ApplicationConfig
      *
      * @return array|string
      */
-    public function getRoutes(?string $locale = null)
+    public function getRoutes(?string $locale = null): array|string
     {
         $routes = [
             '_default' => $this->appId,
@@ -123,6 +125,8 @@ class ApplicationConfig
     }
 
     /**
+     * @param string $alias
+     *
      * @return array
      */
     public function getSource(string $alias): array
@@ -162,12 +166,12 @@ class ApplicationConfig
     /**
      * @return array
      */
-    public function getMeta(?string $attribute = null)
+    public function getMeta(?string $attribute = null): ?array
     {
         return $attribute ? ($this->meta[$attribute] ?? null) : $this->meta;
     }
 
-    protected function setSources()
+    protected function setSources(): void
     {
         $sources = $this->raw['sources'] ?? [];
         foreach ($sources as $name => &$source) {
@@ -198,7 +202,7 @@ class ApplicationConfig
         }
     }
 
-    protected function setModules()
+    protected function setModules(): void
     {
         $modules = [
             'detail' => [
@@ -221,14 +225,14 @@ class ApplicationConfig
         $this->modules = $modules;
     }
 
-    protected function prepareFields(ConfigStore $configStore)
+    protected function prepareFields(ConfigStore $configStore): void
     {
         foreach ($this->raw['fields'] as $id => $config) {
             $this->fields[$id] = new Field($this->appId, $id, $config ?? [], $configStore, $this);
         }
     }
 
-    protected function prepareFrontend(ConfigStore $configStore)
+    protected function prepareFrontend(ConfigStore $configStore): void
     {
         $this->meta = [
             'title'               => $this->raw['label'] ?? Property::displayLabel($this->raw['name'], 'title'),
@@ -237,7 +241,6 @@ class ApplicationConfig
             'exposes'             => $this->raw['meta']['exposes'] ?? null, // <= slugs output
         ];
 
-        /** @var Field $field */
         foreach ($this->fields as $field) {
             if ($field->getConstraint()) {
                 $this->config['constraints'][$field->getConstraint()][] = $field->getId();
@@ -306,7 +309,7 @@ class ApplicationConfig
             try {
                 $userDefault = $this->readYamlFile($yamlConfig);
                 $defaults    = array_replace($defaults, $userDefault);
-            } catch (NoConfigurationException $e) {
+            } catch (NoConfigurationException) {
                 // normal operation
             }
         }

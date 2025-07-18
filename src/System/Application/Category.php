@@ -2,9 +2,7 @@
 
 namespace App\System\Application;
 
-use App\System\Application\Database\Repository;
 use App\System\Configuration\ConfigStore;
-use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -12,10 +10,13 @@ class Category extends Application
 {
     private \App\System\Configuration\ApplicationCategory $config;
 
-    public function __construct(string $appId, RequestStack $requestStack, ConfigStore $configStore, Repository $repository, FormBuilderInterface $formBuilder, TranslatorInterface $translator)
+    public function __construct(string $categoryId, RequestStack $requestStack, ConfigStore $configStore, TranslatorInterface $translator)
     {
-        parent::__construct($appId, $requestStack, $configStore, $repository, $formBuilder, $translator);
-        $this->config = $configStore->getCategoryConfig($appId);
+        $this->appId        = $categoryId;
+        $this->requestStack = $requestStack;
+        $this->configStore  = $configStore;
+        $this->translator   = $translator;
+        $this->config       = $configStore->getCategoryConfig($categoryId);
     }
 
     public function boot(?string $module = null): void

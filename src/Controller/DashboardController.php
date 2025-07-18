@@ -23,9 +23,9 @@ class DashboardController extends AbstractController
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
     #[Route("/refresh")]
-    public function clearCache()
+    public function clearCache(): \Symfony\Component\HttpFoundation\RedirectResponse
     {
-        $this->denyAccessUnlessGranted(['IS_AUTHENTICATED_FULLY', 'IS_AUTHENTICATED_REMEMBERED']);
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
         $cache = new FilesystemAdapter();
         $cache->clear();
 
