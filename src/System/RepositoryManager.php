@@ -11,7 +11,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 class RepositoryManager extends Cacheable
 {
-    private $repositories = [];
+    private array $repositories = [];
 
     public function __construct(
         private readonly ConfigStore $configStore,

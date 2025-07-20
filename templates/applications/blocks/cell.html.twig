@@ -1,5 +1,6 @@
 {% if cell.field %}
     {% if cell.field.type == 'image' and cell.value %}
+            {% dump(cell) %}
         {% if cell.link %}
             {% include 'applications/blocks/link.html.twig' with {image: cell.value, link: url(cell.link.route, cell.link.params), title: cell.title} %}
         {% else %}
@@ -40,7 +41,7 @@
         <span class="d-none">{{ cell.value }}</span> {# hidden value for sorting #}
 
     {% elseif cell.field.type == 'rating' %}
-        {% for i in 0..cell.value %}
+        {% for i in 1..cell.value %}
             <i class="fa fa-star"></i>
         {% endfor %}
 

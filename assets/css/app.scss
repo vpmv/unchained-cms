@@ -21,6 +21,14 @@ img.media {
     width: 500px;
 }
 
+
+.form-group {
+    .markers {
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
 .table.dashboard img.media {
     width: 100px;
 }

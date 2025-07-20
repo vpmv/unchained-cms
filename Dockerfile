@@ -59,7 +59,7 @@ RUN mkdir -p public/media && \
     chown -R www-data: public/media \
 ;
 
-RUN if [ -z "user/assets/user.js" ]; then ln -s user/assets/user.dist.js user/assets/user.js fi
+RUN if [ -z "user/assets/user.js" ]; then ln -s user/assets/user.dist.js user/assets/user.js; fi
 RUN yarn install && yarn encore $env
 
 RUN mkdir vendor/ && \

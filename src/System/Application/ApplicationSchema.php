@@ -5,7 +5,7 @@ namespace App\System\Application;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
-class ApplicationSchema
+readonly class ApplicationSchema
 {
 
     /**
@@ -18,7 +18,7 @@ class ApplicationSchema
         $this->validateTable();
     }
 
-    public function getData(array $conditions = [], array $columns = [], array $sort = [], array $joins = [], array $subQueries = [])
+    public function getData(array $conditions = [], array $columns = [], array $sort = [], array $joins = [], array $subQueries = []): array
     {
         $columns = $columns ?: ['*'];
 
@@ -80,13 +80,12 @@ class ApplicationSchema
         }
 
         $b->setParameters($conditions);
-
-        $rows = $b->execute()->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+        $rows = $b->executeQuery()->fetchAllAssociative() ?: [];
 
         return $rows;
     }
 
-    public function delete(array $params)
+    public function delete(array $params): bool
     {
         if (!$params) {
             return false;
@@ -103,42 +102,50 @@ class ApplicationSchema
         return true;
     }
 
-    public function persist(array $data, $id = null)
+    public function persist(array $data, $id = null): void
     {
         $data = array_filter($data, function ($v) {
             return $v !== null; // strong type null only
         });
 
+        $keys = $values = $updates = [];
         foreach ($data as $k => $v) {
             if ($v instanceof \DateTime) {
                 $v = $v->format('Y-m-d H:i:s');
             }
-            $keys[] = "`$k`";
-            $values[] = $this->connection->quote($v);
+
+            $key = "`$k`";
+            $value = $this->connection->quote($v);
+
+            $keys[] = $key;
+            $values[] = $value;
+            $updates[] = "$key = $value";
+        }
+
+        if (!$keys || !$values) {
+            return;
         }
 
         if ($id > 0) {
-            foreach ($keys as $i => $key) {
-                $updates[] = "$key = $values[$i]";
-            }
             $query = sprintf('UPDATE `%s` SET %s WHERE `id` = %s', $this->table, implode(', ', $updates), $id);
         } else {
             $query = sprintf('INSERT INTO `%s` (%s) VALUES (%s)', $this->table, implode(',', $keys), implode(',', $values)); // todo: id
         }
 
+
         $this->connection->executeQuery($query);
     }
 
-    private function validateTable()
+    private function validateTable(): void
     {
-        $res = $this->connection->executeQuery('SHOW TABLES LIKE "' . $this->table . '"')->fetchAll();
+        $res = $this->connection->executeQuery('SHOW TABLES LIKE "' . $this->table . '"')->fetchAllAssociative();
         if (empty($res)) {
             $this->createSchema();
 
             return;
         }
 
-        $res = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAll();
+        $res = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAllAssociative();
         $columns = array_column($res, 'Field');
         foreach ($this->fields as $name => $field) {
             $def = $this->getColumnDefinition($name, $field);
@@ -148,7 +155,7 @@ class ApplicationSchema
         }
     }
 
-    private function createSchema()
+    private function createSchema(): void
     {
         $cols = ['`id` int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY'];
         foreach ($this->fields as $name => $col) {
@@ -190,7 +197,7 @@ class ApplicationSchema
         return [];
     }
 
-    private function concatSelector(array $columns, string $name, ?string $tableAlias = null)
+    private function concatSelector(array $columns, string $name, ?string $tableAlias = null): string
     {
         if (count($columns) > 1) {
             foreach ($columns as &$col) {

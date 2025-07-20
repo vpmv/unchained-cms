@@ -185,7 +185,7 @@ class Repository extends Cacheable
      *
      * @return \App\System\Application\Database\Column
      */
-    public function getColumn(string $field, ?string $source = null, $default = null): Column|Junction
+    public function getColumn(string $field, ?string $source = null, $default = null): ValueInterface
     {
         if (!$this->activeRow) {
             throw new LogicException('No data selected');
@@ -205,10 +205,29 @@ class Repository extends Cacheable
         return new Column($field, $this->activeRow[$this->getFieldColumn($field)] ?? $default);
     }
 
+    /**
+     * @param string                                      $field
+     * @param \App\System\Application\Database\Repository $repo
+     *
+     * @return \App\System\Application\Database\Column
+     */
+    private function getSourceColumn(string $field, Repository $repo): Column
+    {
+        $fields = $this->fields[$field]['source']['fields']['columns'];
+        $fieldAlias = $this->fields[$field]['source']['fields']['alias'];
+        $fieldValue = [];
+        foreach ($fields as $f) {
+            $fieldValue[] = $repo->getColumn($f)->getValue();
+        }
+        $value = new Column($fieldAlias, implode(' ', $fieldValue));
+        return $value;
+    }
+
     private function createJunction(string $field, ?string $source = null, $default = null): ValueInterface
     {
         $this->timer->start('column-junction.' . $field);
 
+        $value = null;
         $fieldColumn = $this->getFieldColumn($field);
         if ($this->hasSource($source, $field)) {
             $fieldColumn = $this->getFieldColumn($field, true);
@@ -244,13 +263,7 @@ class Repository extends Cacheable
         if (!isset($value) && $foreignColumn != $fieldColumn && isset($this->activeRow[$fieldColumn])) {
             $value = new Column($field, $this->activeRow[$fieldColumn] ?? null);
         } else {
-            $fields = $this->fields[$field]['source']['fields']['columns'];
-            $fieldAlias = $this->fields[$field]['source']['fields']['alias'];
-            $fieldValue = [];
-            foreach ($fields as $f) {
-                $fieldValue[] = $repo->getColumn($f)->getValue();
-            }
-            $value = new Column($fieldAlias, implode(' ', $fieldValue));
+            $value = $this->getSourceColumn($field, $repo);
         }
 
         // fixme: replace with latter
@@ -284,13 +297,7 @@ class Repository extends Cacheable
             $repo->reset();
             $repo->getRecord($key);
 
-            $fields = $this->fields[$field]['source']['fields']['columns'];
-            $fieldAlias = $this->fields[$field]['source']['fields']['alias'];
-            $fieldValue = [];
-            foreach ($fields as $f) {
-                $fieldValue[] = $repo->getColumn($f)->getValue();
-            }
-            $value = new Column($fieldAlias, implode(' ', $fieldValue));
+            $value = $this->getSourceColumn($field, $repo);
             $list[] = new Junction($source, $key, $value, $repo->getColumn('_exposed'), $repo->getColumn('_slug'));
         }
         $this->timer->stop('column-junction.list.' . $field);

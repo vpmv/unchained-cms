@@ -15,9 +15,7 @@
 {% block body %}
     <div id="wrapper">
         {% block navigation %}
-            {% if app.request.pathInfo != '/login' %}
-                {% include 'navigation.html.twig' %}
-            {% endif %}
+            {% include 'navigation.html.twig' %}
         {% endblock %}
 
         {% block content_container %}

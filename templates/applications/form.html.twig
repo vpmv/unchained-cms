@@ -81,7 +81,14 @@
                             </span>
 
                         {% else %} {# not a file #}
-                            {{ form_widget(f) }}
+                            {% if formField.type == 'range' %}
+                                <div class="markers">
+                                    {% for i in range(f.vars.attr.min, f.vars.attr.max) %}
+                                        <span class="marker">{{ i }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                                {{ form_widget(f) }}
                         {% endif %}
                     {% else %} {# no element data #}
                         {{ form_widget(f) }}

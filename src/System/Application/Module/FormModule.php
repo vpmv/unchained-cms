@@ -24,7 +24,7 @@ class FormModule extends AbstractModule
             $field = $data['field'];
 
             $fieldOptions         = $field->getModuleConfig($this);
-            $fieldOptions['data'] = $this->request->request->get($field->getId(), $field->getData('value'));
+            $fieldOptions['data'] = $this->getRequestValue($field);
 
             switch ($field->getFormType()) {
                 case 'checkbox':
@@ -137,6 +137,23 @@ class FormModule extends AbstractModule
     public function getName(): string
     {
         return 'form';
+    }
+
+    /**
+     * @param \App\System\Application\Field $field
+     *
+     * @return mixed
+     * @note InputBag doesn't accept non-scalar values as of 6.0
+     */
+    private function getRequestValue(Field $field): mixed
+    {
+        $default = $field->getData('value');
+        if (is_array($default) || $default instanceof \DateTimeInterface) {
+            if ('no-legal-value' === $this->request->request->get($field->getId(), 'no-legal-value')) {
+                return $default;
+            }
+        }
+        return $this->request->request->get($field->getId(), $default);
     }
 
     private function addFieldData(Field $field, $data): void

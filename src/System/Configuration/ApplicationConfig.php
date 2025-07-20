@@ -30,7 +30,6 @@ class ApplicationConfig
 
     public function __construct(ConfigStore $configStore, array $configuration, string $appId, string $projectDir)
     {
-        dump($projectDir);
         $this->basePath = $projectDir . '/config/';
 
         $this->appId = $appId;
@@ -164,7 +163,9 @@ class ApplicationConfig
     }
 
     /**
-     * @return array
+     * @param string|null $attribute
+     *
+     * @return array|null
      */
     public function getMeta(?string $attribute = null): ?array
     {

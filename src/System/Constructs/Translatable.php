@@ -6,20 +6,13 @@ namespace App\System\Constructs;
 
 abstract class Translatable
 {
-    protected $type = 'value';
+    protected string $type = 'value';
 
-    /** @var string */
-    private $message = '';
-    /** @var array */
-    private $arguments = [];
-    /** @var string|null */
-    private $subject = null;
-
-    public function __construct(string $message, array $arguments = [], ?string $subject = null)
+    public function __construct(private readonly string $message = '', private readonly array $arguments = [], private ?string $subject = null)
     {
-        $this->message   = $message;
-        $this->subject   = strtolower($subject);
-        $this->arguments = $arguments;
+        if ($this->subject) {
+            $this->subject = strtolower($subject);
+        }
     }
 
     /**

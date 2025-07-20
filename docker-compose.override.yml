@@ -1,0 +1,28 @@
+# Compose override for development purposes
+services:
+  php:
+    build:
+      args:
+        env: dev
+    environment:
+      TZ: Europe/Amsterdam
+    volumes:
+      - .env.local:/var/www/.env.local
+      - ./user:/var/www/user
+      - ./config:/var/www/config
+      - ./src:/var/www/src
+      - ./templates:/var/www/templates
+      - ./vendor:/var/www/vendor
+
+  mariadb:
+    image: mariadb
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql:/var/lib/mysql
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: secret
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: unchained
+      MYSQL_PORT: 3306

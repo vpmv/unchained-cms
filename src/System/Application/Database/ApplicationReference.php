@@ -2,7 +2,7 @@
 
 namespace App\System\Application\Database;
 
-class ApplicationReference implements ValueInterface
+readonly class ApplicationReference implements ValueInterface
 {
 
     public function __construct(private string $applicationAlias, private mixed $value = null)
@@ -20,7 +20,7 @@ class ApplicationReference implements ValueInterface
     /**
      * @return mixed|null
      */
-    public function getValue()
+    public function getValue(): mixed
     {
         return $this->value;
     }

@@ -19,6 +19,7 @@ class Application
     /** @var \App\System\Configuration\ApplicationConfig */
     private ApplicationConfig $config;
     protected array           $data     = [];
+    /** @var bool Requested module accepted */
     protected bool            $accepted = true;
 
     protected bool $isPublic        = true;
@@ -30,7 +31,7 @@ class Application
     /**
      * Application constructor.
      *
-     * @param string                                             $applicationId
+     * @param string                                             $appId
      * @param \Symfony\Component\HttpFoundation\RequestStack     $requestStack
      * @param \App\System\Configuration\ConfigStore              $configStore
      * @param \App\System\Application\Database\Repository        $repository
@@ -64,7 +65,7 @@ class Application
      *
      * @todo translation helper
      */
-    public function translate(string $message, array $arguments = [])
+    public function translate(string $message, array $arguments = []): string
     {
         $translation = $this->translator->trans($message, $arguments, Property::schemaName($this->appId));
         $defaultOutput = str_replace(array_keys($arguments), array_values($arguments), $message);
@@ -108,7 +109,7 @@ class Application
         return $uri;
     }
 
-    public function getDirectory(string $type = ConfigStore::DIR_FILES, ?string $sourceAlias = null)
+    public function getDirectory(string $type = ConfigStore::DIR_FILES, ?string $sourceAlias = null): string
     {
         return $this->configStore->getDirectory($type, $this->appId, $sourceAlias, false);
     }
@@ -116,9 +117,9 @@ class Application
     /**
      * Get active module name
      *
-     * @param string $name Give name of module if module is enabled
+     * @param string|null $name Give name of module if module is enabled
      *
-     * @return string
+     * @return bool
      */
     public function isModuleEnabled(?string $name = null): bool
     {
@@ -318,26 +319,22 @@ class Application
             $field->setModuleVisibility($this->module, $this->isAuthenticated); // fixme: adapt in data assignment
         }
 
-        switch ($this->module->getName()) {
-            case 'dashboard':
-                while ($row = $this->repository->next()) {
-                    $this->addDataRow($row);
-                }
-                break;
-            case 'form':
-                try {
-                    $row = $this->repository->getActiveRecord();
-                    $this->addDataRow($row, true);
-                } catch (\LogicException $e) {
-                    $this->addDataRow([], true);
-                }
-                $this->data = $this->data[0];
-                break;
-            case 'detail':
-                $row = $this->repository->getActiveRecord();
+        if ($this->module instanceof DashboardModule) {
+            while ($row = $this->repository->next()) {
                 $this->addDataRow($row);
-                $this->data = $this->data[0];
-                break;
+            }
+        } elseif ($this->module instanceof FormModule) {
+            try {
+                $row = $this->repository->getActiveRecord();
+                $this->addDataRow($row, true);
+            } catch (\LogicException $e) {
+                $this->addDataRow([], true);
+            }
+            $this->data = $this->data[0];
+        } elseif ($this->module instanceof DetailModule) {
+            $row = $this->repository->getActiveRecord();
+            $this->addDataRow($row);
+            $this->data = $this->data[0];
         }
     }
 

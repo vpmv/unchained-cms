@@ -3,7 +3,7 @@
 {% set title = title is defined ? title : '' %}
 {% set target = target is defined ? 'target="'~target~'"' : '' %}
 
-<a title="{{ title }}" href="{{ link }}" {{ target }}>
+<a title="{{ title }}" href="{{ link }}" {{ target }}>{% apply spaceless %}
     {% if image is defined %}
         <div class="media-box">
             {% include 'applications/blocks/image_small.html.twig' with {source: image, alt: title} %}
@@ -16,6 +16,7 @@
     {% else %}
         link
     {% endif %}
+{% endapply %}
 </a>
 
 {% if use_icon %}

@@ -32,16 +32,15 @@ class ConfigStore extends Cacheable
     private $authenticated = false;
 
     public function __construct(
-        private string $projectDir,
-        private string $publicDir,
-        private RequestStack $requestStack,
-        private LoggerInterface $logger,
-        private Timer $timer,
+        private readonly RequestStack $requestStack,
+        private readonly LoggerInterface $logger,
+        private readonly Timer $timer,
         Security $security,
+        private readonly string $projectDir,
+        private readonly string $publicDir,
     ) {
         parent::__construct('config.');
 
-        dump($this->projectDir, $this->publicDir);
         $this->basePath = $this->projectDir . '/user/config/';
 
         $this->paths = [
@@ -99,9 +98,7 @@ class ConfigStore extends Cacheable
             $this->timer->start('config.' . $appId);
             $this->applications[$appId] = $this->remember('application.' . $appId, function () use ($appId) {
                 $config = $this->readApplicationConfig($appId);
-                $config = new ApplicationConfig($this, $config, $appId, $this->projectDir);
-
-                return $config;
+                return new ApplicationConfig($this, $config, $appId, $this->projectDir);
             });
             $this->timer->stop('config.' . $appId);
         }

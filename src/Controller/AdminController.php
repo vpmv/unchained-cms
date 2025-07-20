@@ -4,24 +4,22 @@
 namespace App\Controller;
 
 use App\System\ApplicationManager;
-use App\System\RepositoryManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Routing\Annotation\Route as ARoute;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Requirement\Requirement;
 
 #[Route(name: "admin_")]
 class AdminController extends AbstractController
 {
     #[Route("/admin/{category}/{app}/{uuid}", requirements: ["app" => "[a-z\-]+", "uuid" => "[\w]+"], defaults:["uuid"=>null], name: "edit")]
     #[IsGranted('ROLE_ADMIN')]
-    public function edit($category, $app, $uuid, ApplicationManager $applicationManager)
+    public function edit(ApplicationManager $applicationManager, $category, $app, $uuid): Response
     {
         try {
             $application = $applicationManager->getApplication($app, $category);
@@ -44,7 +42,7 @@ class AdminController extends AbstractController
     }
 
     #[Route("/login", name: "login")]
-    public function login(AuthenticationUtils $utils)
+    public function login(AuthenticationUtils $utils, ApplicationManager $factory): Response
     {
         $error = $utils->getLastAuthenticationError();
         $lastUser = $utils->getLastUsername();
@@ -60,6 +58,7 @@ class AdminController extends AbstractController
         return $this->render('main/login.html.twig', [
             'error' => $error,
             'form' => $form->createView(),
+            'applications' => $factory->getApplications(true),
         ]);
     }
 }

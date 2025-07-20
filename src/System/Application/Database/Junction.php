@@ -2,14 +2,14 @@
 
 namespace App\System\Application\Database;
 
-class Junction implements ValueInterface
+readonly class Junction implements ValueInterface
 {
     public function __construct(
         private string $application,
-        private  int $primaryKey,
-        private  Column $value,
-        private  Column $exposed,
-        private  Column $slug,
+        private int $primaryKey,
+        private Column $value,
+        private Column $exposed,
+        private Column $slug,
     ) {
     }
 
@@ -21,29 +21,29 @@ class Junction implements ValueInterface
         return $this->application;
     }
 
-    public function getValue()
+    public function getValue(): mixed
     {
         return $this->value->getValue();
     }
 
-    public function getValueColumn()
+    public function getValueColumn(): Column
     {
         return $this->value;
     }
 
-    public function getExposed()
+    public function getExposed(): mixed
     {
         return $this->exposed->getValue();
     }
 
 
-    public function getSlug()
+    public function getSlug(): mixed
     {
         return $this->slug->getValue();
     }
 
 
-    public function getPrimaryKey()
+    public function getPrimaryKey(): int
     {
         return $this->primaryKey;
     }

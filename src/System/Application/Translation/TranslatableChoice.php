@@ -7,7 +7,7 @@ use App\System\Constructs\Translatable;
 
 class TranslatableChoice extends Translatable
 {
-    protected $type = 'choice';
+    protected string $type = 'choice';
 
     public function __construct(Field $field, string $message, array $arguments = [])
     {

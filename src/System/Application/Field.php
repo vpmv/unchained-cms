@@ -42,8 +42,8 @@ class Field
         string $identifier,
         array $config,
         ConfigStore $configStore,
-        ?ApplicationConfig $context = null)
-    {
+        ?ApplicationConfig $context = null
+    ) {
         $this->id = $identifier;
 
         $this->setConfiguration($config);
@@ -234,7 +234,7 @@ class Field
             $values = $links = [];
             foreach ($value->getJunctions() as $junction) {
                 $values[] = $junction->getValue();
-                $links[]  = $application->getPublicUri($junction->getApplication(), true, ['slug' => $junction->getSlug()]);
+                $links[] = $application->getPublicUri($junction->getApplication(), true, ['slug' => $junction->getSlug()]);
             }
             $this->setData('value', $values);
             $this->setData('url', $links);
@@ -242,7 +242,7 @@ class Field
 
         // fixme: pretty url
         if ($reference) {
-            $path              = $application->getPublicUri($reference->getApplicationAlias(), true);
+            $path = $application->getPublicUri($reference->getApplicationAlias(), true);
             $path['reference'] = $reference->getValue();
             $this->setData('reference', $path);
         }
@@ -274,8 +274,8 @@ class Field
         $currentModule = $application->getCurrentModule();
 
         $publicHtmlPath = $application->getDirectory(ConfigStore::DIR_PUBLIC);
-        $filesPath      = $application->getDirectory(ConfigStore::DIR_FILES);
-        $imagesPath     = $application->getDirectory(ConfigStore::DIR_IMAGES);
+        $filesPath = $application->getDirectory(ConfigStore::DIR_FILES);
+        $imagesPath = $application->getDirectory(ConfigStore::DIR_IMAGES);
 
         $value = $this->getData('value');
         if ($value === null || $value === self::VALUE_UNSET) {
@@ -285,7 +285,7 @@ class Field
         }
 
         if ($this->getSourceIdentifier()) {
-            $filesPath  = $application->getDirectory(ConfigStore::DIR_FILES, $this->getSourceIdentifier());
+            $filesPath = $application->getDirectory(ConfigStore::DIR_FILES, $this->getSourceIdentifier());
             $imagesPath = $application->getDirectory(ConfigStore::DIR_IMAGES, $this->getSourceIdentifier());
         }
         switch ($this->getDisplayType()) {
@@ -307,7 +307,7 @@ class Field
                     $value = (array)$value;
                 }
 
-                $choiceOptions  = $this->getChoiceOptions();
+                $choiceOptions = $this->getChoiceOptions();
                 $multipleChoice = $this->moduleConfig['form']['multiple'] ?? false;
                 if (in_array($currentModule->getName(), [
                         'dashboard',
@@ -396,7 +396,7 @@ class Field
      *
      * @param bool $visible
      *
-     * @deprecated To be factored out
+     * @fixme To be factored out
      */
     public function setModuleVisibility(ApplicationModuleInterface $module, bool $isAuthenticated = false): void
     {
@@ -420,7 +420,6 @@ class Field
             'boolean'  => 'checkbox',
             'datetime' => 'dateTime',
             'image'    => 'file',
-            'rating'   => 'choice', // fixme: range slider / stars
             'textbox'  => 'textarea',
             'url'      => 'text',
         ];
@@ -429,7 +428,6 @@ class Field
         }
 
         switch ($this->config['type']) {
-            case 'rating': // fixme
             case 'choice':
                 $this->config['options'] = $config['options'] ?? [];
                 foreach ($this->config['options'] as &$value) {
@@ -437,7 +435,7 @@ class Field
                 }
 
                 if (is_array($this->config['default'])) {
-                    $__d                     = $this->config['default'];
+                    $__d = $this->config['default'];
                     $this->config['default'] = [];
                     foreach ($__d as $dk) {
                         $this->config['default'][$dk] = $config['options'][$dk];
@@ -487,24 +485,24 @@ class Field
                 $this->schema['length'] = $this->schema['length'] ?: 255;
                 break;
             case 'choice':
-                $this->schema['type']   = 'int';
+                $this->schema['type'] = 'int';
                 $this->schema['length'] = 11;
                 if ($config['multiple'] ?? false) {
-                    $this->schema['type']      = 'varchar';
+                    $this->schema['type'] = 'varchar';
                     $this->schema['type_meta'] = 'array';
-                    $this->schema['length']    = 255;
+                    $this->schema['length'] = 255;
                 }
                 break;
             case 'boolean':
             case 'checkbox':
-                $this->schema['type']   = 'tinyint';
+                $this->schema['type'] = 'tinyint';
                 $this->schema['length'] = 1;
 
                 break;
             case 'number':
             case 'rating':
             case 'range':
-                $this->schema['type']   = 'int';
+                $this->schema['type'] = 'int';
                 $this->schema['length'] = strlen($config['max'] ?? 11);
                 break;
             case 'float':
@@ -517,18 +515,18 @@ class Field
     {
         if (!empty($config['source'])) {
             $sourceIdentifier = $config['source'];
-            $visibleFields    = [];
+            $visibleFields = [];
 
             if (is_array($sourceIdentifier)) {
                 $sourceIdentifier = $sourceIdentifier['source'];
-                $visibleFields    = $sourceIdentifier['fields'] ?? [];
+                $visibleFields = $sourceIdentifier['fields'] ?? [];
             } else {
                 if (strpos($sourceIdentifier, '.')) {
                     [$sourceIdentifier, $visibleFields] = explode('.', $sourceIdentifier);
                 }
             }
             $contextSourceConfig = $context->getSource($sourceIdentifier);
-            $foreignColumn       = $contextSourceConfig['foreign_column'];
+            $foreignColumn = $contextSourceConfig['foreign_column'];
 
             $this->config['source'] = [
                 'id'      => $sourceIdentifier,
@@ -544,7 +542,7 @@ class Field
                 'context' => 'column_source',
                 'value'   => $this->id,
             ];
-            $this->schema['column']                     = $foreignColumn;
+            $this->schema['column'] = $foreignColumn;
 
             if ($contextSourceConfig['function'] || $contextSourceConfig['join_source']) {
                 $this->extra['ignored'] = true;
@@ -554,7 +552,7 @@ class Field
 
             // convert display type
             if ($visibleFields) {
-                $sourceAppId     = $contextSourceConfig['application'];
+                $sourceAppId = $contextSourceConfig['application'];
                 $sourceAppConfig = $configStore->readApplicationConfig($sourceAppId);
 
                 if (is_string($visibleFields) && !empty($sourceAppConfig['fields'][$visibleFields])) {
@@ -604,10 +602,11 @@ class Field
         switch ($this->config['form_type']) {
             case 'date':
             case 'datetime':
-                $this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMdd';
-                if ($config['type'] == 'datetime') {
-                    $this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMddHHii';
-                }
+                // @deprecated
+                //$this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMdd';
+                //if ($config['type'] == 'datetime') {
+                //    $this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMddHHii';
+                //}
                 $yearsRange = [
                     (int)date('Y') - 10,
                     (int)date('Y') + 10,
@@ -626,17 +625,25 @@ class Field
             case 'text':
                 $this->moduleConfig['form']['attr']['maxlength'] = $config['maxlength'] ?? 255;
                 break;
-            case 'rating': // fixme
+            case 'range':
+            case 'rating':
+                $choices = $config['options'] ?? [1, 10];
+                $this->moduleConfig['form']['attr']['min'] = $config['min'] ?? $choices[0];
+                $this->moduleConfig['form']['attr']['max'] = $config['max'] ?? $choices[array_key_last($choices)];
+                $this->moduleConfig['form']['required'] = filter_var($config['required'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                $this->moduleConfig['form']['row_attr'] = $this->moduleConfig['form']['attr'];
+                $this->config['form_type'] = 'range';
+                break;
             case 'choice':
-                    $this->moduleConfig['form']['required'] = filter_var($config['required'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                    $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
-                    $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
-                    $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
-                    $this->moduleConfig['unique']           = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN); // fixme: different position
+                $this->moduleConfig['form']['required'] = filter_var($config['required'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
+                $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
+                $this->moduleConfig['form']['choices'] = $this->config['options'] ?? [];
+                $this->moduleConfig['unique'] = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN); // fixme: different position
                 break;
             case 'boolean':
             case 'checkbox':
-                $this->moduleConfig['label']['enabled']  = $config['label_enabled'] ?? Property::displayLabel($this->moduleConfig['label']['default'] . '.enabled');
+                $this->moduleConfig['label']['enabled'] = $config['label_enabled'] ?? Property::displayLabel($this->moduleConfig['label']['default'] . '.enabled');
                 $this->moduleConfig['label']['disabled'] = $config['label_disabled'] ?? Property::displayLabel($this->moduleConfig['label']['default'] . '.disabled');
                 break;
             case 'number':
@@ -701,7 +708,7 @@ class Field
             'form'      => !$this->extra['ignored'],
         ];
 
-        $classes                                  = [
+        $classes = [
             'all'       => 'all',
             'visible'   => 'all',
             'invisible' => 'never',

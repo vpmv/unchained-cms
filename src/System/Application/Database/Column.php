@@ -4,7 +4,7 @@ namespace App\System\Application\Database;
 
 class Column implements ValueInterface
 {
-    public function __construct(private string $name, private mixed $value = null)
+    public function __construct(private readonly string $name, private mixed $value = null)
     {
         $this->setValue($value);
     }
@@ -30,7 +30,7 @@ class Column implements ValueInterface
     /**
      * @return mixed|null
      */
-    public function getValue()
+    public function getValue(): mixed
     {
         return $this->value;
     }

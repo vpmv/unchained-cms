@@ -14,7 +14,7 @@ use Twig\TwigFilter;
 class TranslationExtension extends AbstractExtension
 {
     /** @var \Symfony\Bridge\Twig\Extension\TranslationExtension */
-    private $parent;
+    private SymfonyTranslation $parent;
 
     public function __construct(
         private ?TranslatorInterface $translator = null,

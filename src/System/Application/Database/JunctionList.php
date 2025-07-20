@@ -7,7 +7,7 @@ class JunctionList implements ValueInterface
     /** @var Junction[] */
     private $junctions = [];
 
-    public function __construct(private string $application, Junction ...$junctions)
+    public function __construct(private readonly string $application, Junction ...$junctions)
     {
         foreach ($junctions as $junction) {
             $this->junctions[$junction->getPrimaryKey()] = $junction;

@@ -6,13 +6,11 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class LocaleListener implements EventSubscriberInterface
+readonly class LocaleListener implements EventSubscriberInterface
 {
-    private $defaultLocale;
 
-    public function __construct($defaultLocale = 'nl')
+    public function __construct(private string $defaultLocale = 'en')
     {
-        $this->defaultLocale = $defaultLocale;
     }
 
     public function onKernelRequest(RequestEvent $event)

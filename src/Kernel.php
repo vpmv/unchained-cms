@@ -3,7 +3,6 @@
 namespace App;
 
 use App\EventListener\LocaleListener;
-use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Finder\Finder;
@@ -41,7 +40,8 @@ class Kernel extends BaseKernel
     protected function configureContainer(ContainerConfigurator $container): void
     {
         $container->parameters()->set('kernel.public_dir', $this->publicDir);
-        $container->parameters()->set('locale', env('LOCALE'));
+        $container->parameters()->set('locale', getenv('LOCALE'));
+        $container->parameters()->set('timezone', getenv('TZ') ?: 'UTC');
 
         $container->import(__DIR__ . '/../config/framework.yaml');
         $container->import(__DIR__ . '/../config/packages/doctrine.yaml');
@@ -70,7 +70,6 @@ class Kernel extends BaseKernel
             //]);
         }
 
-        //$container->import(__DIR__ . '/../config/services.yaml');
         $services = $container->services();
         $services->defaults()
             ->autowire()
@@ -79,20 +78,17 @@ class Kernel extends BaseKernel
             ->bind('$projectDir', $this->getProjectDir())
             ->bind('$publicDir', $this->publicDir);
 
-        // 2️⃣ Load all services under src/, excluding Kernel
         $services->load('App\\', __DIR__ . '/../src')
             ->exclude([__DIR__ . '/../src/Kernel.php']);
 
-        // 3️⃣ Controllers: load + tag so Symfony injects container/route args
         $services->load('App\\Controller\\', __DIR__ . '/../src/Controller')
             ->tag('controller.service_arguments');
 
-        // 4️⃣ Explicit definitions for services needing specific args or tags
-
         // LocaleListener needs the default locale
         $services->set(LocaleListener::class)
-            ->args([env('LOCALE')])
+            ->args([getenv('LOCALE')])
             ->autoconfigure(); // ensure it gets dispatcher listener tag if needed
+
 
         // Twig extension: just needs to be tagged
         //$services->set(TranslationExtension::class)
@@ -111,6 +107,12 @@ class Kernel extends BaseKernel
         // load the routes defined as PHP attributes
         // (use 'annotation' as the second argument if you define routes as annotations)
         $routes->import(__DIR__ . '/Controller/', 'attribute');
+    }
+
+    public function boot(): void
+    {
+        date_default_timezone_set($this->container->getParameter('timezone'));
+        parent::boot();
     }
 
     // optional, to use the standard Symfony cache directory

@@ -4,18 +4,17 @@
 namespace App\System\Constructs;
 
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
 class Md5Cacheable
 {
-    /** @var \Symfony\Contracts\Cache\CacheInterface */
-    protected $cache;
-    /** @var string|null */
-    private $cacheKey;
+    protected CacheInterface $cache;
+    private ?string          $cacheKey;
 
     public function __construct(?string $cacheKey = null)
     {
-        $this->cache    = new FilesystemAdapter();
+        $this->cache = new FilesystemAdapter();
         $this->cacheKey = $cacheKey;
     }
 
@@ -24,9 +23,10 @@ class Md5Cacheable
      * @param mixed  $contents
      * @param int    $ttl Defaults to 1 week
      *
-     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     * @return void
+     * @throws \Psr\Cache\InvalidArgumentException
      */
-    protected function writeCache(string $key, $contents, int $ttl = 886400 * 7)
+    protected function writeCache(string $key, mixed $contents, int $ttl = 886400 * 7): void
     {
         $this->cache->get(md5($this->cacheKey . $key), function (ItemInterface $item) use ($contents, $ttl) {
             $item->expiresAfter($ttl);
@@ -37,13 +37,13 @@ class Md5Cacheable
 
 
     /**
-     * @param string $key
-     * @param mixed  $default
+     * @param string     $key
+     * @param mixed|null $default
      *
      * @return mixed
-     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     * @throws \Psr\Cache\InvalidArgumentException
      */
-    protected function getCache(string $key, $default = null)
+    protected function getCache(string $key, mixed $default = null): mixed
     {
         /** @var \Psr\Cache\CacheItemInterface $item */
         $item = $this->cache->getItem(md5($this->cacheKey . $key));
@@ -51,7 +51,14 @@ class Md5Cacheable
         return $item->isHit() ? $item->get() : $default;
     }
 
-    protected function remember(string $key, callable $callback)
+    /**
+     * @param string   $key
+     * @param callable $callback
+     *
+     * @return mixed
+     * @throws \Psr\Cache\InvalidArgumentException
+     */
+    protected function remember(string $key, callable $callback): mixed
     {
         if ($cache = $this->getCache($key)) {
             return $cache;

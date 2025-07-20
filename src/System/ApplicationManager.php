@@ -124,7 +124,6 @@ class ApplicationManager
                     break 2;
                 }
             }
-
         }
 
         if (empty($_application)) {
@@ -209,6 +208,7 @@ class ApplicationManager
             }
 
             $category = $config->getCategory();
+            dump($category);
             if (!isset($this->applications[$category->getCategoryId()])) {
                 $this->applications[$category->getCategoryId()] = [
                     'label'        => $category->getLabel(),
