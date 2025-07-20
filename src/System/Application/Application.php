@@ -18,9 +18,9 @@ class Application
 {
     /** @var \App\System\Configuration\ApplicationConfig */
     private ApplicationConfig $config;
-    protected array           $data     = [];
+    protected array           $data = [];
     /** @var bool Requested module accepted */
-    protected bool            $accepted = true;
+    protected bool $accepted = true;
 
     protected bool $isPublic        = true;
     protected bool $isAuthenticated = false;
@@ -46,8 +46,8 @@ class Application
         public FormBuilderInterface $formBuilder, // fixme: ?
         protected TranslatorInterface $translator,
     ) {
-        $this->config = $configStore->getApplicationConfig($this->appId);
-        $this->isPublic = $configStore->isAuthorized($this->appId);
+        $this->config          = $configStore->getApplicationConfig($this->appId);
+        $this->isPublic        = $configStore->isAuthorized($this->appId);
         $this->isAuthenticated = $configStore->isAuthenticated();
     }
 
@@ -67,7 +67,7 @@ class Application
      */
     public function translate(string $message, array $arguments = []): string
     {
-        $translation = $this->translator->trans($message, $arguments, Property::schemaName($this->appId));
+        $translation   = $this->translator->trans($message, $arguments, Property::schemaName($this->appId));
         $defaultOutput = str_replace(array_keys($arguments), array_values($arguments), $message);
 
         if ($translation == $message || $translation == $defaultOutput) {
@@ -188,14 +188,14 @@ class Application
     {
         if ($field->getSourceIdentifier()) {
             $rawData = $this->getRepository()->getForeignData($field->getSourceIdentifier());
-            $data = array_combine(array_column($rawData, 'pk'), array_column($rawData, '_exposed'));
+            $data    = array_combine(array_column($rawData, 'pk'), array_column($rawData, '_exposed'));
         } else {
             $data = $field->getChoiceOptions();
         }
         if ($field->getConstraint() == 'unique') {
             if ($field->getSourceIdentifier()) {
                 $foreignColumn = $this->configStore->getForeignColumn($this->appId, $field->getSourceIdentifier());
-                $used = $this->getRepository()->getDistinct($foreignColumn);
+                $used          = $this->getRepository()->getDistinct($foreignColumn);
             } else {
                 $used = $this->getRepository()->getDistinct($field->getSchema()['column']);
             }
@@ -283,14 +283,14 @@ class Application
         $uniqueConstraint = false;
         if ($this->module instanceof DashboardModule && ($constraints = $this->config->getConstraint('unique'))) {
             foreach ($constraints as $fieldId) {
-                $field = $this->getField($fieldId);
-                $values = $this->getUniqueValues($field);
-                $column = $this->getConstraintColumn($field);
+                $field            = $this->getField($fieldId);
+                $values           = $this->getUniqueValues($field);
+                $column           = $this->getConstraintColumn($field);
                 $uniqueConstraint = empty(array_diff($values, array_column($this->data, $column)));
             }
         }
 
-        $data = [
+        $data       = [
             'appId'              => $this->appId,
             'category'           => $this->config->getCategory(),
             'categoryId'         => $this->config->getCategory()->getCategoryId(),
@@ -411,8 +411,8 @@ class Application
      */
     public function timeElapsedString(string|\DateTime $datetime, string $round = 'floor', ?string $suffix = null, string $transformTo = 'auto'): string
     {
-        $now = new \DateTime();
-        $ago = !$datetime instanceof \DateTime ? new \DateTime($datetime) : $datetime;
+        $now  = new \DateTime();
+        $ago  = !$datetime instanceof \DateTime ? new \DateTime($datetime) : $datetime;
         $diff = $now->diff($ago);
 
         if (false === $diff) {
@@ -428,7 +428,7 @@ class Application
         }
 
         $diffWeeks = call_user_func($round, $diff->d / 7);
-        $diff->d -= $diffWeeks * 7;
+        $diff->d   -= $diffWeeks * 7;
 
         $dateSlices = [
             'year'   => 'y',
@@ -439,7 +439,7 @@ class Application
             'minute' => 'm',
         ];
         foreach ($dateSlices as &$v) {
-            $v = $diff->$v;
+            $v = $v == 'w' ? $diff->days / 7 : $diff->$v;
         }
 
         if ($transformTo != 'auto') {
@@ -472,7 +472,7 @@ class Application
      */
     public function resolveExtension($fieldId, array $context): mixed
     {
-        $className = str_replace(' ', '', ucwords(preg_replace('/[\W]+/', ' ', $this->appId)));
+        $className  = str_replace(' ', '', ucwords(preg_replace('/[\W]+/', ' ', $this->appId)));
         $methodName = 'transform' . str_replace(' ', '', ucwords(preg_replace('/[^a-zA-Z]/', ' ', $fieldId)));
 
         if (!is_callable("$className::$methodName")) {

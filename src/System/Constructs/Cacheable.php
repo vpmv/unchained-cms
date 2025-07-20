@@ -13,7 +13,7 @@ class Cacheable
 
     public function __construct(?string $cacheKey = null)
     {
-        $this->cache = new FilesystemAdapter();
+        $this->cache    = new FilesystemAdapter();
         $this->cacheKey = $cacheKey;
     }
 
@@ -49,6 +49,7 @@ class Cacheable
         if (!$item->isHit()) {
             return $default;
         }
+
         return $item->get();
     }
 

@@ -7,7 +7,6 @@ use Doctrine\DBAL\Exception;
 
 readonly class ApplicationSchema
 {
-
     /**
      * @param \Doctrine\DBAL\Connection       $connection
      * @param string                          $table
@@ -114,11 +113,11 @@ readonly class ApplicationSchema
                 $v = $v->format('Y-m-d H:i:s');
             }
 
-            $key = "`$k`";
+            $key   = "`$k`";
             $value = $this->connection->quote($v);
 
-            $keys[] = $key;
-            $values[] = $value;
+            $keys[]    = $key;
+            $values[]  = $value;
             $updates[] = "$key = $value";
         }
 
@@ -145,7 +144,7 @@ readonly class ApplicationSchema
             return;
         }
 
-        $res = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAllAssociative();
+        $res     = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAllAssociative();
         $columns = array_column($res, 'Field');
         foreach ($this->fields as $name => $field) {
             $def = $this->getColumnDefinition($name, $field);
@@ -155,9 +154,19 @@ readonly class ApplicationSchema
         }
     }
 
+    /**
+     * @return void
+     * @throws \Doctrine\DBAL\Exception
+     *
+     * @todo UUIDs not implemented;
+     *       Functionally no difference when everything is converted to JSON
+     */
     private function createSchema(): void
     {
-        $cols = ['`id` int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY'];
+        $cols = [
+            '`id` int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY',
+            //'`_uuid` uuid not null DEFAULT uuid()',
+        ];
         foreach ($this->fields as $name => $col) {
             if ($def = $this->getColumnDefinition($name, $col)) {
                 $cols[] = $def['fmt'];
@@ -181,14 +190,14 @@ readonly class ApplicationSchema
     private function getColumnDefinition(string $name, Field $field): array
     {
         if ($schema = $field->getSchema()) {
-            $result = $schema;
+            $result        = $schema;
             $result['fmt'] = sprintf('`%s` %s%s %s %s %s',
                 $schema['column'] ?? $name,
                 $schema['type'],
                 $schema['length'] ? '(' . $schema['length'] . ')' : '',
                 !$schema['nullable'] ? 'NOT NULL' : '',
                 strtoupper(implode(' ', $schema['options'])),
-                $schema['default'] ? ' DEFAULT ' . $schema['default'] : ''
+                $schema['default'] ? ' DEFAULT ' . $schema['default'] : '',
             );
 
             return $result;

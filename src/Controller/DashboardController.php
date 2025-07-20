@@ -24,7 +24,7 @@ class DashboardController extends AbstractController
      *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
-    #[Route("/refresh")]
+    #[Route("/refresh", name: "refresh")]
     public function clearCache(): RedirectResponse
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
@@ -41,6 +41,7 @@ class DashboardController extends AbstractController
 
         return $this->render('main/dashboard.html.twig', ['applications' => $applications]);
     }
+
     #[Route("/{app}", name: "app", requirements: ['app' => "[0-9a-z\-\/]{3,}"])]
     public function application($app, ApplicationManager $factory): Response
     {

@@ -153,6 +153,7 @@ class FormModule extends AbstractModule
                 return $default;
             }
         }
+
         return $this->request->request->get($field->getId(), $default);
     }
 

@@ -30,7 +30,7 @@ class ApplicationManager
      * @param \Symfony\Component\Form\FormFactoryInterface       $forms
      * @param \Symfony\Contracts\Translation\TranslatorInterface $translator
      * @param \App\System\Configuration\ConfigStore              $configStore
-     * @param \Symfony\Bundle\SecurityBundle\Security           $security
+     * @param \Symfony\Bundle\SecurityBundle\Security            $security
      */
     public function __construct(
         private readonly RequestStack $requestStack,
@@ -52,7 +52,7 @@ class ApplicationManager
     public function loadApplicationExtension(string $appId): void
     {
         $appPath = $this->configStore->getDirectory(ConfigStore::DIR_EXTENSION, $appId);
-        $app = $appPath . '/' . Property::schemaName($appId) . '.php';
+        $app     = $appPath . '/' . Property::schemaName($appId) . '.php';
         if (file_exists($app)) {
             require_once $app;
         }
@@ -68,7 +68,7 @@ class ApplicationManager
     {
         $this->configureApplications();
 
-        $category = $this->applications[$categoryId] ?? [];
+        $category    = $this->applications[$categoryId] ?? [];
         $application = $this->applications[$categoryId]['applications'][$appId] ?? [];
         if (!$application) {
             throw new NotFoundHttpException('Application does not exist');
@@ -78,7 +78,7 @@ class ApplicationManager
         }
 
         $imagesPath = $this->configStore->getDirectory(ConfigStore::DIR_IMAGES, $appId, null, true);
-        $filesPath = $this->configStore->getDirectory(ConfigStore::DIR_FILES, $appId, null, true);
+        $filesPath  = $this->configStore->getDirectory(ConfigStore::DIR_FILES, $appId, null, true);
         if (!file_exists($imagesPath)) {
             mkdir($imagesPath, 0777, true);
         }
@@ -131,10 +131,10 @@ class ApplicationManager
         }
 
         $routeParams = array_filter(explode('/', ltrim(str_replace($matchedRoute, '', $path), '/')));
-        $module = null;
+        $module      = null;
         if (!empty($routeParams)) {  // fixme
             if ($routeParams == 'charts') {
-                $module = 'charts';
+                $module      = 'charts';
                 $routeParams = [];
             } else {
                 $module = 'detail';
@@ -199,7 +199,7 @@ class ApplicationManager
         $locale = $this->requestStack->getMainRequest()->getLocale();
 
         $this->applications = [];
-        $appConfig = $this->configStore->readSystemConfig('applications');
+        $appConfig          = $this->configStore->readSystemConfig('applications');
         foreach ($appConfig['applications'] as $appId => $app) {
             try {
                 $config = $this->configStore->getApplicationConfig($appId);
@@ -208,7 +208,6 @@ class ApplicationManager
             }
 
             $category = $config->getCategory();
-            dump($category);
             if (!isset($this->applications[$category->getCategoryId()])) {
                 $this->applications[$category->getCategoryId()] = [
                     'label'        => $category->getLabel(),

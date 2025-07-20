@@ -43,7 +43,7 @@ class ConfigStore extends Cacheable
 
         $this->basePath = $this->projectDir . '/user/config/';
 
-        $this->paths = [
+        $this->paths         = [
             'root'   => $this->projectDir,
             'public' => $this->publicDir,
         ];
@@ -149,7 +149,7 @@ class ConfigStore extends Cacheable
                 if ($categoryId = $appConfig->getCategory()->getCategoryId()) {
                     try {
                         $categoryConfig = $this->getCategoryConfig($categoryId);
-                        $routePrefix = $categoryConfig->getRoute($userLocale, true);
+                        $routePrefix    = $categoryConfig->getRoute($userLocale, true);
                     } catch (NoConfigurationException) {
                         $this->logger->warning(sprintf('No configuration for category "%s"', $categoryId));
                     }
@@ -171,7 +171,7 @@ class ConfigStore extends Cacheable
     {
         $config = $this->getApplicationConfig($applicationId);
         if ($sourceAlias) {
-            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
+            $config        = $this->getSourceConfigByAlias($config, $sourceAlias);
             $applicationId = $config->getAppId();
         }
 

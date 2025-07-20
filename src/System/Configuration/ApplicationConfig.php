@@ -33,7 +33,7 @@ class ApplicationConfig
         $this->basePath = $projectDir . '/config/';
 
         $this->appId = $appId;
-        $this->raw = $configuration + ['appId' => $appId, 'name' => $appId];
+        $this->raw   = $configuration + ['appId' => $appId, 'name' => $appId];
 
         $this->setSources();
         $this->setModules();
@@ -270,18 +270,20 @@ class ApplicationConfig
                     'type'   => 'slug',
                 ],
             ], $configStore);
-        } else if ($this->meta['exposes'] != 'id') {
-            $this->fields['_slug'] = new Field($this->appId, '_slug', [
-                'dashboard' => false,
-                'detail'    => false,
-                'public'    => false,
-                'type'      => 'text',
-                'length'    => 100,
-                'pointer'   => [
-                    'fields' => (array)$this->meta['exposes'],
-                    'type'   => 'slug',
-                ],
-            ], $configStore);
+        } else {
+            if ($this->meta['exposes'] != 'id') {
+                $this->fields['_slug'] = new Field($this->appId, '_slug', [
+                    'dashboard' => false,
+                    'detail'    => false,
+                    'public'    => false,
+                    'type'      => 'text',
+                    'length'    => 100,
+                    'pointer'   => [
+                        'fields' => (array)$this->meta['exposes'],
+                        'type'   => 'slug',
+                    ],
+                ], $configStore);
+            }
         }
 
         $sortKeys = !empty($this->raw['sort']) ? $this->raw['sort'] : (array)$this->meta['exposes'];

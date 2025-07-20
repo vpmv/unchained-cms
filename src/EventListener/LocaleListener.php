@@ -30,8 +30,8 @@ readonly class LocaleListener implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return array(
-            KernelEvents::REQUEST => array(array('onKernelRequest', 20)), // higher prio than kernel localelistener
-        );
+        return [
+            KernelEvents::REQUEST => [['onKernelRequest', 20]], // higher prio than kernel localelistener
+        ];
     }
 }

@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route(name: "admin_")]
 class AdminController extends AbstractController
 {
-    #[Route("/admin/{category}/{app}/{uuid}", requirements: ["app" => "[a-z\-]+", "uuid" => "[\w]+"], defaults:["uuid"=>null], name: "edit")]
+    #[Route("/admin/{category}/{app}/{uuid}", requirements: ["app" => "[a-z\-]+", "uuid" => "[\w]+"], defaults: ["uuid" => null], name: "edit")]
     #[IsGranted('ROLE_ADMIN')]
     public function edit(ApplicationManager $applicationManager, $category, $app, $uuid): Response
     {
@@ -33,6 +33,7 @@ class AdminController extends AbstractController
 
         if (!empty($data['redirect'])) {
             $redirect = $data['redirect'];
+
             return $this->redirect($this->generateUrl($redirect['route'], $redirect['params']));
         }
 
@@ -44,7 +45,7 @@ class AdminController extends AbstractController
     #[Route("/login", name: "login")]
     public function login(AuthenticationUtils $utils, ApplicationManager $factory): Response
     {
-        $error = $utils->getLastAuthenticationError();
+        $error    = $utils->getLastAuthenticationError();
         $lastUser = $utils->getLastUsername();
 
         $form = $this->createFormBuilder(null, ['attr' => ['novalidate' => true]])
@@ -56,8 +57,8 @@ class AdminController extends AbstractController
         $form->setData(['_username' => $lastUser]);
 
         return $this->render('main/login.html.twig', [
-            'error' => $error,
-            'form' => $form->createView(),
+            'error'        => $error,
+            'form'         => $form->createView(),
             'applications' => $factory->getApplications(true),
         ]);
     }

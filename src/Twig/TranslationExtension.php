@@ -25,7 +25,7 @@ class TranslationExtension extends AbstractExtension
 
     public function trans($message, array $arguments = [], $domain = null, $locale = null, $count = null)
     {
-        $output = $this->parent->trans($message, $arguments, $domain, $locale);
+        $output        = $this->parent->trans($message, $arguments, $domain, $locale);
         $defaultOutput = str_replace(array_keys($arguments), array_values($arguments), $message);
         if ($domain && $domain != 'messages' && ($output == $message || $output == $defaultOutput)) {
             $output = $this->parent->trans($message, $arguments, 'messages', $locale);

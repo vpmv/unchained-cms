@@ -23,14 +23,14 @@ form {
     cursor: pointer;
 
     .media-box {
-      max-height: 150px;
-      max-width: 200px;
       position: relative;
       overflow: hidden;
+      display: inline-block;
 
       img {
         max-height: 150px;
         max-width: 200px;
+        width: initial;
       }
 
       .media-edit {
