@@ -1,5 +1,0 @@
-{% for appId,a in applications %}
-    <a class="{{ class }} app app-{{ a.appId }}" href="{{ url('dash_app', {app: a.route}) }}">
-        {{ a.config.meta.title|trans([], a.translation_domain) }}
-    </a>
-{% endfor %}

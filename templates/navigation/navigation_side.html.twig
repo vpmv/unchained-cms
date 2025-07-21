@@ -1,0 +1,30 @@
+<button class="navbar-toggler navbar offcanvas-button" type="button" data-bs-toggle="offcanvas" data-bs-target="#navbarSide" aria-controls="navbarSide" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+</button>
+
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="navbarSide" aria-labelledby="navbarSideLabel">
+    <div class="offcanvas-header">
+        <a class="offcanvas-title navbar-brand" id="navbarSideLabel" href="/">
+            {% include '/navigation/app_brand.html.twig' %}
+        </a>
+
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" data-bs-theme="dark" aria-label="{{ 'Close' | trans }}"></button>
+    </div>
+    <nav class="offcanvas-body navbar" role="navigation">
+        <ul class="nav sidebar-nav">
+            {% include '/navigation/navigation_l10n.html.twig' %}
+
+            {% if app_navigation.show_home ?? true %}
+                <li>
+                    <a href="/">Home</a>
+                </li>
+            {% endif %}
+
+            {% include '/navigation/applications.html.twig' with {child_wrapper: 'li'} %}
+        </ul>
+        <ul class="nav user-menu">
+        {% include '/navigation/user.html.twig' %}
+        </ul>
+    </nav>
+</div>

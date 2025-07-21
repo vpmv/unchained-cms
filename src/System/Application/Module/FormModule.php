@@ -29,7 +29,7 @@ class FormModule extends AbstractModule
             switch ($field->getFormType()) {
                 case 'checkbox':
                     $fieldOptions['attr']  += [
-                        'data-toggle' => 'toggle',
+                        'data-bs-toggle' => 'toggle',
                         'data-on'     => $this->container->translate($field->getLabel('enabled')),
                         'data-off'    => $this->container->translate($field->getLabel('disabled')),
                     ];

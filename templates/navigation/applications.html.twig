@@ -1,0 +1,27 @@
+{% set active_cat = category ?? '' ? category.categoryId : '' %}
+{% set active_app = application ?? '' ? application.appId : '' %}
+
+{% if app_navigation.show_home ?? true %}
+    <li>
+        <a class="nav-link {{ application is not defined ? 'active' : '' }}" href="/">{{ 'Home'|trans }}</a>
+    </li>
+{% endif %}
+
+{% if applications|length > 1 %}
+    {% for catId,cat in applications %}
+        {% if catId != '_default' %}
+            <li class="nav-item dropdown {{ active_cat == catId ? 'active' : '' }}">
+                <a class="nav-link dropdown-toggle" id="dropdown-{{ catId }}" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {{ cat.label|trans }}
+                </a>
+                <div class="dropdown-menu" aria-labelledby="dropdown-{{ catId }}">
+                    {% include "/navigation/app_links.html.twig" with {applications: cat.applications, class: "dropdown-item"} %}
+                </div>
+            </li>
+        {% else %}
+            {% include "/navigation/app_links.html.twig" with {applications: cat.applications, class: "nav-link", wrap: 'li'} %}
+        {% endif %}
+    {% endfor %}
+{% else %}
+    {% include "/navigation/app_links.html.twig" with {applications: (applications|first).applications, class: "nav-link"} %}
+{% endif %}

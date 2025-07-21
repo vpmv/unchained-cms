@@ -196,7 +196,7 @@ class ApplicationManager
         if ($this->applications) {
             return;
         }
-        $locale = $this->requestStack->getMainRequest()->getLocale();
+        $locale = $this->requestStack->getMainRequest()->getLocale() ?: getenv('LOCALE') ?: 'en';
 
         $this->applications = [];
         $appConfig          = $this->configStore->readSystemConfig('applications');

@@ -35,10 +35,8 @@
     {% block links %}
         <div class="row no-gutters">
             <div class="col-sm-12">
-                <a class="btn btn-secondary" href="{{ url('dash_app', {app: application.public_uri}) }}"><i
-                            class="fa fa-ban"></i> {{ 'label.cancel'|trans }}</a>
                 {% if application.hasData %}
-                    <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
+                    <a class="btn btn-success" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
                         <i class="fa fa-plus"></i>
                         {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
                     </a>
@@ -109,7 +107,10 @@
     <div class="form-group row">
         <div class="col-sm-2"></div>
         <div class="col-sm-10">
-            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> {{ 'Save'|trans }}</button>
+            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> {{ 'label.save'|trans }}</button>
+            <a class="btn btn-light" href="{{ url('dash_app', {app: application.public_uri}) }}">
+                <i class="fa fa-ban"></i> {{ 'label.cancel'|trans }}
+            </a>
         </div>
     </div>
     {{ form_end(application.form) }}

@@ -58,9 +58,16 @@ class DashboardController extends AbstractController
 
         $applications = $factory->getApplications(true);
         if ($application instanceof Category) {
-            return $this->render('applications/category_index.html.twig', ['applications' => $applications, 'category' => $data]);
+            return $this->render('applications/category_index.html.twig', [
+                'applications' => $applications,
+                'category'     => $data,
+            ]);
         }
 
-        return $this->render('applications/' . $application->getCurrentModule()->getName() . '.html.twig', ['applications' => $applications, 'application' => $data]);
+        return $this->render('applications/' . $application->getCurrentModule()->getName() . '.html.twig', [
+            'category'     => $data['category'],
+            'application'  => $data,
+            'applications' => $applications,
+        ]);
     }
 }

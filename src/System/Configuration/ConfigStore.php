@@ -4,32 +4,20 @@ namespace App\System\Configuration;
 
 use App\System\Application\Field;
 use App\System\Application\Property;
-use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
 
-class ConfigStore extends Cacheable
+class ConfigStore extends ConfigStoreBase
 {
-    use YamlReader;
+    public const string DIR_PUBLIC    = 'public';
+    public const string DIR_FILES     = 'files';
+    public const string DIR_IMAGES    = 'images';
+    public const string DIR_EXTENSION = 'extension';
 
-    public const DIR_PUBLIC    = 'public';
-    public const DIR_FILES     = 'files';
-    public const DIR_IMAGES    = 'images';
-    public const DIR_EXTENSION = 'extension';
-
-    /** @var \App\System\Configuration\ApplicationConfig[] */
-    private $applications      = [];
-    private $applicationConfig = [];
-    /** @var ApplicationCategory[] */
-    private $applicationCategories = [];
-
-    private $systemConfig = [];
-
-    private $paths         = [];
-    private $authenticated = false;
+    protected $applicationConfig = [];
 
     public function __construct(
         private readonly RequestStack $requestStack,
@@ -39,7 +27,7 @@ class ConfigStore extends Cacheable
         private readonly string $projectDir,
         private readonly string $publicDir,
     ) {
-        parent::__construct('config.');
+        parent::__construct();
 
         $this->basePath = $this->projectDir . '/user/config/';
 
@@ -48,39 +36,6 @@ class ConfigStore extends Cacheable
             'public' => $this->publicDir,
         ];
         $this->authenticated = !empty($security->getToken()?->getRoleNames());
-    }
-
-    /**
-     * @param string      $name
-     * @param null|string $attribute
-     * @param null|mixed  $default
-     *
-     * @return mixed
-     */
-    public function readSystemConfig(string $name, ?string $attribute = null, mixed $default = null): mixed
-    {
-        $this->systemConfig[$name] = $this->remember('system.' . $name, function () use ($name) {
-            return $this->readYamlFile('system/' . $name . '.yaml');
-        });
-
-        if ($attribute) {
-            return $this->systemConfig[$name][$attribute] ?? $default;
-        }
-
-        return $this->systemConfig[$name] ?? $default;
-    }
-
-    public function readApplicationConfig(string $appId)
-    {
-        return $this->remember('application.raw.' . $appId, function () use ($appId) {
-            $config = $this->readYamlFile('applications/' . $appId . '.yaml');
-            if (empty($config['application'])) {
-                $this->logger->alert('Application configuration missing <application> attribute', ['appId' => $appId]);
-                throw new NoConfigurationException('No configuration found for App<' . $appId . '>');
-            }
-
-            return $config['application'];
-        });
     }
 
     /**
@@ -107,21 +62,6 @@ class ConfigStore extends Cacheable
         return $this->applications[$appId];
     }
 
-    public function getCategoryConfig(string $categoryId): ApplicationCategory
-    {
-        if (!isset($this->applicationCategories[$categoryId])) {
-            $categories = $this->readSystemConfig('applications', 'categories', []) + ['_default' => []];
-            if (!array_key_exists($categoryId, $categories)) {
-                $categoryId = '_default';
-            }
-
-            $this->applicationCategories[$categoryId] = $this->remember('category.' . $categoryId, function () use ($categories, $categoryId) {
-                return new ApplicationCategory($categoryId, $categories[$categoryId] ?? []);
-            });
-        }
-
-        return $this->applicationCategories[$categoryId];
-    }
 
     /**
      * @param string $applicationId

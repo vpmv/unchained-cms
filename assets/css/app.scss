@@ -6,6 +6,7 @@ body {
 }
 
 .main {
+    margin-top: 1rem;
     h2 {
         @include media-breakpoint-down(sm) {
             padding-left: 2.1rem;
@@ -13,7 +14,7 @@ body {
     }
 
     &.dashboard {
-        margin-top: 1rem;
+        overflow-x: auto;
     }
 }
 
@@ -23,9 +24,26 @@ img.media {
 
 
 .form-group {
+    &.row {
+        --bs-gutter-y: .2rem;
+        margin-top: var(--bs-gutter-y);
+    }
+
+    .form-select {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+
     .markers {
         display: flex;
         justify-content: space-between;
+    }
+}
+
+.dt-container {
+    .dt-layout-full, .dt-layout-start {
+        padding-left: 0;
+        padding-right: 0;
     }
 }
 

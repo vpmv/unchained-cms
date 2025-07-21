@@ -1,5 +1,7 @@
 doctrine:
     orm:
+        controller_resolver:
+            enabled: false
         metadata_cache_driver:
             type: service
             id: doctrine.system_cache_provider

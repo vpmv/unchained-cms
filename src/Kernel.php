@@ -3,8 +3,11 @@
 namespace App;
 
 use App\EventListener\LocaleListener;
+use App\System\Configuration\ConfigStore;
+use App\System\Configuration\ConfigStoreBase;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
@@ -39,9 +42,19 @@ class Kernel extends BaseKernel
 
     protected function configureContainer(ContainerConfigurator $container): void
     {
+        new Dotenv()->bootEnv($this->getProjectDir() . '/.env', $this->getEnvironment(), overrideExistingVars: true);
+        $locales = explode(',', $_ENV['LOCALES'] ?: 'en');
+        $default_locale = $_ENV['LOCALE'] ?? $locales[array_key_first($locales)];
+
+        $systemConfig = new ConfigStoreBase()->readSystemConfig('config', 'config');
+
         $container->parameters()->set('kernel.public_dir', $this->publicDir);
-        $container->parameters()->set('locale', getenv('LOCALE'));
-        $container->parameters()->set('timezone', getenv('TZ') ?: 'UTC');
+        $container->parameters()->set('timezone', '%env(string:TZ)%');
+        $container->parameters()->set('app.locales', $locales);
+        $container->parameters()->set('locale', $default_locale);
+        $container->parameters()->set('app.name', $systemConfig['title'] ?? 'Unchained');
+        $container->parameters()->set('app.navigation', $systemConfig['navigation'] ?? ['style' => 'default']);
+
 
         $container->import(__DIR__ . '/../config/framework.yaml');
         $container->import(__DIR__ . '/../config/packages/doctrine.yaml');
@@ -58,7 +71,6 @@ class Kernel extends BaseKernel
                 $container->import($file->getRealPath());
             }
         }
-
         // configure WebProfilerBundle only if the bundle is enabled
         if (isset($this->bundles['WebProfilerBundle'])) {
             $container->extension('web_profiler', [
@@ -86,7 +98,7 @@ class Kernel extends BaseKernel
 
         // LocaleListener needs the default locale
         $services->set(LocaleListener::class)
-            ->args([getenv('LOCALE')])
+            ->args(['%kernel.default_locale%'])
             ->autoconfigure(); // ensure it gets dispatcher listener tag if needed
 
 

@@ -3,4 +3,9 @@ twig:
     debug: '%kernel.debug%'
     strict_variables: '%kernel.debug%'
     default_path: '%kernel.project_dir%/user/templates'
-    form_themes: [ 'bootstrap_4_horizontal_layout.html.twig' ]
+    form_themes: [ 'bootstrap_5_horizontal_layout.html.twig' ]
+
+    globals:
+        enabled_locales: '%app.locales%'
+        app_name: '%app.name%'
+        app_navigation: '%app.navigation%'

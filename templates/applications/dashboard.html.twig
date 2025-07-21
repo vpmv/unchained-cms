@@ -22,9 +22,9 @@
     {% block links %}
         {% if is_granted('IS_AUTHENTICATED_FULLY') %}
             <div class="row">
-                <div class="btn-group" role="group">
+                <div class="col">
                     {% if not application.frontend.uniqueConstraint %}
-                        <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}">
+                        <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}">
                             <i class="fa fa-plus"></i>
                             {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
                         </a>

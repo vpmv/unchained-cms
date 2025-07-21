@@ -1,0 +1,28 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid container-lg">
+        <a class="navbar-brand" href="/">
+            {% include '/navigation/app_brand.html.twig' %}
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTop" aria-controls="navbarTop" aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarTop">
+            {% block application_menu %}
+                <ul class="navbar-nav mr-auto me-auto">
+                    {% include '/navigation/applications.html.twig' %}
+                </ul>
+            {% endblock %}
+
+            {% block user_menu %}
+                <div class="my-2 my-lg-0">
+                    <ul class="navbar-nav">
+                        {% include '/navigation/navigation_l10n.html.twig' with {} %}
+                        {% include '/navigation/user.html.twig' with {} %}
+                    </ul>
+                </div>
+            {% endblock %}
+        </div>
+    </div>
+</nav>

@@ -1,17 +1,20 @@
 import $ from 'jquery';
 import 'bootstrap';
-import 'bootstrap-select';
-import 'bootstrap-toggle';
+const bootstrap = require('bootstrap');
+window.bootstrap = bootstrap;
+require('bootstrap-select');
+require('bootstrap-toggle');
 
-import dt from 'datatables.net-bs4';
-import 'datatables.net-responsive-bs4'
-import 'datatables.net-bs4/css/dataTables.bootstrap4.min.css'
-import 'datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css'
+import dt from 'datatables.net-bs5';
+import 'datatables.net-responsive-bs5'
+import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css'
+import 'datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css'
 
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
 import '../css/app.scss';
 import '../css/forms.scss';
+import '../css/nav.scss';
 
 import './tables'
 import './forms'

@@ -3,6 +3,7 @@ framework:
     json_manifest_path: '%kernel.public_dir%/build/manifest.json'
 
   default_locale: '%locale%'
+  enabled_locales: '%app.locales%'
   #csrf_protection: true
   translator:
     default_path: '%kernel.project_dir%/user/translations'
