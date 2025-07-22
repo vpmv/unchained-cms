@@ -2,6 +2,7 @@
 {% trans_default_domain application.translation_domain %}
 
 {% block title %}
+    {{ parent() }} -
     {% if application.hasData %}
         {% if application.meta.exposes is iterable %}
             {% for field in application.meta.exposes %}
@@ -18,34 +19,27 @@
     {% endif %}
 {% endblock %}
 
+{% block dashboard_title %}
+    {{ application.meta.title|trans }}
+    <small class="text-muted">
+        {% if application.hasData %}
+            {{ ('text.entity.edit.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
+        {% else %}
+            {{ ('text.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
+        {% endif %}
+    </small>
+{% endblock %}
+
+{% block dashboard_links %}
+    {% if application.hasData %}
+        <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
+            <i class="fa fa-plus"></i>
+            {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
+        </a>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
-    <h2>
-        {{ application.meta.title|trans }}
-        <small class="text-muted">
-            {% if application.hasData %}
-                {{ ('text.entity.edit.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
-            {% else %}
-                {{ ('text.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
-            {% endif %}
-        </small>
-    </h2>
-
-
-    {# TODO move to base #}
-    {% block links %}
-        <div class="row no-gutters">
-            <div class="col-sm-12">
-                {% if application.hasData %}
-                    <a class="btn btn-success" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
-                        <i class="fa fa-plus"></i>
-                        {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    {% endblock %}
-
-
     {{ form_start(application.form) }}
     {% for f in application.form.children %}
         {% if f.vars.name != '_token' %}
@@ -86,7 +80,7 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                                {{ form_widget(f) }}
+                            {{ form_widget(f) }}
                         {% endif %}
                     {% else %} {# no element data #}
                         {{ form_widget(f) }}
@@ -103,11 +97,13 @@
             </div>
         {% endif %}
     {% endfor %}
-    {#{{ form_widget(application.form)  }}#}
+    {# {{ form_widget(application.form)  }} #}
     <div class="form-group row">
         <div class="col-sm-2"></div>
         <div class="col-sm-10">
+            {# SAVE #}
             <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> {{ 'label.save'|trans }}</button>
+            {# CANCEL #}
             <a class="btn btn-light" href="{{ url('dash_app', {app: application.public_uri}) }}">
                 <i class="fa fa-ban"></i> {{ 'label.cancel'|trans }}
             </a>

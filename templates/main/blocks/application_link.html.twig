@@ -1,0 +1,25 @@
+{% set domain = application.translation_domain ?: 'messages' %}
+{% set appId = appId is defined ? appId : application.appId %}
+{% set title = title is defined ? title : application.config.meta.title %}
+{% set path = path is defined ? path : application.route %}
+{% set icon = icon is defined ? icon : application.config.meta.icon %}
+{% set links = links is defined ? links : [] %}
+
+<a class="app app-{{ appId }} btn" href="{{ url('dash_app', {app: path}) }}">
+    {% if icon %}
+        <i class="{{ icon }}"></i>
+    {% endif %}
+    <span class="title">{{ title|trans([], domain) }}</span>
+</a>
+
+{% if links and links is iterable %}
+    <div class="app-links">
+        <ul>
+            {% for link in links %}
+                <li>
+                    <a href="{{ url(link.route, {app: link.application}|merge(link.params)) }}">{{ link.label|trans([], domain) }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}

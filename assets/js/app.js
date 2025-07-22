@@ -3,7 +3,7 @@ import 'bootstrap';
 const bootstrap = require('bootstrap');
 window.bootstrap = bootstrap;
 require('bootstrap-select');
-require('bootstrap-toggle');
+import 'bootstrap5-toggle';
 
 import dt from 'datatables.net-bs5';
 import 'datatables.net-responsive-bs5'

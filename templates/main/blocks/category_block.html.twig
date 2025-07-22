@@ -1,0 +1,38 @@
+{% set catId = catId is defined ? catId : category.catId %}
+{% set title = title is defined ? title : category.label %}
+{% set path = path is defined ? path : category.route %}
+{% set with_image = with_image ?? false %}
+
+{% set include_apps = include_apps is defined ? include_apps : unchained.dashboard.show_app_stack %}
+{% set class = class ?? (include_apps ? 'col-12' : 'col') %}
+{% set links = links is defined ? links : [] %}
+
+{% if catId != '_default' and path %}
+    <div class="cat-block {{ class }} cat-{{ catId }}">
+        <a class="cat cat-{{ catId }}" href="{{ url('dash_app', {app: path}) }}">
+            {% if with_image %}
+                <img src="/assets/images/design/{{ catId }}.png">
+            {% endif %}
+
+            {# style this however you like #}
+            <div class="decorator"></div>
+            <span class="title">{{ title|trans([], ('category.'~catId)) }}</span>
+        </a>
+    </div>
+{% endif %}
+
+{% if include_apps %}
+    <div class="apps row">
+        {% for appId,application in category.applications %}
+            {% set title = application.config.meta.title %}
+            {% set path = application.route %}
+            {% set class = 'col' %}
+
+            {% if unchained.dashboard.style == 'block' %}
+                {% include "main/blocks/application_block.html.twig" %}
+            {% else %}
+                {% include "main/blocks/application_link.html.twig" %}
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}

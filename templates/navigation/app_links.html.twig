@@ -13,7 +13,7 @@
         </a>
 
         {# show "add item" link #}
-        {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+        {% if is_granted('IS_AUTHENTICATED_FULLY') and unchained.navigation.show_quicklinks %}
             <a class="{{ class }} app app-{{ appId }} plus" href="{{ url('admin_edit', {app: appId, category: a.config.category.categoryId}) }}"
                title="{{ ('action.entity.create.verbose')|trans({ verbose: ('entity.verbose')|trans([], a.translation_domain) }, a.translation_domain) }}">
                 <i class="fa fa-plus"></i>

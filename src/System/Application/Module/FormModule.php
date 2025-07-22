@@ -29,9 +29,11 @@ class FormModule extends AbstractModule
             switch ($field->getFormType()) {
                 case 'checkbox':
                     $fieldOptions['attr']  += [
-                        'data-bs-toggle' => 'toggle',
-                        'data-on'     => $this->container->translate($field->getLabel('enabled')),
-                        'data-off'    => $this->container->translate($field->getLabel('disabled')),
+                        'data-toggle'   => 'toggle',
+                        'data-onlabel'  => $this->container->translate($field->getLabel('enabled')),
+                        'data-offlabel' => $this->container->translate($field->getLabel('disabled')),
+                        'data-ontyle'   => 'primary',
+                        'data-offstyle' => 'outline-primary',
                     ];
                     $fieldOptions['label'] = false;
                     $fieldOptions['data']  = filter_var($fieldOptions['data'] ?? false, FILTER_VALIDATE_BOOLEAN);

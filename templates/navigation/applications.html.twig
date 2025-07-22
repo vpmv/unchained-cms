@@ -1,11 +1,7 @@
 {% set active_cat = category ?? '' ? category.categoryId : '' %}
 {% set active_app = application ?? '' ? application.appId : '' %}
 
-{% if app_navigation.show_home ?? true %}
-    <li>
-        <a class="nav-link {{ application is not defined ? 'active' : '' }}" href="/">{{ 'Home'|trans }}</a>
-    </li>
-{% endif %}
+{% include '/navigation/link_home.html.twig' %}
 
 {% if applications|length > 1 %}
     {% for catId,cat in applications %}

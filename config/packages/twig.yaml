@@ -7,5 +7,4 @@ twig:
 
     globals:
         enabled_locales: '%app.locales%'
-        app_name: '%app.name%'
-        app_navigation: '%app.navigation%'
+        unchained: '%unchained.config%'

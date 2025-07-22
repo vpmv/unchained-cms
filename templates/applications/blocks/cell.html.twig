@@ -3,12 +3,12 @@
         {% if cell.link %}
             {% include 'applications/blocks/link.html.twig' with {image: cell.value, link: url(cell.link.route, cell.link.params), title: cell.title} %}
         {% else %}
-            <div class="media-box">
+            <span class="media-box">
                 {% include 'applications/blocks/image_small.html.twig' with {source: cell.value, title: cell.title} %}
                 {% if cell.title %}
                     <span class="media-title">{{ cell.title }}</span>
                 {% endif %}
-            </div>
+            </span>
         {% endif %}
 
     {% elseif cell.field.type == 'file' and cell.value %}

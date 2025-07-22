@@ -27,7 +27,7 @@ class ConfigStore extends ConfigStoreBase
         private readonly string $projectDir,
         private readonly string $publicDir,
     ) {
-        parent::__construct();
+        parent::__construct($this->projectDir);
 
         $this->basePath = $this->projectDir . '/user/config/';
 

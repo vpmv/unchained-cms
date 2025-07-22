@@ -19,9 +19,10 @@ class ConfigStoreBase extends Cacheable
     protected $paths         = [];
     protected $authenticated = false;
 
-    public function __construct()
+    public function __construct(string $projectDir)
     {
-        parent::__construct('config.');
+        parent::__construct('config.', 'cache/unchained');
+        $this->basePath = $projectDir . '/user/config/';
     }
 
     public function readApplicationConfig(string $appId): mixed
@@ -70,5 +71,17 @@ class ConfigStoreBase extends Cacheable
         }
 
         return $this->systemConfig[$name] ?? $default;
+    }
+
+    public function getUnchainedConfig(): UnchainedConfig
+    {
+        $config = $this->readSystemConfig('config', 'config');
+        return $this->remember('unchained.config', function () use ($config) {
+            return new UnchainedConfig(
+                $config['title'] ?? 'Unchained',
+                $config['dashboard'] ?? [],
+                $config['navigation'] ?? [],
+            );
+        });
     }
 }

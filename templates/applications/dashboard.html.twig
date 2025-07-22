@@ -2,38 +2,36 @@
 {% trans_default_domain application.translation_domain %}
 
 {% block title %}
-    {{ application.meta.title|trans }} {#- {{ parent() }}#}
+    {{ parent() }} - {{ application.meta.title|trans }}
 {% endblock %}
 
-{% block content %}
+
+{% block dashboard_title %}
+    {{ application.meta.title|trans }}
+{% endblock %}
+
+{% block dashboard_links %}
     {% if application.category.categoryId != '_default' %}
         {% set categoryRoute = application.category.route(app.request.locale) %}
         {% if categoryRoute %}
-            <a class="btn btn-light" href="{{ url('dash_app', {app: categoryRoute}) }}" style="float: right">
+            <a class="btn btn-light" href="{{ url('dash_app', {app: categoryRoute}) }}" >
                 <i class="fa fa-arrow-left"></i>
                 {{ application.category.label|trans }}
             </a>
         {% endif %}
     {% endif %}
 
-    <h2>{{ application.meta.title|trans }}</h2>
-
-    {# TODO move to base #}
-    {% block links %}
-        {% if is_granted('IS_AUTHENTICATED_FULLY') %}
-            <div class="row">
-                <div class="col">
-                    {% if not application.frontend.uniqueConstraint %}
-                        <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}">
-                            <i class="fa fa-plus"></i>
-                            {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
+    {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+        {% if not application.frontend.uniqueConstraint %}
+            <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}">
+                <i class="fa fa-plus"></i>
+                {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
+            </a>
         {% endif %}
-    {% endblock %}
+    {% endif %}
+{% endblock %}
 
+{% block content %}
     {% if application.data %}
         <div class="table-responsive">
             <table class="table table-striped dashboard responsive">
@@ -58,7 +56,7 @@
                             {% endif %}
                         {% endfor %}
 
-                        {# TODO links #}
+                        {# TODO application links #}
 
                         {# edit buttons #}
                         <td>
@@ -66,8 +64,10 @@
                                 <div class="btn-group">
                                     {% if row.detail is defined %}
                                         <a class="btn btn-primary btn-sm"
-                                           href="{{ url(row.detail.link.route, row.detail.link.params) }}"><i
-                                                    class="fa fa-info"></i></a>
+                                           href="{{ url(row.detail.link.route, row.detail.link.params) }}"
+                                           title="{{ 'label.details' | trans }}">
+                                            <i class="fa fa-info"></i>
+                                        </a>
                                     {% endif %}
 
                                     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
@@ -76,7 +76,8 @@
                                                     class="fa fa-edit"></i>
                                         </a>
                                         <a class="btn btn-danger btn-sm"
-                                           href="javascript:;" onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'delete'}) }}'; }">
+                                           href="javascript:;"
+                                           onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'delete'}) }}'; }">
                                             <i class="fa fa-trash-alt"></i>
                                         </a>
                                     {% endif %}

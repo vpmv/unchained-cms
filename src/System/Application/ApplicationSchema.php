@@ -43,7 +43,7 @@ readonly class ApplicationSchema
             foreach ($query['conditions'] as $key => $cond) {
                 if (is_array($cond)) {
                     if (!empty($cond['in'])) {// fixme: prettify
-                        $subBuilder->andWhere("LOCATE(\",\"+_curr.$key+\",\", REPLACE(REPLACE(_$alias.$cond[in], \"]\", \",\"), \"[\", \",\")) > 0"); // fixme: only works for json array
+                        $subBuilder->andWhere("LOCATE(concat(concat(\",\",_curr.$key), \",\"), REPLACE(REPLACE(_$alias.$cond[in], \"]\", \",\"), \"[\", \",\")) > 0");
                     }
                     continue;
                 }

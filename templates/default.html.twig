@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <title>{% block title %}{{ unchained.title }}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
 
@@ -15,16 +15,18 @@
 {% block body %}
     <div id="wrapper">
         {% block navigation %}
-            {% if app_navigation.style == 'default' %}
-                {% include '/navigation/navigation_default.html.twig' %}
-            {% elseif app_navigation.style == 'side' %}
+            {% if unchained.navigation.style == 'side' %}
                 {% include '/navigation/navigation_side.html.twig' %}
+            {% else %}
+                {% include '/navigation/navigation_default.html.twig' %}
             {% endif %}
         {% endblock %}
 
         {% block content_container %}
             <div class="main container {{ application is defined ? application.appId : 'dashboard' }}">
+                {% block content_header %}{% endblock %}
                 {% block content %}{% endblock %}
+                {% block content_footer %}{% endblock %}
             </div>
         {% endblock %}
     </div>

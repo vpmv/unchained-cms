@@ -11,9 +11,9 @@ class Cacheable
     protected FilesystemAdapter $cache;
     private ?string             $cacheKey;
 
-    public function __construct(?string $cacheKey = null)
+    public function __construct(?string $cacheKey = null, ?string $directory = null)
     {
-        $this->cache    = new FilesystemAdapter();
+        $this->cache    = new FilesystemAdapter(directory: $directory);
         $this->cacheKey = $cacheKey;
     }
 
@@ -61,7 +61,7 @@ class Cacheable
      * @return mixed
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    protected function remember(string $key, callable $callback, int $ttl = 886400 * 7): mixed
+    protected function remember(string $key, callable $callback, int $ttl = 86400 * 7): mixed
     {
         if ($cache = $this->getCache($key)) {
             return $cache;

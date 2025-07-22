@@ -14,13 +14,6 @@
     <nav class="offcanvas-body navbar" role="navigation">
         <ul class="nav sidebar-nav">
             {% include '/navigation/navigation_l10n.html.twig' %}
-
-            {% if app_navigation.show_home ?? true %}
-                <li>
-                    <a href="/">Home</a>
-                </li>
-            {% endif %}
-
             {% include '/navigation/applications.html.twig' with {child_wrapper: 'li'} %}
         </ul>
         <ul class="nav user-menu">

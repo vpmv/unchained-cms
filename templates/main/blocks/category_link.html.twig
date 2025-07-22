@@ -1,0 +1,33 @@
+{% set catId = catId is defined ? catId : category.catId %}
+{% set title = title is defined ? title : category.label %}
+{% set path = path is defined ? path : category.route %}
+{% set links = links is defined ? links : [] %}
+{% set include_apps = include_apps is defined ? include_apps : unchained.dashboard.show_app_stack %}
+
+{% if catId != '_default' and path %}
+    <a class="cat cat-{{ catId }} btn border-bottom" href="{{ url('dash_app', {app: path}) }}">
+
+        <h2 class="title">
+            {{ title|trans([], ('category.'~catId)) }}
+{#            <i class="fa fa-folder fa-xs"></i>#}
+        </h2>
+        <div class="decorator"></div>
+    </a>
+{% endif %}
+
+{% if include_apps %}
+    <div class="apps row text-center justify-content-center">
+        {% for appId,application in category.applications %}
+            {% set title = application.config.meta.title %}
+            {% set path = application.route  %}
+
+            {% if unchained.dashboard.style == 'block' %}
+                {% include "main/blocks/application_block.html.twig"
+            {% else %}
+                <div class="col-md-4">
+                    {% include "main/blocks/application_link.html.twig" %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}

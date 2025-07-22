@@ -240,6 +240,7 @@ class ApplicationConfig
             'verbose_name'        => 'entity.verbose', // fixme: remove
             'verbose_name_plural' => 'entity.verbose_plural', // fixme: remove
             'exposes'             => $this->raw['meta']['exposes'] ?? null, // <= slugs output
+            'icon'                => $this->raw['meta']['icon'] ?? null,
         ];
 
         foreach ($this->fields as $field) {

@@ -1,7 +1,26 @@
 {% extends 'default.html.twig' %}
 
+{% block content_header %}
+    {% if app.request.pathinfo != '/' %}
+    <div class="d-flex justify-content-between">
+        <h2>{% block dashboard_title %}{% endblock %}</h2>
+        <div>
+            {% block dashboard_links %}{% endblock %}
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
-    {% for catId,cat in applications %}
-        {% include 'main/blocks/link_category.html.twig' with {category: cat, include_apps: true} %}
-    {% endfor %}
+    <div class="{{ unchained.dashboard.show_app_stack ? 'container' : 'row' }}">
+        {% for catId, category in applications %}
+            {% if unchained.dashboard.style == 'block' %}
+                {% include "main/blocks/category_block.html.twig" %}
+            {% else %}
+                <div class="cat-link cat-{{ catId }} row">
+                    {% include "main/blocks/category_link.html.twig" %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
 {% endblock %}
