@@ -23,7 +23,7 @@
         {% endblock %}
 
         {% block content_container %}
-            <div class="main container {{ application is defined ? application.appId : 'dashboard' }}">
+            <div class="main container {{ application is defined ? application.appId : 'dashboard' }} {{ 'nav-'~unchained.navigation.style }}">
                 {% block content_header %}{% endblock %}
                 {% block content %}{% endblock %}
                 {% block content_footer %}{% endblock %}

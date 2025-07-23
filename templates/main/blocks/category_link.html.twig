@@ -3,31 +3,36 @@
 {% set path = path is defined ? path : category.route %}
 {% set links = links is defined ? links : [] %}
 {% set include_apps = include_apps is defined ? include_apps : unchained.dashboard.show_app_stack %}
+{% set domain = domain ?? category.translation_domain ?? ('category.'~catId) %}
 
 {% if catId != '_default' and path %}
-    <a class="cat cat-{{ catId }} btn border-bottom" href="{{ url('dash_app', {app: path}) }}">
-
-        <h2 class="title">
+    <div class="cat-link cat-{{ catId }} d-flex">
+        <h3 class="">
             {{ title|trans([], ('category.'~catId)) }}
-{#            <i class="fa fa-folder fa-xs"></i>#}
-        </h2>
-        <div class="decorator"></div>
-    </a>
+            <small class="subtitle">{{ category.description | trans([], domain) }}</small>
+        </h3>
+        <a class="btn" href="{{ url('dash_app', {app: path}) }}">
+            <i class="fa fa-arrow-right"></i>
+        </a>
+    </div>
+{% else %}
+    <div class="cat-link uncategorized">
+        <h3>
+            {{ 'Uncategorized' | trans }}
+            <small class="subtitle" style="visibility: hidden">-</small>
+        </h3>
+    </div>
 {% endif %}
 
 {% if include_apps %}
-    <div class="apps row text-center justify-content-center">
+    <div class="apps row">
         {% for appId,application in category.applications %}
             {% set title = application.config.meta.title %}
-            {% set path = application.route  %}
+            {% set path = application.route %}
 
-            {% if unchained.dashboard.style == 'block' %}
-                {% include "main/blocks/application_block.html.twig"
-            {% else %}
-                <div class="col-md-4">
-                    {% include "main/blocks/application_link.html.twig" %}
-                </div>
-            {% endif %}
+            <div class="">
+                {% include "main/blocks/application_link.html.twig" %}
+            </div>
         {% endfor %}
     </div>
 {% endif %}

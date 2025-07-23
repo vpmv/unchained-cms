@@ -172,6 +172,9 @@ class ApplicationManager
                 });
             }
         }
+        $categories = array_filter($categories, function ($cat) {
+            return !!$cat['applications'];
+        });
 
         return $categories;
     }
@@ -232,12 +235,9 @@ class ApplicationManager
         }
     }
 
-    public function addRecordCount(?string $onlyCategoryId = null): array {
-        if (!$this->applications) {
-            $this->configureApplications();
-        }
-
-        foreach ($this->applications as $categoryId => &$category) {
+    public function addRecordCount(array &$applications, ?string $onlyCategoryId = null): array
+    {
+        foreach ($applications as $categoryId => &$category) {
             if ($onlyCategoryId && $onlyCategoryId != $categoryId) {
                 continue;
             }

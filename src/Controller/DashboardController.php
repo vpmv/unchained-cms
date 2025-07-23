@@ -42,7 +42,7 @@ class DashboardController extends AbstractController
 
         $unchainedConfig = $configStore->getUnchainedConfig();
         if ($unchainedConfig->getDashboard('show_counter', true)) {
-            $applications = $factory->addRecordCount();
+            $factory->addRecordCount($applications);
         }
 
         return $this->render('main/dashboard.html.twig', ['applications' => $applications]);
@@ -66,7 +66,7 @@ class DashboardController extends AbstractController
         if ($application instanceof Category) {
             $unchainedConfig = $configStore->getUnchainedConfig();
             if ($unchainedConfig->getDashboard('show_counter', true)) {
-                $applications = $factory->addRecordCount($application->appId);
+                $factory->addRecordCount($applications, $application->appId);
             }
 
             return $this->render('applications/category_index.html.twig', [

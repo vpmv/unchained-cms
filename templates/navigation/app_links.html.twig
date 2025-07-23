@@ -2,24 +2,18 @@
 {% set class = class ?? '' %}
 {% set active_app = active_app ?? '' %}
 
-{% for appId,a in applications %}
+{% for appId, application in applications %}
     {% if wrap %}
         <{{ wrap }}>
     {% endif %}
     <span class="d-flex justify-content-between">
 
-        <a class="{{ class }} app app-{{ a.appId }} {{ active_app == appId ? 'active' : '' }}" href="{{ url('dash_app', {app: a.route}) }}">
-            {{ a.config.meta.title|trans([], a.translation_domain) }}
+        <a class="{{ class }} app app-{{ application.appId }} {{ active_app == appId ? 'active' : '' }}" href="{{ url('dash_app', {app: application.route}) }}">
+            {{ application.config.meta.title|trans([], application.translation_domain) }}
         </a>
 
         {# show "add item" link #}
-        {% if is_granted('IS_AUTHENTICATED_FULLY') and unchained.navigation.show_quicklinks %}
-            <a class="{{ class }} app app-{{ appId }} plus" href="{{ url('admin_edit', {app: appId, category: a.config.category.categoryId}) }}"
-               title="{{ ('action.entity.create.verbose')|trans({ verbose: ('entity.verbose')|trans([], a.translation_domain) }, a.translation_domain) }}">
-                <i class="fa fa-plus"></i>
-
-            </a>
-        {% endif %}
+        {% include '/navigation/app_quicklinks.html.twig' with {class: class ~ 'app app-'~ appId} %}
 
     </span>
     {% if wrap %}

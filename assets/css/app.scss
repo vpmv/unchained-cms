@@ -7,27 +7,59 @@ body {
 
 .main {
   margin-top: 1rem;
+  &.nav-side {
+    @include media-breakpoint-down(md) {
+      margin-top: 3rem;
+    }
+  }
+
 
   &.dashboard {
     overflow-x: auto;
 
-    .apps.row {
-      padding: 0;
-
-      .app.btn {
-        min-width: 12rem;
-        margin-bottom: 1rem;
+    .cat-group {
+      margin-bottom: 1em;
+      .subtitle {
+        font-size: .5em;
+        color: #666;
+        display: block;
       }
+      .app {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px dotted #aaa;
 
-      @for $i from 1 through 10 {
-        :nth-child(#{$i}n) .app.btn { // fixme: replace btns with normal styling
-          background-color: mix($lightgray, $primary, ($i - 1) * 10%);
-          @if $i < 8 {
-            color: white;
-          }
+        &:hover, &:active {
+          background-color: lighten($primary, 70%);
+        }
+        .title {
+          flex-grow: 1;
+          text-decoration: none;
+          padding: .5em 0 0 .5em;
+        }
+        .actions > * {
+          vertical-align: middle;
         }
       }
     }
+
+    //.apps.row {
+    //  padding: 0;
+    //
+    //  .app.btn {
+    //    min-width: 12rem;
+    //    margin-bottom: 1rem;
+    //  }
+    //
+    //  @for $i from 1 through 10 {
+    //    :nth-child(#{$i}n) .app.btn {
+    //      background-color: mix($lightgray, $primary, ($i - 1) * 10%);
+    //      @if $i < 8 {
+    //        color: white;
+    //      }
+    //    }
+    //  }
+    //}
 
     .cat-block {
       &.col-12 {
