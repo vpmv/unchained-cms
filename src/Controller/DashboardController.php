@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\System\Application\Category;
 use App\System\ApplicationManager;
+use App\System\Configuration\ConfigStore;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -35,15 +36,20 @@ class DashboardController extends AbstractController
     }
 
     #[Route("/", name: "main")]
-    public function dashboard(ApplicationManager $factory): Response
+    public function dashboard(ApplicationManager $factory, ConfigStore $configStore): Response
     {
         $applications = $factory->getApplications(true);
+
+        $unchainedConfig = $configStore->getUnchainedConfig();
+        if ($unchainedConfig->getDashboard('show_counter', true)) {
+            $applications = $factory->addRecordCount();
+        }
 
         return $this->render('main/dashboard.html.twig', ['applications' => $applications]);
     }
 
     #[Route("/{app}", name: "app", requirements: ['app' => "[0-9a-z\-\/]{3,}"])]
-    public function application($app, ApplicationManager $factory): Response
+    public function application($app, ApplicationManager $factory, ConfigStore $configStore): Response
     {
         $application = $factory->getApplicationByPath($app);
         $data        = $application->run();
@@ -58,6 +64,11 @@ class DashboardController extends AbstractController
 
         $applications = $factory->getApplications(true);
         if ($application instanceof Category) {
+            $unchainedConfig = $configStore->getUnchainedConfig();
+            if ($unchainedConfig->getDashboard('show_counter', true)) {
+                $applications = $factory->addRecordCount($application->appId);
+            }
+
             return $this->render('applications/category_index.html.twig', [
                 'applications' => $applications,
                 'category'     => $data,

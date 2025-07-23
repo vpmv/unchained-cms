@@ -43,17 +43,16 @@ class Kernel extends BaseKernel
     protected function configureContainer(ContainerConfigurator $container): void
     {
         new Dotenv()->bootEnv($this->getProjectDir() . '/.env', $this->getEnvironment(), overrideExistingVars: true);
-        $locales = explode(',', $_ENV['LOCALES'] ?: 'en');
+        $locales        = explode(',', $_ENV['LOCALES'] ?: 'en');
         $default_locale = $_ENV['LOCALE'] ?? $locales[array_key_first($locales)];
 
-        $systemConfig = new ConfigStoreBase()->readSystemConfig('config', 'config');
+        $unchainedConfig = new ConfigStoreBase($this->getProjectDir())->getUnchainedConfig();
 
         $container->parameters()->set('kernel.public_dir', $this->publicDir);
         $container->parameters()->set('timezone', '%env(string:TZ)%');
         $container->parameters()->set('app.locales', $locales);
         $container->parameters()->set('locale', $default_locale);
-        $container->parameters()->set('app.name', $systemConfig['title'] ?? 'Unchained');
-        $container->parameters()->set('app.navigation', $systemConfig['navigation'] ?? ['style' => 'default']);
+        $container->parameters()->set('unchained.config', $unchainedConfig->toArray());
 
 
         $container->import(__DIR__ . '/../config/framework.yaml');

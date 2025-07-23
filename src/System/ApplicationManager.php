@@ -20,7 +20,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 class ApplicationManager
 {
-    /** @var array */
+    /** @var array Categorized listing of applications */
     private array $applications = [];
 
     /**
@@ -85,7 +85,7 @@ class ApplicationManager
 
         if (!file_exists($filesPath)) {
             mkdir($filesPath, 0777, true);
-        };
+        }
 
         $app = new Application($appId, $this->requestStack, $this->configStore, $this->repositoryManager->getRepository($appId), $this->getFormBuilder($appId), $this->translator);
         $this->loadApplicationExtension($appId);
@@ -149,9 +149,10 @@ class ApplicationManager
     /**
      * @param bool $visibleOnly
      *
-     * @return array
+     * @return array Categories;
+     *               If application is uncategorized, it's placed under _default
      */
-    public function getApplications(bool $visibleOnly = false)
+    public function getApplications(bool $visibleOnly = false): array
     {
         $this->configureApplications();
 
@@ -183,13 +184,13 @@ class ApplicationManager
         if (!$config) {
             throw new NotFoundHttpException('Category does not exist');
         }
-        $category = new Category($categoryId, $this->requestStack, $this->configStore, $this->translator);
-
-        return $category;
+        return new Category($categoryId, $this->requestStack, $this->configStore, $this->translator);
     }
 
     /**
-     * @throws \InvalidArgumentException
+     * Configures applications for current locale, nested within categories
+     *
+     * @return void
      */
     protected function configureApplications(): void
     {
@@ -203,7 +204,7 @@ class ApplicationManager
         foreach ($appConfig['applications'] as $appId => $app) {
             try {
                 $config = $this->configStore->getApplicationConfig($appId);
-            } catch (NoConfigurationException $e) {
+            } catch (NoConfigurationException) {
                 continue;
             }
 
@@ -226,8 +227,26 @@ class ApplicationManager
                 'config'             => $config,
                 'route'              => $this->configStore->getApplicationUri($appId, null, $locale),
                 'translation_domain' => Property::schemaName($appId),
+                'entry_count'        => -1,
             ];
         }
+    }
+
+    public function addRecordCount(?string $onlyCategoryId = null): array {
+        if (!$this->applications) {
+            $this->configureApplications();
+        }
+
+        foreach ($this->applications as $categoryId => &$category) {
+            if ($onlyCategoryId && $onlyCategoryId != $categoryId) {
+                continue;
+            }
+            foreach ($category['applications'] as $appId => &$app) {
+                $app['entry_count'] = $this->getApplication($appId, $categoryId)->getRepository()->getCount('', null);
+            }
+        }
+
+        return $this->applications;
     }
 
     private function isAuthorizedFully(): bool
@@ -235,7 +254,7 @@ class ApplicationManager
         return !empty($this->security->getToken()?->getRoleNames());
     }
 
-    private function getFormBuilder(string $applicationId)
+    private function getFormBuilder(string $applicationId): \Symfony\Component\Form\FormBuilderInterface
     {
         return $this->forms->createBuilder(FormType::class, [], [
             'translation_domain' => Property::schemaName($applicationId),

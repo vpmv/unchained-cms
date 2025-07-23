@@ -13,13 +13,14 @@ body {
 
     .apps.row {
       padding: 0;
+
       .app.btn {
         min-width: 12rem;
         margin-bottom: 1rem;
       }
 
       @for $i from 1 through 10 {
-        :nth-child(#{$i}n) .app.btn {
+        :nth-child(#{$i}n) .app.btn { // fixme: replace btns with normal styling
           background-color: mix($lightgray, $primary, ($i - 1) * 10%);
           @if $i < 8 {
             color: white;
@@ -31,8 +32,10 @@ body {
     .cat-block {
       &.col-12 {
         background-color: $primary;
+
         .cat {
           height: 4em;
+
           .title {
             text-align: center;
             width: 100%;
@@ -40,6 +43,7 @@ body {
         }
       }
     }
+
     .app-block, .cat-block {
       margin-bottom: 1.5rem;
 
@@ -50,6 +54,7 @@ body {
         height: 8em;
         position: relative;
         color: #fff;
+        border-radius: .5em;
 
         .title {
           position: absolute;
@@ -60,15 +65,44 @@ body {
           @include media-breakpoint-up(md) {
             font-size: 1.5em;
           }
+
           &:first-letter {
             font-size: 1.5em;
           }
+        }
+
+        .count {
+          display: block;
+          position: absolute;
+          right: .5em;
+          top: .5em;
+          padding: .2em .5em;
+          background-color: rgba(200, 200, 200, .3);
+          text-decoration: none;
+          border-radius: 25%;
+          text-align: center;
+          line-height: 1.2em;
+          font-size: 1.5rem;
+          color: #ddd;
         }
       }
 
       &.col {
         @for $i from 1 through 20 {
           &:nth-child(#{$i}) {
+            $nth-index: $i;
+            @if $i > 10 {
+              $nth-index: $i - 10;
+            }
+
+            .cat {
+              background-color: nth($nth-color, $nth-index);
+            }
+
+            .app {
+              background-color: mix($lightgray, $secondary, $nth-index * 10%);
+            }
+
             @media (max-width: map-get($grid-breakpoints, md)) {
               width: 100%;
               flex: 0 0 100%;
@@ -79,10 +113,9 @@ body {
                 flex: 0 0 60%;
               }
 
-              .app, .cat {
-                background-color: mix($lightgray, $secondary, $i/2 * 10%);
+              .app {
                 .title {
-                  right: 0
+                  right: 0.5em;
                 }
               }
 
@@ -91,10 +124,9 @@ body {
                 flex: 0 0 40%;
               }
 
-              .app, .cat {
-                background-color: mix($lightgray, $secondary, $i/2 * 10%);
+              .app {
                 .title {
-                  left: 0
+                  left: 0.5em;
                 }
               }
             }

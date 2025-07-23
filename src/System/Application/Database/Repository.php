@@ -377,9 +377,19 @@ class Repository extends Cacheable
         return $this->activeRow['_exposed'] ?? $default;
     }
 
-    public function getCount(string $column, $value): int // todo
+    /**
+     * @param string $column
+     * @param mixed  $value
+     *
+     * @return int
+     * @todo Implement conditional
+     */
+    public function getCount(string $column, mixed $value): int
     {
-        return count($this->data);
+        if (!empty($column)) {
+            throw new \LogicException('count by param not implemented');
+        }
+        return $this->schema->countRecords();
     }
 
     public function getDistinctCount(string $column, $value)

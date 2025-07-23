@@ -17,6 +17,18 @@ readonly class ApplicationSchema
         $this->validateTable();
     }
 
+    public function countRecords(): int {
+        $b = $this->connection->createQueryBuilder()
+            ->from($this->table, '_curr')
+            ->select('COUNT(_curr.id)');
+        $count = $b->executeQuery()->fetchOne();
+        if (!$count) {
+            return 0;
+        }
+
+        return (int)$count;
+    }
+
     public function getData(array $conditions = [], array $columns = [], array $sort = [], array $joins = [], array $subQueries = []): array
     {
         $columns = $columns ?: ['*'];

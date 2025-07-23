@@ -15,6 +15,9 @@
         {# style this however you like #}
         <div class="decorator"></div>
         <span class="title">{{ title|trans([], domain) }}</span>
+        {% if unchained.dashboard.show_count and application.entry_count > 0 %}
+            <span class="count">{{ application.entry_count }}</span>
+        {% endif %}
     </a>
 
     {% if links and links is iterable %}

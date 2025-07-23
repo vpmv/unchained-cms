@@ -16,6 +16,14 @@
         {% for catId, category in applications %}
             {% if unchained.dashboard.style == 'block' %}
                 {% include "main/blocks/category_block.html.twig" %}
+
+                {# Simulate category block with uncategorized applications #}
+                {% if catId == '_default' %}
+                    {% for catId, category in category.applications %}
+                        {% include "main/blocks/category_block.html.twig" with {include_apps: false, title: category.config.meta.title} %}
+                    {% endfor %}
+                {% endif %}
+
             {% else %}
                 <div class="cat-link cat-{{ catId }} row">
                     {% include "main/blocks/category_link.html.twig" %}

@@ -32,7 +32,7 @@ class FormModule extends AbstractModule
                         'data-toggle'   => 'toggle',
                         'data-onlabel'  => $this->container->translate($field->getLabel('enabled')),
                         'data-offlabel' => $this->container->translate($field->getLabel('disabled')),
-                        'data-ontyle'   => 'primary',
+                        'data-onstyle'   => 'primary',
                         'data-offstyle' => 'outline-primary',
                     ];
                     $fieldOptions['label'] = false;

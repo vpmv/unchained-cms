@@ -38,6 +38,7 @@ class UnchainedConfig
     protected const DEFAULT_DASHBOARD  = [
         'style'          => 'default',
         'show_app_stack' => true,
+        'show_count'     => true,
     ];
     protected const DEFAULT_NAVIGATION = [
         'style'           => NavigationStyle::Default,
@@ -75,11 +76,22 @@ class UnchainedConfig
 
         $this->dashboard['style']          = $dashboardStyle->convert();
         $this->dashboard['show_app_stack'] = filter_var($this->dashboard['show_app_stack'], FILTER_VALIDATE_BOOL);
+        $this->dashboard['show_count'] = filter_var($this->dashboard['show_count'], FILTER_VALIDATE_BOOL);
 
         $this->navigation['style']           = $navigationStyle->convert();
         $this->navigation['show_home']       = filter_var($this->navigation['show_home'], FILTER_VALIDATE_BOOL);
         $this->navigation['home_icon_only']  = filter_var($this->navigation['home_icon_only'], FILTER_VALIDATE_BOOL);
         $this->navigation['show_quicklinks'] = filter_var($this->navigation['show_quicklinks'], FILTER_VALIDATE_BOOL);
+    }
+
+    public function getDashboard(string $elem, mixed $default = null): mixed
+    {
+        return $this->dashboard[$elem] ?? $default;
+    }
+
+    public function getNavigation(string $elem, mixed $default = null): mixed
+    {
+        return $this->navigation[$elem] ?? $default;
     }
 
     public function toArray(): array

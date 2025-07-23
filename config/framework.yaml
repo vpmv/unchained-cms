@@ -26,6 +26,11 @@ framework:
     log: true
 
   cache:
+    directory: '%kernel.project_dir%/cache'
+#    pools:
+#      unchained.cache:
+#        adapter: cache.adapter.filesystem
+#        tags: true
     #prefix_seed: your_vendor_name/app_name
     # APCu (not recommended with heavy random-write workloads as memory fragmentation can cause perf issues)
     #app: cache.adapter.apcu
