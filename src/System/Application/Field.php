@@ -724,6 +724,10 @@ class Field
             'form'      => !$this->extra['ignored'],
         ];
 
-        $this->moduleConfig['dashboard']['class'] = $classes[$config['dashboard']['visibility'] ?? 'all'] ?? 'all';
+        // allow setting `field.visibility: 'value'`
+        if (!is_array($v = $config['dashboard'] ?? 'all')) {
+            $config['dashboard']['visibility'] = $v;
+        }
+        $this->moduleConfig['dashboard']['class'] = $classes[$config['dashboard']['visibility']] ?? 'all';
     }
 }

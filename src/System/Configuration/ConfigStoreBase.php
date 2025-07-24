@@ -25,7 +25,7 @@ class ConfigStoreBase extends Cacheable
         $this->basePath = $projectDir . '/user/config/';
     }
 
-    public function readApplicationConfig(string $appId): mixed
+    public function readApplicationConfig(string $appId): array
     {
         return $this->remember('application.raw.' . $appId, function () use ($appId) {
             $config = $this->readYamlFile('applications/' . $appId . '.yaml');
@@ -63,7 +63,7 @@ class ConfigStoreBase extends Cacheable
     public function readSystemConfig(string $name, ?string $attribute = null, mixed $default = null): mixed
     {
         $this->systemConfig[$name] = $this->remember('system.' . $name, function () use ($name) {
-            return $this->readYamlFile('system/' . $name . '.yaml');
+            return $this->readYamlFile($name . '.yaml');
         });
 
         if ($attribute) {

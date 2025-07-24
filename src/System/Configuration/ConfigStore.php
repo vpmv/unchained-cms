@@ -42,17 +42,20 @@ class ConfigStore extends ConfigStoreBase
      * Retrieve and parse application configuration
      *
      * @param string $appId
+     * @param array  $baseConfig
      *
      * @return \App\System\Configuration\ApplicationConfig
-     * @throws \InvalidArgumentException if configuration file is not found
-     * @throws \Symfony\Component\Routing\Exception\NoConfigurationException If configuration is missing mandatory 'application' attribute
+     * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function getApplicationConfig(string $appId): ApplicationConfig
+    public function getApplicationConfig(string $appId, array $baseConfig = []): ApplicationConfig
     {
         if (!isset($this->applications[$appId])) {
             $this->timer->start('config.' . $appId);
-            $this->applications[$appId] = $this->remember('application.' . $appId, function () use ($appId) {
+            $this->applications[$appId] = $this->remember('application.' . $appId, function () use ($appId, $baseConfig) {
                 $config = $this->readApplicationConfig($appId);
+                if ($baseConfig['category'] ?? null) {
+                    $config['category'] = $baseConfig['category'];
+                }
                 return new ApplicationConfig($this, $config, $appId, $this->projectDir);
             });
             $this->timer->stop('config.' . $appId);

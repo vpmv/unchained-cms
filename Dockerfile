@@ -59,13 +59,17 @@ RUN mkdir -p public/media && \
     chown -R www-data: public/media \
 ;
 
-RUN if [ -z "user/assets/user.js" ]; then ln -s user/assets/user.dist.js user/assets/user.js; fi
+RUN if [ -z "user/assets/user.js" ]; then ln -s user/assets/user.js.dist user/assets/user.js; fi
+RUN if [ -z "user/config.yaml" ]; then ln -s user/config.yaml.dist user/config.yaml; fi
+RUN if [ -z "user/applications.yaml" ]; then ln -s user/applications.yaml.dist user/applications.yaml; fi
+RUN if [ -z "user/config/framework/security.yaml" ]; then ln -s user/config/framework/security.yaml.dist user/config/framework/security.yaml; fi
+
 RUN yarn install && yarn encore $env
 
 RUN mkdir vendor/ && \
     chown -R www-data: vendor \
 ;
 
-#USER www-data:
+USER www-data:
 
 RUN bin/composer.sh $env

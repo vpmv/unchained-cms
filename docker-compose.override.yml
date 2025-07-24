@@ -21,6 +21,8 @@ services:
       - 3306:3306
     volumes:
       - mysql:/var/lib/mysql
+      # initialize a db for development
+      - "./.docker/mysql/_unchained_dev.sql:/docker-entrypoint-initdb.d/1-dev-data.sql"
     environment:
       MYSQL_USER: user
       MYSQL_PASSWORD: secret

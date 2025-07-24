@@ -145,7 +145,7 @@ body {
                 flex: 0 0 60%;
               }
 
-              .app {
+              .app, .cat {
                 .title {
                   right: 0.5em;
                 }
@@ -156,7 +156,7 @@ body {
                 flex: 0 0 40%;
               }
 
-              .app {
+              .app, .cat {
                 .title {
                   left: 0.5em;
                 }
@@ -233,49 +233,11 @@ img.media {
 }
 
 /* DataTables */
-.dataTables_wrapper {
+.dt-container {
   margin-top: 1rem;
 
   table.dataTable.dtr-inline.collapsed {
-    // collapsed
-    & > tbody > tr[role="row"] > td.dtr-control:before,
-    & > tbody > tr[role="row"] > th.dtr-control:before {
-      font-family: "Font Awesome 5 Free", "Font\ Awesome\ 5\ Free", FontAwesome;
-      font-weight: 900; // required by FA
-      content: "\F0DD";
-
-      width: 10px;
-      height: auto;
-      top: 50%;
-      margin-top: -.5em;
-      background-color: transparent;
-      border: 0;
-      border-radius: 0;
-      color: #000;
-      -webkit-box-shadow: none;
-      -moz-box-shadow: none;
-      box-shadow: none;
-    }
-
-    & > tbody > tr[role="row"].no-child > td:first-child {
-      cursor: default;
-
-      &:before {
-        display: none;
-      }
-    }
-
-    // expanded
-    & > tbody > tr.parent > th.dtr-control:before {
-      font-family: "Font Awesome 5 Free", "Font\ Awesome\ 5\ Free", FontAwesome;
-      font-weight: 900; // required by FA
-      content: "\F0DE";
-      margin-top: 0;
-    }
-
-
     tr.child {
-      //display: table;
       width: 100%;
 
       ul.dtr-details > li {

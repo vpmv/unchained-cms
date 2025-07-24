@@ -51,13 +51,10 @@ class FormModule extends AbstractModule
                     } elseif ($rawData instanceof Column) {
                         $fieldOptions['data'] = $rawData->getValue();
                     }
-                    $fieldOptions['attr'] += ['class' => 'selectpicker', 'title' => 'Select...'];
+                    $fieldOptions['attr'] += ['class' => 'selectpicker', 'title' => 'Select...', 'data-live-search' => 'true'];
                     if ($fieldOptions['required']) {
                         $fieldOptions['attr']['required'] = 'required';
                     }
-
-                    // TODO
-                    //$fieldOptions['attr'] += ['data-live-search' => $fieldOptions['suggestions'] ?? true];
 
                     $choices = $this->container->getFieldOptions($field, (!is_array($fieldOptions['data']) ? $fieldOptions['data'] : null));
                     unset ($fieldOptions['choices']);

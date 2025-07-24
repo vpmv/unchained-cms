@@ -42,7 +42,6 @@ class Kernel extends BaseKernel
 
     protected function configureContainer(ContainerConfigurator $container): void
     {
-        new Dotenv()->bootEnv($this->getProjectDir() . '/.env', $this->getEnvironment(), overrideExistingVars: true);
         $locales        = explode(',', $_ENV['LOCALES'] ?: 'en');
         $default_locale = $_ENV['LOCALE'] ?? $locales[array_key_first($locales)];
 

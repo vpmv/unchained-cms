@@ -60,7 +60,7 @@ class ApplicationConfig
 
     private function setCategory(ConfigStore $configStore): void
     {
-        $this->category = $configStore->getCategoryConfig($this->raw['category'] ?? 'default');
+        $this->category = $configStore->getCategoryConfig($this->raw['category'] ?? '_default');
     }
 
     /**
@@ -206,12 +206,15 @@ class ApplicationConfig
     protected function setModules(): void
     {
         $modules = [
-            'detail' => [
+            'dashboard' => [
+                'sort' => [],
+            ],
+            'detail'    => [
                 'enabled' => true,
                 'params'  => ['slug'], // fixme: architecture prevents configuration
                 'public'  => true, // todo
             ],
-            'charts' => [
+            'charts'    => [
                 'enabled' => false,
                 'public'  => true, // todo
             ],
@@ -237,10 +240,10 @@ class ApplicationConfig
     {
         $this->meta = [
             'title'               => $this->raw['label'] ?? Property::displayLabel($this->raw['name'], 'title'),
-            'verbose_name'        => 'entity.verbose', // fixme: remove
-            'verbose_name_plural' => 'entity.verbose_plural', // fixme: remove
             'exposes'             => $this->raw['meta']['exposes'] ?? null, // <= slugs output
             'icon'                => $this->raw['meta']['icon'] ?? null,
+            'sort'                => $this->raw['meta']['sort'] ?? null,
+            'slug'                => $this->raw['meta']['slug'] ?? null,
         ];
 
         foreach ($this->fields as $field) {
@@ -259,35 +262,28 @@ class ApplicationConfig
         }
 
         // add slug field
+        $slugConfig = [
+            'dashboard' => false,
+            'detail'    => false,
+            'public'    => false,
+            'type'      => 'text',
+            'length'    => 100,
+            'pointer'   => [
+                'fields' => [],
+                'type'   => 'slug',
+            ],
+        ];
         if ($this->meta['slug'] ?? null) {
-            $this->fields['_slug'] = new Field($this->appId, '_slug', [
-                'dashboard' => false,
-                'detail'    => false,
-                'public'    => false,
-                'type'      => 'text',
-                'length'    => 100,
-                'pointer'   => [
-                    'fields' => (array)$this->meta['slug'],
-                    'type'   => 'slug',
-                ],
-            ], $configStore);
+            $slugConfig['pointer']['fields'] = (array)$this->meta['slug'];
+            $this->fields['_slug'] = new Field($this->appId, '_slug', $slugConfig, $configStore);
         } else {
             if ($this->meta['exposes'] != 'id') {
-                $this->fields['_slug'] = new Field($this->appId, '_slug', [
-                    'dashboard' => false,
-                    'detail'    => false,
-                    'public'    => false,
-                    'type'      => 'text',
-                    'length'    => 100,
-                    'pointer'   => [
-                        'fields' => (array)$this->meta['exposes'],
-                        'type'   => 'slug',
-                    ],
-                ], $configStore);
+                $slugConfig['pointer']['fields'] = (array)$this->meta['exposes'];
+                $this->fields['_slug'] = new Field($this->appId, '_slug', $slugConfig, $configStore);
             }
         }
 
-        $sortKeys = !empty($this->raw['sort']) ? $this->raw['sort'] : (array)$this->meta['exposes'];
+        $sortKeys = $this->getSortConfiguration();
         foreach ($sortKeys as $key => $dir) {
             if (is_int($key)) {
                 $key = $dir;
@@ -296,6 +292,23 @@ class ApplicationConfig
 
             $this->sort[$this->getSchemaColumn($key)] = $dir;
         }
+    }
+
+    /**
+     * Get sorting configuration
+     *
+     * @return array
+     */
+    private function getSortConfiguration(): array
+    {
+        if (!empty($this->raw['sort'])) {
+            return $this->raw['sort'];
+        } elseif (!empty($this->meta['sort'])) {
+            return $this->meta['sort'];
+        } elseif (!empty($this->modules['dashboard']['sort'])) {
+            return $this->modules['dashboard']['sort'];
+        }
+        return (array)$this->meta['exposes'];
     }
 
     private function getSchemaColumn(string $column): string

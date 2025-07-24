@@ -5,13 +5,13 @@ namespace App\System\Configuration;
 enum DashboardStyle: string
 {
     case Default = 'default';
-    case Button = 'button';
+    case Text = 'text';
     case Block = 'block';
 
     public function convert(): string
     {
         return match ($this) {
-            DashboardStyle::Default, DashboardStyle::Button => DashboardStyle::Default->value,
+            DashboardStyle::Default, DashboardStyle::Text => DashboardStyle::Default->value,
             DashboardStyle::Block => DashboardStyle::Block->value,
         };
     }

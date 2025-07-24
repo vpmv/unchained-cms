@@ -1,5 +1,8 @@
+.wiki
 .idea
 .env.local
+
+.docker/mysql/*
 
 /public/build/
 /node_modules
@@ -9,8 +12,8 @@
 
 # USER GENERATED CONTENT
 /user/assets/*
+/user/config/*.yaml
 /user/config/applications/*.yaml
-/user/config/system/*.yaml
 /user/config/framework/*.yaml
 /user/extensions/*
 /user/templates/*
