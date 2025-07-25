@@ -7,8 +7,13 @@
     {% endif %}
 </li>
 {% endif %}
+
 {% if is_granted('IS_AUTHENTICATED_FULLY') %}
 <li class="nav-item refresh">
     <a class="nav-link" href="{{ url('dash_refresh') }}" title="{{ 'reload config' | trans }}"><i class="fa fa-sync-alt"></i></a>
 </li>
+{% endif %}
+
+{% if unchained.navigation.show_theme_switcher %}
+    {% include "/navigation/theme_select.html.twig" %}
 {% endif %}

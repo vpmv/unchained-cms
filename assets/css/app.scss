@@ -132,7 +132,7 @@ body {
             }
 
             .app {
-              background-color: mix($lightgray, $secondary, $nth-index * 10%);
+              background-color: color-mix($lightgray, $secondary, $nth-index * 10%);
             }
 
             @media (max-width: map-get($grid-breakpoints, md)) {

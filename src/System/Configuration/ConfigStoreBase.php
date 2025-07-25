@@ -9,6 +9,13 @@ class ConfigStoreBase extends Cacheable
 {
     use YamlReader;
 
+    private const BASE_KEYS = [
+        'category',
+        'order',
+        'public',
+        'routes',
+    ];
+
     /** @var \App\System\Configuration\ApplicationConfig[] */
     protected $applications = [];
     /** @var ApplicationCategory[] */
@@ -28,9 +35,20 @@ class ConfigStoreBase extends Cacheable
     public function readApplicationConfig(string $appId): array
     {
         return $this->remember('application.raw.' . $appId, function () use ($appId) {
+            $baseConfig = $this->readSystemConfig('applications', 'applications')[$appId] ?? null;
+            if (null === $baseConfig) {
+                throw new \LogicException('Error 50: <applications.appID> must exist; You\'ve done the impossible!');
+            }
+
             $config = $this->readYamlFile('applications/' . $appId . '.yaml');
             if (empty($config['application'])) {
                 throw new NoConfigurationException('No configuration found for App<' . $appId . '>');
+            }
+
+            foreach (self::BASE_KEYS as $key) {
+                if ($baseConfig[$key] ?? null) {
+                    $config['application'][$key] = $baseConfig[$key];
+                }
             }
 
             return $config['application'];
@@ -79,6 +97,7 @@ class ConfigStoreBase extends Cacheable
         return $this->remember('unchained.config', function () use ($config) {
             return new UnchainedConfig(
                 $config['title'] ?? 'Unchained',
+                ($config['theme'] ?? $config['default_theme']) ?? 'auto',
                 $config['dashboard'] ?? [],
                 $config['navigation'] ?? [],
             );

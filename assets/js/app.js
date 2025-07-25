@@ -11,6 +11,7 @@ import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css'
 import 'datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css'
 
 import '@fortawesome/fontawesome-free/css/all.min.css'
+import "bootstrap-icons/font/bootstrap-icons.min.css"
 
 import '../css/app.scss';
 import '../css/forms.scss';
@@ -18,3 +19,4 @@ import '../css/nav.scss';
 
 import './tables'
 import './forms'
+import './themes'

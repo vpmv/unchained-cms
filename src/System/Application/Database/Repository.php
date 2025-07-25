@@ -614,24 +614,49 @@ class Repository extends Cacheable
                             'id' => $source['column'],
                         ],
                         'alias'      => 'count',
+                        'function'   => 'count',
+                        'field'      => 'id',
                     ];
                     if ($source['function'] == 'count_in') {
                         $result['subQueries'][$alias]['conditions']['id'] = ['in' => $source['column']];
                     }
-                    continue;
+                    continue; // note to self: no need to nest If control statement
                 }
-                if (in_array($source['function'], ['find_in', 'find_in_max'])) {
+
+                if (in_array($source['function'], ['avg', 'average'])) {
+                    if (empty($source['field'])) {
+                        throw new \InvalidArgumentException('Missing attribute <field> for source configuration');
+                    }
+                    $result['subQueries'][$alias] = [
+                        'from'       => Property::schemaName($source['application']),
+                        'conditions' => [
+                            'id' => $source['column'],
+                        ],
+                        'alias'      => 'avg',
+                        'function'   => 'avg',
+                        'field'      => $source['field'],
+                    ];
+                    continue; // note to self: no need to nest If control statement
+                }
+
+                if (str_starts_with($source['function'], 'find_in')) {
+                    $function = ltrim(str_replace('find_in', '', $source['function']), '_');
+                    if (empty($source['field'])) {
+                        throw new \InvalidArgumentException('Missing attribute <field> for source configuration');
+                    } elseif ($function && !in_array($function, ['max', 'min', 'avg'])) {
+                        throw new \InvalidArgumentException('Invalid <function> for source configuration');
+                    }
+
                     $result['subQueries'][$alias] = [
                         'from'       => Property::schemaName($source['application']),
                         'conditions' => [
                             'id' => ['in' => $source['column']],
                         ],
                         'alias'      => 'find_in',
+                        'function'   => $function,
+                        'field'      => $source['field'],
                     ];
-                    if ($source['function'] == 'find_in_max') {
-                        $result['subQueries'][$alias]['function'] = 'max';
-                    }
-                    continue;
+                    continue; // note to self: no need to nest If control statement
                 }
 
                 $result['joins'][$alias] = [

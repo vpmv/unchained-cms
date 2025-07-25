@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html lang="{{ app.request.locale }}" data-bs-theme="{{ unchained.theme | replace({'auto': ''}) }}">
 <head>
     <title>{% block title %}{{ unchained.title }}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

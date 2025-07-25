@@ -3,6 +3,7 @@ FROM php:8.4-fpm
 ARG dir="/var/www/"
 ARG timezone="Europe/Amsterdam"
 ARG env="prod"
+ARG user="www-data"
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV TZ $timezone
@@ -70,6 +71,6 @@ RUN mkdir vendor/ && \
     chown -R www-data: vendor \
 ;
 
-USER www-data:
+USER $user:
 
 RUN bin/composer.sh $env

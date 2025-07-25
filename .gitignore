@@ -2,9 +2,11 @@
 .idea
 .env.local
 
-.docker/mysql/*
+.docker/**/*
+!.docker/nginx/default.conf
 
 /public/build/
+/public/media/
 /node_modules
 
 /vendor/

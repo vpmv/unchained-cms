@@ -13,7 +13,7 @@ class Cacheable
 
     public function __construct(?string $cacheKey = null, ?string $directory = null)
     {
-        $this->cache    = new FilesystemAdapter(directory: $directory);
+        $this->cache    = new FilesystemAdapter();
         $this->cacheKey = $cacheKey;
     }
 

@@ -372,15 +372,71 @@ class Field
         $this->setData('value', $value);
     }
 
-    private function getTransformer(?string $fieldType = null)
+    private function getTransformer(?string $fieldType = null): mixed
     {
         $transformer = $this->extra['transformers'][$fieldType ?? $this->getDisplayType()] ?? [];
-        if (isset($transformer['transform']) && $transformer['transform'] === false) {
+        if (empty($transformer['transform'])) {
             return null;
         }
 
         return $transformer;
     }
+
+    /**
+     * @param array $config
+     *
+     * @return void
+     *
+     * @fixme changing scalar value is illegal?
+     */
+    private function setTransformer(array $config): void
+    {
+        $transformers = [
+            'date'   => [
+                'suffix'        => ['key' => 'suffix', 'value' => null,],
+                'math_round'    => ['key' => 'round', 'value' => 'floor', 'validate' => true],
+                'math_round_to' => ['key' => 'round_to', 'value' => 'auto',],
+            ],
+            'number' => [
+                'scalar'               => ['key' => 'scalar', 'value' => 'string'],
+                'math_round'           => ['key' => 'round', 'value' => false, 'validate' => true],
+                'math_round_precision' => ['key' => 'round_precision', 'value' => 2],
+                'suffix'               => ['key' => 'suffix', 'value' => null],
+            ],
+            'text'   => [
+                'suffix' => ['key' => 'suffix', 'value' => null],
+            ],
+        ];
+
+        $validate = function (mixed $fn): bool|string {
+            if (true === $fn) {
+                return 'round';
+            } elseif (false === $fn) {
+                return false;
+            }
+            if (!in_array($fn, ['round', 'floor', 'ceil'])) {
+                throw new \InvalidArgumentException(sprintf('Invalid option value <round: "%s"> for Field<%s.%s>; choices [ceil, floor, round]', $fn, $this->appId, $this->id));
+            }
+            return $fn;
+        };
+
+        // find transformer
+        $transformerType = array_key_first($config);
+        if ($transformer = $transformers[$transformerType] ?? false) {
+            $config = $config[$transformerType];
+            $result = $transformer + ['transform' => true];
+
+            foreach ($transformer as $key => $cond) {
+                $result[$key] = $config[$cond['key']] ?? $cond['value'];
+                if ($cond['validate'] ?? false) {
+                    $result[$key] = $validate($result[$key]);
+                }
+            }
+
+            $this->extra['transformers'] = [$transformerType => $result];
+        }
+    }
+
 
     public function isVisible(?ApplicationModuleInterface $module): bool
     {
@@ -681,24 +737,9 @@ class Field
             $this->extra['constraint'] = 'unique';
         }
 
-        $this->extra['transformers'] = [
-            // fixme a field is only one type
-            'date'   => [
-                'transform'     => !empty($config['_transform']['date']),
-                'suffix'        => $config['_transform']['date']['suffix'] ?? null,
-                'math_round'    => $config['_transform']['date']['round'] ?? 'floor',
-                'math_round_to' => $config['_transform']['date']['round_to'] ?? 'auto',
-            ],
-            'number' => [
-                'scalar'               => $config['_transform']['number']['scalar'] ?? 'string',
-                'math_round'           => $config['_transform']['number']['round'] ?? false,
-                'math_round_precision' => $config['_transform']['number']['round_precision'] ?? 2,
-                'suffix'               => $config['_transform']['number']['suffix'] ?? null,
-            ],
-            'text'   => [
-                'suffix' => $config['_transform']['text']['suffix'] ?? null,
-            ],
-        ];
+        if (!empty($config['_transform'])) {
+            $this->setTransformer($config['_transform']);
+        }
     }
 
     private function setVisibility(array $config)
@@ -726,7 +767,7 @@ class Field
 
         // allow setting `field.visibility: 'value'`
         if (!is_array($v = $config['dashboard'] ?? 'all')) {
-            $config['dashboard']['visibility'] = $v;
+            $config['dashboard'] = ['visibility' => $v];
         }
         $this->moduleConfig['dashboard']['class'] = $classes[$config['dashboard']['visibility']] ?? 'all';
     }

@@ -36,7 +36,7 @@ class RepositoryManager extends Cacheable
         $this->remember('init', function () {
             $applications = $this->configStore->readSystemConfig('applications', 'applications');
             foreach ($applications as $appId => $application) {
-                new Repository($this, $this->em, $this->timer, $this->configStore, $this->configStore->getApplicationConfig($appId, $application));
+                new Repository($this, $this->em, $this->timer, $this->configStore, $this->configStore->getApplicationConfig($appId));
             }
         });
     }

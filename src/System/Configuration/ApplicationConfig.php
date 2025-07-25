@@ -42,6 +42,10 @@ class ApplicationConfig
         $this->setCategory($configStore);
     }
 
+    public function isPublic(): bool {
+        return $this->raw['public'] ?? true;
+    }
+
     /**
      * @return string
      */

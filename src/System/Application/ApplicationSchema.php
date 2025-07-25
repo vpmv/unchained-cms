@@ -50,7 +50,7 @@ readonly class ApplicationSchema
         foreach ($subQueries as $alias => $query) {
             $subBuilder = $this->connection->createQueryBuilder();
             $subBuilder
-                ->select('count(id)')// fixme
+                ->select($query['function'] .'('. $query['field'] . ')') // e.g.: count(id) / max(date) / avg(rating)
                 ->from($query['from'], '_' . $alias);
             foreach ($query['conditions'] as $key => $cond) {
                 if (is_array($cond)) {

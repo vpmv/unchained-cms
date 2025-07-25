@@ -350,6 +350,7 @@ class Application
             ],
         ];
 
+        // fixme: add wait group for external/pointer fields until all is resolved
         foreach ($this->getFields() as $field) {
             if (!$field->isVisible($this->module) && !$field->isSlug()) { // fixme: append data into modules directly
                 continue;
@@ -417,14 +418,6 @@ class Application
 
         if (false === $diff) {
             return $ago->format('Y M d');
-        }
-
-        if (!in_array($round, [
-            'floor',
-            'ceil',
-            'round',
-        ])) {
-            throw new \LogicException('"' . $round . '" is not a valid Math function');
         }
 
         $diffWeeks = call_user_func($round, $diff->d / 7);

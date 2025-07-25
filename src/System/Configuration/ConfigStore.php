@@ -47,16 +47,12 @@ class ConfigStore extends ConfigStoreBase
      * @return \App\System\Configuration\ApplicationConfig
      * @throws \Psr\Cache\InvalidArgumentException
      */
-    public function getApplicationConfig(string $appId, array $baseConfig = []): ApplicationConfig
+    public function getApplicationConfig(string $appId): ApplicationConfig
     {
         if (!isset($this->applications[$appId])) {
             $this->timer->start('config.' . $appId);
-            $this->applications[$appId] = $this->remember('application.' . $appId, function () use ($appId, $baseConfig) {
-                $config = $this->readApplicationConfig($appId);
-                if ($baseConfig['category'] ?? null) {
-                    $config['category'] = $baseConfig['category'];
-                }
-                return new ApplicationConfig($this, $config, $appId, $this->projectDir);
+            $this->applications[$appId] = $this->remember('application.' . $appId, function () use ($appId) {
+                return new ApplicationConfig($this, $this->readApplicationConfig($appId), $appId, $this->projectDir);
             });
             $this->timer->stop('config.' . $appId);
         }

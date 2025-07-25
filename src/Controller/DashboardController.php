@@ -8,6 +8,7 @@ use App\System\Configuration\ConfigStore;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -26,13 +27,15 @@ class DashboardController extends AbstractController
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
     #[Route("/refresh", name: "refresh")]
-    public function clearCache(): RedirectResponse
+    public function clearCache(Request $request): RedirectResponse
     {
         $this->denyAccessUnlessGranted('IS_AUTHENTICATED');
         $cache = new FilesystemAdapter();
         $cache->clear();
 
-        return $this->redirect('/');
+        $referer = $request->headers->get('referer', '/');
+
+        return $this->redirect($referer);
     }
 
     #[Route("/", name: "main")]

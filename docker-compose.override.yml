@@ -4,8 +4,11 @@ services:
     build:
       args:
         env: dev
+        # Customize runtime user (default: www-data)
+        # Useful for installing packages without rebuilding the container
+        #user: root
     environment:
-      TZ: Europe/Amsterdam
+      TZ: Europe/Amsterdam # Picked up by the Kernel
     volumes:
       - .env.local:/var/www/.env.local
       - ./assets:/var/www/assets
@@ -22,7 +25,7 @@ services:
     volumes:
       - mysql:/var/lib/mysql
       # initialize a db for development
-      - "./.docker/mysql/_unchained_dev.sql:/docker-entrypoint-initdb.d/1-dev-data.sql"
+      #- "./.docker/mysql/_unchained_dev.sql:/docker-entrypoint-initdb.d/1-dev-data.sql"
     environment:
       MYSQL_USER: user
       MYSQL_PASSWORD: secret

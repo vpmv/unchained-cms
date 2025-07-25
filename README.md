@@ -24,14 +24,21 @@ The user directory is ideal for setting up a nested Git repo. This way you can k
 Read the wiki on how to [Configure and use your first app](https://github.com/vpmv/unchained/wiki/applications)
 
 # Features
- * [x]  Highly customizable front-end, with two built-in styles
- * [x]  Admin backend
- * [x]  Link applications with each other, using their values and counting occurrences
+ * [x]  Highly customizable front-end
+     * **New in v1.2**: Two built-in styles (textual/blocky)
+     * **New in v1.2**: Themes (dark/light/auto)
+ * [x]  Public / private views with admin backend
+     * Configure which apps / fields are publicly visible
+ * [x]  Link applications with each other, cross-referencing values<br>
+     * Count foreign records
+     * **New in v1.2**: find min/max dates & show averages
  * [x]  Customize data output by referencing values, through user written code
+     * **New in v1.2**: Helper functions and example scripts to help you get started 
  * [x]  Extend or replace templates
- * [x]  Custom styling using Webpack 
+ * [x]  Native customizable/extendable styling using Webpack standards 
  * [x]  Translation support
- * [x]  Application categorization (needs some tweaking)
+ * [x]  Application categorization
+     * Easily define categories with automatic routing 
  
  ## Roadmap
 
