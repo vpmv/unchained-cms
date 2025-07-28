@@ -13,8 +13,10 @@
     </div>
     <nav class="offcanvas-body navbar" role="navigation">
         <ul class="nav sidebar-nav">
-            {% include '/navigation/navigation_l10n.html.twig' %}
-            {% include '/navigation/applications.html.twig' with {child_wrapper: 'li'} %}
+            {% if unchained.locales|length > 1 %}
+                {% include '/navigation/navigation_l10n.html.twig' %}
+            {% endif %}
+            {% include '/navigation/applications.html.twig' %}
         </ul>
         <ul class="nav user-menu">
         {% include '/navigation/user.html.twig' %}

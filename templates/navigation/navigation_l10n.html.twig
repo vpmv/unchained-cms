@@ -5,8 +5,8 @@
         <i class="flag-icon flag-icon-{{ loc|lower|replace({'en':'gb'}) }}"></i> {{ loc|upper }}
     </a>
     <div class="dropdown-menu" aria-labelledby="dropdown-locales">
-        {% for locale in enabled_locales %}
-            <a class="dropdown-item lang-choice" href="{{ path('locale_switch', {_locale: locale}) }}">
+        {% for locale in unchained.locales %}
+            <a class="dropdown-item lang-choice {{ locale == loc ? 'active' : '' }}" href="{{ path('locale_switch', {_locale: locale}) }}">
                 <i class="flag-icon flag-icon-{{ locale|replace({'en': 'gb'}) }}"></i> {{ locale|upper }}
             </a>
         {% endfor %}

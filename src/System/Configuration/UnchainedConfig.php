@@ -62,9 +62,17 @@ class UnchainedConfig
         protected string $theme = 'auto',
         protected array $dashboard = [],
         protected array $navigation = [],
+        protected array $locales = [],
+        protected ?string $locale = null,
     ) {
         $this->dashboard  = array_replace_recursive(self::DEFAULT_DASHBOARD, $this->dashboard);
         $this->navigation = array_replace_recursive(self::DEFAULT_NAVIGATION, $this->navigation);
+
+        if ($this->locales) {
+            if (!$this->locale || !in_array($this->locale, $this->locales)) {
+                $this->locale = $this->locales[0];
+            }
+        }
 
         $this->validate();
     }
@@ -114,11 +122,22 @@ class UnchainedConfig
         return $this->navigation[$elem] ?? $default;
     }
 
+    public function getLocale(): ?string
+    {
+        return $this->locale;
+    }
+
+    public function getLocales(): array
+    {
+        return $this->locales;
+    }
+
     public function toArray(): array
     {
         return [
             'theme'      => $this->theme,
             'title'      => $this->title,
+            'locales'    => $this->locales,
             'dashboard'  => $this->dashboard,
             'navigation' => $this->navigation,
         ];

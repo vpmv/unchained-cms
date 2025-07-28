@@ -18,8 +18,10 @@
             {% block user_menu %}
                 <div class="my-2 my-lg-0">
                     <ul class="navbar-nav">
-                        {% include '/navigation/navigation_l10n.html.twig' with {} %}
-                        {% include '/navigation/user.html.twig' with {} %}
+                        {% if unchained.locales|length > 1 %}
+                            {% include '/navigation/navigation_l10n.html.twig' %}
+                        {% endif %}
+                        {% include '/navigation/user.html.twig' %}
                     </ul>
                 </div>
             {% endblock %}

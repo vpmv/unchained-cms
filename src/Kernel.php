@@ -3,15 +3,12 @@
 namespace App;
 
 use App\EventListener\LocaleListener;
-use App\System\Configuration\ConfigStore;
 use App\System\Configuration\ConfigStoreBase;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
-use function Symfony\Component\DependencyInjection\Loader\Configurator\env;
 
 class Kernel extends BaseKernel
 {
@@ -42,15 +39,13 @@ class Kernel extends BaseKernel
 
     protected function configureContainer(ContainerConfigurator $container): void
     {
-        $locales        = explode(',', $_ENV['LOCALES'] ?: 'en');
-        $default_locale = $_ENV['LOCALE'] ?? $locales[array_key_first($locales)];
-
         $unchainedConfig = new ConfigStoreBase($this->getProjectDir())->getUnchainedConfig();
+        $locale          = $_ENV['LOCALE'] ?? $unchainedConfig->getLocale();
 
         $container->parameters()->set('kernel.public_dir', $this->publicDir);
         $container->parameters()->set('timezone', '%env(string:TZ)%');
-        $container->parameters()->set('app.locales', $locales);
-        $container->parameters()->set('locale', $default_locale);
+        $container->parameters()->set('unchained.locales', $unchainedConfig->getLocales());
+        $container->parameters()->set('locale', $locale);
         $container->parameters()->set('unchained.config', $unchainedConfig->toArray());
 
 
