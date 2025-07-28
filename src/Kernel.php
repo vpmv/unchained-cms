@@ -50,6 +50,7 @@ class Kernel extends BaseKernel
 
 
         $container->import(__DIR__ . '/../config/framework.yaml');
+        $container->import(__DIR__ . '/../config/packages/cache.yaml');
         $container->import(__DIR__ . '/../config/packages/doctrine.yaml');
         $container->import(__DIR__ . '/../config/packages/security.yaml');
         $container->import(__DIR__ . '/../config/packages/twig.yaml');

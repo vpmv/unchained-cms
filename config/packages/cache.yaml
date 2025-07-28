@@ -1,0 +1,11 @@
+framework:
+  cache:
+    directory: '%kernel.cache_dir%/pools' # Only used with cache.adapter.filesystem
+
+    app: cache.adapter.filesystem
+
+    pools:
+      doctrine.system_cache_pool:
+        adapter: cache.app
+      doctrine.result_cache_pool:
+        adapter: cache.app
