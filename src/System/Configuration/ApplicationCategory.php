@@ -7,8 +7,6 @@ use App\System\Application\Property;
 class ApplicationCategory
 {
     /** @var string */
-    private $categoryId;
-    /** @var string */
     private $description;
     /** @var string */
     private $label;
@@ -17,13 +15,12 @@ class ApplicationCategory
 
     private $routes = [];
 
-    public function __construct(string $categoryId, array $config)
+    public function __construct(private string $categoryId, private array $config, public ?Route $route = null)
     {
-        $this->categoryId  = $categoryId;
         $this->description = Property::displayLabel($this->categoryId, 'category') . '.description';
         $this->label       = Property::displayLabel($this->categoryId, 'title.category');
-        $this->setRoutes($config);
-        $this->setVisibility($config);
+        $this->setRoutes($this->config);
+        $this->setVisibility($this->config);
     }
 
     public function getCategoryId()
@@ -50,11 +47,21 @@ class ApplicationCategory
     }
 
     /**
+     * Helper method defining category type
+     *
+     * @return bool
+     */
+    public function isDefault(): bool
+    {
+        return $this->categoryId == '_default';
+    }
+
+    /**
      * @param string|null $locale
      *
      * @return string
      */
-    public function getRoute(?string $locale = null, bool $addSlash = false): string
+    public function getRoutes(?string $locale = null, bool $addSlash = false): string
     {
         $route = $this->routes['_default'];
         if ($locale && isset($this->routes[$locale])) {

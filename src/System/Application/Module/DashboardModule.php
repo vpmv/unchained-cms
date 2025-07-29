@@ -16,7 +16,7 @@ class DashboardModule extends AbstractModule
                     'raw'         => null,
                     'field'       => null,
                     'transformed' => false,
-                    'link'        => $this->container->getPublicUri(null, true, ['slug' => $detailVal]),
+                    'link' => $this->container->getRoute(null, ['slug' => $detailVal]),
                 ];
             }
         }

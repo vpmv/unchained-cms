@@ -13,8 +13,6 @@ class ApplicationConfig
 
     /** @var string Application identifier */
     public string $appId;
-    /** @var \App\System\Configuration\ApplicationCategory */
-    private ApplicationCategory $category;
     /** @var array Configuration */
     private array $config = [];
 
@@ -28,7 +26,7 @@ class ApplicationConfig
     /** @var array Raw config */
     private array $raw;
 
-    public function __construct(ConfigStore $configStore, array $configuration, string $appId, string $projectDir)
+    public function __construct(ConfigStore $configStore, protected ApplicationCategory $category, array $configuration, string $appId, string $projectDir)
     {
         $this->basePath = $projectDir . '/config/';
 
@@ -39,7 +37,6 @@ class ApplicationConfig
         $this->setModules();
         $this->prepareFields($configStore);
         $this->prepareFrontend($configStore);
-        $this->setCategory($configStore);
     }
 
     public function isPublic(): bool {
@@ -62,9 +59,15 @@ class ApplicationConfig
         return $this->category;
     }
 
-    private function setCategory(ConfigStore $configStore): void
+    /**
+     * @param string     $key
+     * @param mixed|null $default
+     *
+     * @return mixed
+     */
+    public function getConfig(string $key, mixed $default = null): mixed
     {
-        $this->category = $configStore->getCategoryConfig($this->raw['category'] ?? '_default');
+        return $this->raw[$key] ?? $default;
     }
 
     /**
@@ -171,7 +174,7 @@ class ApplicationConfig
      *
      * @return array|null
      */
-    public function getMeta(?string $attribute = null): ?array
+    public function getMeta(?string $attribute = null): mixed
     {
         return $attribute ? ($this->meta[$attribute] ?? null) : $this->meta;
     }
@@ -229,6 +232,7 @@ class ApplicationConfig
             $modules = array_replace_recursive($modules, $this->raw['modules']);
         }
         $modules['form'] = ['enabled' => true]; // fixme: this shouldn't be necessary
+        $modules['dashboard']['enabled'] = true; // fixme: dito
 
         $this->modules = $modules;
     }

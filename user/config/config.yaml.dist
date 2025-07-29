@@ -40,7 +40,7 @@ config:
     # Show navigation button "Home"
     show_home: true
 
-    # Home icon: e.g. "⌂ Home"
+    # Home icon: e.g. "🏠 Home"
     # use ~ (tilde) to disable
     home_icon: fa fa-home
 

@@ -30,7 +30,7 @@
 
 
 {% block dashboard_links %}
-    <a class="btn btn-light" href="{{ url('dash_app', {app: application.public_uri}) }}"><i class="fa fa-arrow-left"></i> {{ 'label.overview'|trans }}</a>
+    <a class="btn btn-light" href="{{ url(application.route.getName(), application.route.getParams()) }}"><i class="fa fa-arrow-left"></i> {{ 'label.overview'|trans }}</a>
 
     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
         <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId, uuid: application.data.pk.value, action: 'edit'}) }}">

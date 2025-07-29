@@ -10,6 +10,7 @@ use App\System\Application\Module\FormModule;
 use App\System\Application\Module\RedirectModule;
 use App\System\Configuration\ApplicationConfig;
 use App\System\Configuration\ConfigStore;
+use App\System\Configuration\Route;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -22,7 +23,6 @@ class Application
     /** @var bool Requested module accepted */
     protected bool $accepted = true;
 
-    protected bool $isPublic        = true;
     protected bool $isAuthenticated = false;
 
     /** @var \App\System\Application\Module\ApplicationModuleInterface */
@@ -46,8 +46,7 @@ class Application
         public FormBuilderInterface $formBuilder, // fixme: ?
         protected TranslatorInterface $translator,
     ) {
-        $this->config          = $configStore->getApplicationConfig($this->appId);
-        $this->isPublic        = $configStore->isAuthorized($this->appId);
+        $this->config = $configStore->getApplication($this->appId);
         $this->isAuthenticated = $configStore->isAuthenticated();
     }
 
@@ -77,36 +76,23 @@ class Application
         return $translation;
     }
 
-    public function getPublicUri(?string $source = null, bool $getPath = false, array $parameters = [])
+    public function getRoute(?string $source = null, array $parameters = []): ?Route
     {
         if (!$this->configStore->isAuthorized($this->appId, $source)) {
             return null;
         }
 
-        $uri = $this->configStore->getApplicationUri($this->appId, $source);
-        if ($getPath) {
-            $uri = [
-                'route'  => 'dash_app',
-                'params' => [
-                    'app' => $uri,
-                ],
-            ];
-
-            if (!empty($parameters['slug'])) {
-                if (!$this->configStore->isAuthorized($this->appId, $source, 'detail')) {
-                    return null;
-                }
-
-                $slug = trim($parameters['slug']);
-                unset($parameters['slug']);
-                $uri['params']['app'] .= '/' . $slug;
+        $route = $this->configStore->getApplicationRoute($this->appId, $source);
+        if (!empty($parameters['slug'])) {
+            if (!$this->configStore->isAuthorized($this->appId, $source, 'detail')) {
+                return null;
             }
-            if (!empty($parameters)) {
-                $uri['params']['?'] = $parameters;
-            }
+        } elseif ($parameters && !isset($parameters['slug'])) {
+            $parameters = ['?' => $parameters];
         }
+        $route->addParameters($parameters);
 
-        return $uri;
+        return $route;
     }
 
     public function getDirectory(string $type = ConfigStore::DIR_FILES, ?string $sourceAlias = null): string
@@ -252,7 +238,7 @@ class Application
                 }
 
                 $this->module = new RedirectModule($this, $this->getRequest());
-                $this->module->setData(['redirect' => $this->getPublicUri(null, true)]);
+                $this->module->setData(['redirect' => $this->getRoute()]);
                 $this->module->prepare();
 
                 return;
@@ -297,8 +283,10 @@ class Application
             // todo: remove
             'translation_domain' => Property::schemaName($this->appId),
             'meta'               => $this->config->meta,
-            'public_uri'         => $this->getPublicUri(),
             'frontend'           => compact('uniqueConstraint'),
+            'route'         => $this->configStore->getApplicationRoute($this->appId),
+            // fixme
+            'categoryRoute' => $this->configStore->router->matchApp($this->config->getCategory()->getCategoryId(), $this->appId),
         ];
         $moduleData = $this->module->getData();
         if ($moduleData && ctype_alpha(key($moduleData))) {
@@ -313,11 +301,6 @@ class Application
     protected function prepareData(): void
     {
         $this->data = [];
-
-        // globally modify visibility
-        foreach ($this->getFields() as $field) {
-            $field->setModuleVisibility($this->module, $this->isAuthenticated); // fixme: adapt in data assignment
-        }
 
         if ($this->module instanceof DashboardModule) {
             while ($row = $this->repository->next()) {
@@ -352,6 +335,7 @@ class Application
 
         // fixme: add wait group for external/pointer fields until all is resolved
         foreach ($this->getFields() as $field) {
+            $field->authenticateVisibility($this->module, $this->configStore->router->isAuthenticated());
             if (!$field->isVisible($this->module) && !$field->isSlug()) { // fixme: append data into modules directly
                 continue;
             }

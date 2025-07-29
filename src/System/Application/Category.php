@@ -38,7 +38,7 @@ class Category extends Application
         $data = [
             'categoryId'         => $this->appId,
             'translation_domain' => 'category_' . preg_replace('/\W+/', '_', $this->appId),
-            'public_uri'         => $this->configStore->getCategoryUri($this->appId, $this->requestStack->getMainRequest()->getLocale()),
+            'route' => $this->configStore->router->matchApp($this->appId),
             'description'        => $this->config->getDescription(),
             'label'              => $this->config->getLabel(),
         ];

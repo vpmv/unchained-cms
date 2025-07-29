@@ -1,6 +1,5 @@
 {% set catId = catId is defined ? catId : category.catId %}
 {% set title = title is defined ? title : category.label %}
-{% set path = path is defined ? path : category.route %}
 {% set with_image = with_image ?? false %}
 {% set domain = domain ?? category.translation_domain ?? ('category.'~catId) %}
 
@@ -8,9 +7,9 @@
 {% set class = class ?? (include_apps ? 'col-12' : 'col') %}
 {% set links = links is defined ? links : [] %}
 
-{% if catId != '_default' and path %}
+{% if catId != '_default' %}
     <div class="cat-block {{ class }} cat-{{ catId }}">
-        <a class="cat cat-{{ catId }}" href="{{ url('dash_app', {app: path}) }}">
+        <a class="cat cat-{{ catId }}" href="{{ url(category.route.getName(), category.route.getParams()) }}">
             {% if with_image %}
                 <img src="/assets/images/design/{{ catId }}.jpg">
             {% endif %}

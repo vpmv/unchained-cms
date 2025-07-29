@@ -16,12 +16,25 @@ Installation is easiest using [Docker](https://docs.docker.com). The project com
 Please read the [Installation Guide](https://github.com/vpmv/unchained/wiki/installation)
 
 
-# User configurations
+# User configuration
 The user directory is the starting point of your applications. Unchained will look here first for configurations, templates and extensions.
 
 The user directory is ideal for setting up a nested Git repo. This way you can keep the core updated by pulling this repo whilst maintaining the freedom within your own configurations.
 
 Read the wiki on how to [Configure and use your first app](https://github.com/vpmv/unchained/wiki/applications)
+
+
+## Customization
+
+Unchained is easily extended with Webpack Encore. The entrypoint is preconfigured at `/user/assets/user.js`. <br> Feel free to add your own scripts and styling.
+
+Unchained comes with the following Icon packs:
+* FontAwesome 5
+* Bootstrap Icons 1.13 
+
+Templates are easily overridden as well. See [the sources](tree/master/templates) for templates you wish to override and put them in `/user/templates`.
+
+More information is found on the wiki.
 
 # Features
  * [x]  Highly customizable front-end

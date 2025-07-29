@@ -12,7 +12,7 @@ class DetailModule extends AbstractModule
     public function prepare(): void
     {
         if (!$this->data || key($this->data) != 'pk') {
-            $this->output['redirect'] = $this->container->getPublicUri(null, true);
+            $this->output['redirect'] = $this->container->getRoute();
 
             return;
         }

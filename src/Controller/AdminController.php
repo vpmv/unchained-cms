@@ -32,9 +32,7 @@ class AdminController extends AbstractController
         $data = $application->run();
 
         if (!empty($data['redirect'])) {
-            $redirect = $data['redirect'];
-
-            return $this->redirect($this->generateUrl($redirect['route'], $redirect['params']));
+            return $this->redirect($this->generateUrl($data['redirect']->getName(), $data['redirect']->getParams()));
         }
 
         $applications = $applicationManager->getApplications(true);

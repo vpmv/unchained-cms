@@ -7,7 +7,6 @@ use App\System\Configuration\ConfigStore;
 use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\SecurityBundle\Security;
 
 class RepositoryManager extends Cacheable
 {
@@ -17,7 +16,6 @@ class RepositoryManager extends Cacheable
         private readonly ConfigStore $configStore,
         private readonly EntityManagerInterface $em,
         private readonly Timer $timer,
-        private readonly Security $security,
     ) {
         parent::__construct('repoman.');
         $this->initialize();
@@ -34,9 +32,11 @@ class RepositoryManager extends Cacheable
     private function initialize(): void
     {
         $this->remember('init', function () {
-            $applications = $this->configStore->readSystemConfig('applications', 'applications');
+            $this->configStore->configureApplications();
+
+            $applications = $this->configStore->getApplications();
             foreach ($applications as $appId => $application) {
-                new Repository($this, $this->em, $this->timer, $this->configStore, $this->configStore->getApplicationConfig($appId));
+                new Repository($this, $this->em, $this->timer, $this->configStore, $application);
             }
         });
     }
@@ -47,13 +47,8 @@ class RepositoryManager extends Cacheable
             return $this->repositories[$applicationId];
         }
 
-        $this->repositories[$applicationId] = new Repository($this, $this->em, $this->timer, $this->configStore, $this->configStore->getApplicationConfig($applicationId));
+        $this->repositories[$applicationId] = new Repository($this, $this->em, $this->timer, $this->configStore, $this->configStore->getApplication($applicationId));
 
         return $this->repositories[$applicationId];
-    }
-
-    public function isAuthorizedFully(): bool
-    {
-        return !empty($this->security->getToken()?->getRoleNames());
     }
 }

@@ -1,7 +1,7 @@
 {% if cell.field %}
     {% if cell.field.type == 'image' and cell.value %}
         {% if cell.link %}
-            {% include 'applications/blocks/link.html.twig' with {image: cell.value, link: url(cell.link.route, cell.link.params), title: cell.title} %}
+            {% include 'applications/blocks/link.html.twig' with {image: cell.value, link: url(cell.link.getName(), cell.link.getParams()), title: cell.title} %}
         {% else %}
             <span class="media-box">
                 {% include 'applications/blocks/image_small.html.twig' with {source: cell.value, title: cell.title} %}
@@ -52,7 +52,7 @@
             {% if cell.value is iterable and cell.link is iterable %}
                 {% for k,link in cell.link %}
                     {% if link %}
-                        {% include 'applications/blocks/link.html.twig' with {text: cell.value[k], link: url(link.route, link.params)} %}
+                        {% include 'applications/blocks/link.html.twig' with {text: cell.value[k], link: url(link.getName(), link.getParams())} %}
                     {% else %}
                         {{ cell.value[k] }}
                     {% endif %}
@@ -60,11 +60,11 @@
             {% elseif cell.field.type == 'url' and cell.value %}
                 {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: cell.value, target: "blank"} %}
             {% elseif cell.field.type != 'url' %}
-                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: url(cell.link.route, cell.link.params)} %}
+                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: url(cell.link.getName(), cell.link.getParams())} %}
             {% endif %}
         {% elseif cell.reference %}
-            {% if cell.reference.route is defined %}
-                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: url(cell.reference.route, cell.reference.params) ~ '#' ~ cell.reference.reference, icon: 'fa fa-search'} %}
+            {% if cell.reference.isAuthenticated() %}
+                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: url(cell.reference.getName(), cell.reference.getParams()) ~ '#' ~ cell.reference.getParam('reference'), icon: 'fa fa-search'} %}
             {% else %}
                 {{ cell.value }}
             {% endif %}

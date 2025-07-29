@@ -1,6 +1,5 @@
 {% set catId = catId is defined ? catId : category.catId %}
 {% set title = title is defined ? title : category.label %}
-{% set path = path is defined ? path : category.route %}
 {% set links = links is defined ? links : [] %}
 {% set include_apps = include_apps is defined ? include_apps : unchained.dashboard.show_app_stack %}
 {% set domain = domain ?? category.translation_domain ?? ('category.'~catId) %}
@@ -11,7 +10,7 @@
             {{ title|trans([], ('category.'~catId)) }}
             <small class="subtitle">{{ category.description | trans([], domain) }}</small>
         </h3>
-        <a class="btn" href="{{ url('dash_app', {app: path}) }}">
+        <a class="btn" href="{{ url(category.route.getName(), category.route.getParams()) }}">
             <i class="fa fa-arrow-right"></i>
         </a>
     </div>

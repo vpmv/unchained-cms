@@ -1,0 +1,104 @@
+<?php
+
+namespace App\System;
+
+use App\System\Configuration\Route;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Translation\LocaleSwitcher;
+
+/**
+ * Router MUST be included after RepoMan
+ */
+class Router
+{
+    /** @var array<string, Route> Routes => Application */
+    protected array $routes;
+    /**
+     * @var array<string, Route> Application => Route <br>
+     *                           Reverse routes only come in one locale,
+     *                           and should be redirected accordingly
+     */
+    private string  $locale;
+    protected array $routesReverse;
+    private array   $authRoles;
+
+    public function __construct(Security $security, private readonly RouterInterface $sfRouter, private readonly RequestStack $requestStack, private readonly LocaleSwitcher $localeSwitcher)
+    {
+        $this->locale    = $requestStack->getCurrentRequest()->getLocale();
+        $this->authRoles = $security->getToken()?->getRoleNames() ?? [];
+    }
+
+    public function addRoutes(Route ...$routes)
+    {
+        foreach ($routes as $route) {
+            $this->routes[$route->getUri()]                                    = $route;
+            $this->routesReverse[$route->getIdentifier()][$route->getLocale()] = $route;
+        }
+    }
+
+
+    public function match(string $uri): Route
+    {
+        if (!isset($this->routes[$uri])) {
+            throw new NotFoundHttpException('Could not resolve route to app.');
+        }
+
+        return $this->routes[$uri];
+    }
+
+    public function matchApp(string $appId, ?string $childId = null, ?string $locale = null): Route|array
+    {
+        if ($childId) {
+            if ($appId == '_default') {
+                $appId = $childId;
+            } else {
+                $appId = Route::identifier($appId, $childId);
+            }
+        }
+
+        if (!isset($this->routesReverse[$appId])) {
+            throw new NotFoundHttpException("No routes for app <$appId>");
+        }
+
+        /** @var Route[] $routes */
+        $routes = $this->routesReverse[$appId];
+
+        // clone Route preventing alterations
+        $route = clone($routes[$locale ?? $this->locale] ?? $routes['_default']);
+        $route->setAuthenticated($this->isAuthenticated());
+
+        return $route;
+    }
+
+    /**
+     * @return bool
+     * @fixme factor out
+     */
+    public function isAuthenticated(): bool
+    {
+        return !empty($this->authRoles);
+    }
+
+    public function resolve(Route $route): ?Response
+    {
+        $redirect = null;
+        if ($route->getLocale() != $this->localeSwitcher->getLocale()) {
+            $request = $this->requestStack->getMainRequest();
+
+            $this->localeSwitcher->setLocale($route->getLocale());
+            $request->setLocale($route->getLocale());
+            $request->getSession()->set('_locale', $route->getLocale());
+        }
+
+        if ($route->isAuthenticationRequired() && !$this->isAuthenticated()) {
+            $redirect = new RedirectResponse($this->sfRouter->generate('admin_login', ['redirect' => $route->getUri()]));
+        }
+
+        return $redirect;
+    }
+}

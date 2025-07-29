@@ -2,8 +2,9 @@
 .idea
 .env.local
 
-.docker/**/*
-!.docker/nginx/default.conf
+.docker/php/media
+.docker/mysql/*.sql
+!.docker/php/bin/*
 
 /public/build/
 /public/media/

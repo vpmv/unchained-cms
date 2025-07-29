@@ -12,13 +12,10 @@
 
 {% block dashboard_links %}
     {% if application.category.categoryId != '_default' %}
-        {% set categoryRoute = application.category.route(app.request.locale) %}
-        {% if categoryRoute %}
-            <a class="btn btn-light" href="{{ url('dash_app', {app: categoryRoute}) }}" >
-                <i class="fa fa-arrow-left"></i>
-                {{ application.category.label|trans }}
-            </a>
-        {% endif %}
+        <a class="btn btn-light" href="{{ url(application.categoryRoute.getName(), application.categoryRoute.getParams()) }}" >
+            <i class="fa fa-arrow-left"></i>
+            {{ application.category.label|trans }}
+        </a>
     {% endif %}
 
     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
@@ -49,7 +46,7 @@
                 </thead>
                 <tbody>
                 {% for row in application.data %}
-                    <tr {% if row.detail is defined %}data-detail-url="{{ url(row.detail.link.route, row.detail.link.params) }}"{% endif %}>
+                    <tr {% if row.detail is defined %}data-detail-url="{{ url(row.detail.link.getName(), row.detail.link.getParams()) }}"{% endif %}>
                         {% for cell in row %}
                             {% if cell.visible %}
                                 <td class="{{ cell.field.type }}">{% include 'applications/blocks/cell.html.twig' with {cell: cell} %}</td>
@@ -64,7 +61,7 @@
                                 <div class="btn-group">
                                     {% if row.detail is defined %}
                                         <a class="btn btn-primary btn-sm"
-                                           href="{{ url(row.detail.link.route, row.detail.link.params) }}"
+                                           href="{{ url(row.detail.link.getName(), row.detail.link.getParams()) }}"
                                            title="{{ 'label.details' | trans }}">
                                             <i class="fa fa-info"></i>
                                         </a>

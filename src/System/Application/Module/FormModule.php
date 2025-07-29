@@ -121,7 +121,7 @@ class FormModule extends AbstractModule
         if ($form->isSubmitted() && $form->isValid()) {
             try {
                 $this->container->getRepository()->persist($form->getData());
-                $this->output['redirect'] = $this->container->getPublicUri(null, true);
+                $this->output['redirect'] = $this->container->getRoute();
 
                 return;
             } catch (UniqueConstraintViolationException $e) {

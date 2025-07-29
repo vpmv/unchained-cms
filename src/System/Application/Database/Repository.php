@@ -49,12 +49,12 @@ class Repository extends Cacheable
         ApplicationConfig $applicationConfig,
     ) {
         $this->appId = $applicationConfig->appId;
-        $this->auth  = $repositoryManager->isAuthorizedFully();
+        $this->auth = $this->configStore->router->isAuthenticated();
 
         parent::__construct('repo.' . $applicationConfig->appId . '.auth-' . intval($this->auth) . '.');
 
         $this->sortBy                    = $applicationConfig->sort;
-        $this->config['exposed_columns'] = (array)$applicationConfig->meta['exposes'];
+        $this->config['exposed_columns'] = (array)$applicationConfig->getMeta('exposes') ?? [];
         $this->config['foreign_column']  = Property::foreignKey($applicationConfig->appId);
 
         $this->schema = new ApplicationSchema(
@@ -414,15 +414,16 @@ class Repository extends Cacheable
     {
         $this->filterUnknownColumns($data);
 
-        $cacheKeys   = ['data', 'record.' . $this->primaryKey];
-        $persistData = [];
+        $applicationConfig = $this->configStore->getApplication($this->appId);
+        $cacheKeys         = ['data', 'record.' . $this->primaryKey];
+        $persistData       = [];
 
         /**
          * @var Field $field
          * @var mixed $value
          */
         foreach ($data as $field => $value) {
-            $field = $this->configStore->getApplicationField($this->appId, $field);
+            $field = $applicationConfig->getField($field);
             switch ($field->getFormType()) {
                 case 'file':
                     if ($value instanceof UploadedFile) {
@@ -466,7 +467,7 @@ class Repository extends Cacheable
         }
 
         if ($this->slugField != 'id') {
-            $slugField = $this->configStore->getApplicationField($this->appId, $this->slugField);
+            $slugField = $applicationConfig->getField($this->slugField);
             try {
                 $currentValue = $this->getColumn($this->slugField)->getValue();
             } catch (LogicException $e) {
@@ -475,7 +476,7 @@ class Repository extends Cacheable
 
             $slugContext = [];
             foreach ($slugField->getPointer()['fields'] as $fieldId) {
-                $field         = $this->configStore->getApplicationField($this->appId, $fieldId);
+                $field = $applicationConfig->getField($fieldId);
                 $slugFieldData = $data[$fieldId] ?? null;
                 if ($slugFieldData instanceof DateTime) {
                     switch ($field->getFormType()) {
@@ -639,7 +640,7 @@ class Repository extends Cacheable
                     continue; // note to self: no need to nest If control statement
                 }
 
-                if (str_starts_with($source['function'], 'find_in')) {
+                if ($source['function'] && str_starts_with($source['function'], 'find_in')) {
                     $function = ltrim(str_replace('find_in', '', $source['function']), '_');
                     if (empty($source['field'])) {
                         throw new \InvalidArgumentException('Missing attribute <field> for source configuration');
@@ -806,7 +807,7 @@ class Repository extends Cacheable
     {
         $fields = [];
         foreach ($exposedFieldIdentifiers as $id) {
-            if ($this->fields[$id]['column']) { // fixme: should authorize?
+            if ($this->fields[$id]['column']) {
                 $fields[] = $this->fields[$id]['column'];
             }
         }

@@ -228,23 +228,22 @@ class Field
             $this->setData('value', $value->getValue());
         } elseif ($value instanceof Junction) {
             $this->setData('value', $value->getValue());
-            $this->setData('url', $application->getPublicUri($value->getApplication(), true, ['slug' => $value->getSlug()]));
+            $this->setData('url', $application->getRoute($value->getApplication(), ['slug' => $value->getSlug()]));
             $this->setData('title', $value->getExposed());
         } elseif ($value instanceof JunctionList) {
             $values = $links = [];
             foreach ($value->getJunctions() as $junction) {
                 $values[] = $junction->getValue();
-                $links[]  = $application->getPublicUri($junction->getApplication(), true, ['slug' => $junction->getSlug()]);
+                $links[] = $application->getRoute($junction->getApplication(), ['slug' => $junction->getSlug()]);
             }
             $this->setData('value', $values);
             $this->setData('url', $links);
         }
 
-        // fixme: pretty url
         if ($reference) {
-            $path              = $application->getPublicUri($reference->getApplicationAlias(), true);
-            $path['reference'] = $reference->getValue();
-            $this->setData('reference', $path);
+            $route = $application->getRoute($reference->getApplicationAlias());
+            $route->addParameters(['reference' => $reference->getValue()]);
+            $this->setData('reference', $route);
         }
 
         if ($this->config['pointer']) {
@@ -279,8 +278,7 @@ class Field
 
         $value = $this->getData('value');
         if ($value === null || $value === self::VALUE_UNSET) {
-            $this->setData('value', null);
-
+            $this->setData('value');
             return;
         }
 
@@ -288,6 +286,7 @@ class Field
             $filesPath  = $application->getDirectory(ConfigStore::DIR_FILES, $this->getSourceIdentifier());
             $imagesPath = $application->getDirectory(ConfigStore::DIR_IMAGES, $this->getSourceIdentifier());
         }
+
         switch ($this->getDisplayType()) {
             case 'boolean':
                 $value = intval($value);
@@ -405,6 +404,7 @@ class Field
             ],
             'text'   => [
                 'suffix' => ['key' => 'suffix', 'value' => null],
+                'abbr' => ['key' => 'abbr', 'value' => false],
             ],
         ];
 
@@ -454,7 +454,7 @@ class Field
      *
      * @fixme To be factored out
      */
-    public function setModuleVisibility(ApplicationModuleInterface $module, bool $isAuthenticated = false): void
+    public function authenticateVisibility(ApplicationModuleInterface $module, bool $isAuthenticated = false): void
     {
         if ($this->visibility[$module->getName()] && !$this->visibility['public']) {
             $this->visibility[$module->getName()] = $isAuthenticated;
@@ -611,31 +611,29 @@ class Field
             // convert display type
             if ($visibleFields) {
                 $sourceAppId     = $contextSourceConfig['application'];
-                $sourceAppConfig = $configStore->readApplicationConfig($sourceAppId);
+                $sourceAppConfig = $configStore->getApplication($sourceAppId);
 
-                if (is_string($visibleFields) && !empty($sourceAppConfig['fields'][$visibleFields])) {
-                    $sourceField = $sourceAppConfig['fields'][$visibleFields];
-                } elseif (is_array($visibleFields)) {
-                    if ($visibleFields) {
-                        if ($sourceAppConfig['meta']['exposes']) {
-                            $sourceField = (array)$sourceAppConfig['meta']['exposes'];
-                        } else {
-                            $sourceField = (array)array_filter($sourceAppConfig['fields'], function ($field) {
-                                return filter_var($field['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                            })[0];
-                        }
-                        //} else {
-                        //    $sourceField = (array)array_filter($visibleFields, function ($field) use ($sourceAppConfig) {
-                        //        return isset($sourceAppConfig['fields'][$field]) && filter_var($sourceAppConfig['fields'][$field]['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                        //    })[0];
-                        //}
+                if (is_string($visibleFields)) {
+                    $sourceField = $sourceAppConfig->getField($visibleFields);
+                } elseif (is_array($visibleFields) && count($visibleFields)) {
+                    if ($sourceAppConfig->getMeta('exposes')) {
+                        $sourceField = (array)$sourceAppConfig->getMeta('exposes');
+                    } else {
+                        $sourceField = (array)array_filter($sourceAppConfig->getFields(), function ($field) {
+                            return filter_var($field['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                        })[0];
                     }
+                    //} else {
+                    //    $sourceField = (array)array_filter($visibleFields, function ($field) use ($sourceAppConfig) {
+                    //        return isset($sourceAppConfig['fields'][$field]) && filter_var($sourceAppConfig['fields'][$field]['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                    //    })[0];
+                    //}
                     if (count($sourceField) > 1) {
                         return; // combined fields are always textual
                     }
                     $sourceField = $sourceField[0];
                 }
-                $this->config['type'] = $sourceField['type']; // source DisplayType overrules our DisplayType, whilst maintaining the FormType
+                $this->config['type'] = $sourceField->getDisplayType(); // source DisplayType overrules our DisplayType, whilst maintaining the FormType
             }
         }
     }

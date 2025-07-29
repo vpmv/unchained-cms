@@ -7,6 +7,7 @@ body {
 
 .main {
   margin-top: 1rem;
+
   &.nav-side {
     @include media-breakpoint-down(md) {
       margin-top: 3rem;
@@ -19,11 +20,13 @@ body {
 
     .cat-group {
       margin-bottom: 1em;
+
       .subtitle {
         font-size: .5em;
         color: #666;
         display: block;
       }
+
       .app {
         display: flex;
         justify-content: space-between;
@@ -32,34 +35,18 @@ body {
         &:hover, &:active {
           background-color: lighten($primary, 70%);
         }
+
         .title {
           flex-grow: 1;
           text-decoration: none;
           padding: .5em 0 0 .5em;
         }
+
         .actions > * {
           vertical-align: middle;
         }
       }
     }
-
-    //.apps.row {
-    //  padding: 0;
-    //
-    //  .app.btn {
-    //    min-width: 12rem;
-    //    margin-bottom: 1rem;
-    //  }
-    //
-    //  @for $i from 1 through 10 {
-    //    :nth-child(#{$i}n) .app.btn {
-    //      background-color: mix($lightgray, $primary, ($i - 1) * 10%);
-    //      @if $i < 8 {
-    //        color: white;
-    //      }
-    //    }
-    //  }
-    //}
 
     .cat-block {
       &.col-12 {
@@ -256,5 +243,41 @@ img.media {
         }
       }
     }
+  }
+}
+
+/* DARK THEME */
+[data-bs-theme="dark"] {
+
+  .table {
+    --bs-link-color-rgb: 150, 150, 200;
+  }
+
+  .btn-primary {
+    --bs-btn-bg: #2337b4;
+    --bs-btn-hover-bg: #3e57dd;
+    --bs-btn-active-bg: #3e57dd;
+  }
+  .btn-outline-primary {
+    --bs-btn-border-color: #2337b4;
+    --bs-btn-active-border-color: #3e57dd;
+    --bs-btn-color: #fff;
+  }
+
+  .btn-light {
+    --bs-btn-color: #f8f9fa;
+    --bs-btn-bg: #333;
+    --bs-btn-border-color: #333;
+  }
+
+  .toggle-group {
+    --bs-primary: #2337b4;
+    --bs-btn-border-color: #2337b4;
+    --bs-btn-active-border-color: #3e57dd;
+  }
+
+  .dropdown-menu {
+    --bs-dropdown-link-hover-bg: #2337b4;
+    --bs-dropdown-link-active-bg: #2337b4;
   }
 }

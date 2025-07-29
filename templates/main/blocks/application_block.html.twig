@@ -1,13 +1,12 @@
 {% set appId = appId is defined ? appId : application.appId %}
 {% set title = title is defined ? title : application.config.meta.title %}
-{% set path = path is defined ? path : application.route %}
 {% set domain = application is defined ? application.translation_domain  : 'messages' %}
 {% set class = class ?? "col" %}
 {% set with_image = with_image ?? false %}
 {% set links = links is defined ? links : [] %}
 
 <div class="app-block {{ class }} app-{{ appId }}">
-    <a class="app app-{{ appId }}" href="{{ url('dash_app', {app: path}) }}">
+    <a class="app app-{{ appId }}" href="{{ url(application.route.getName(), application.route.getParams()) }}">
         {% if with_image %}
             <img src="/assets/images/design/{{ appId }}.jpg">
         {% endif %}
