@@ -2,12 +2,9 @@
 
 namespace App\System\Configuration;
 
-use App\System\Application\Field;
 use App\System\Application\Property;
 use App\System\Configuration\Exception\SequenceException;
-use App\System\Helpers\Timer;
 use App\System\Router;
-use Psr\Log\LoggerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
@@ -69,7 +66,7 @@ class ConfigStore extends ConfigStoreBase
         }
 
         foreach ($applications as $appId => $appConfig) {
-            $this->getApplication($appId);
+            $this->getApplication($appId, $appConfig); // populate $this->applications[$appId]
             $this->router->addRoutes(...
                 $this->remember("routes.app.$appId", function () use ($appId) {
                     return Route::create($this->applications[$appId]);
@@ -103,7 +100,7 @@ class ConfigStore extends ConfigStoreBase
                 }
 
                 foreach (static::BASE_KEYS as $key) {
-                    if ($appConfig[$key] ?? null) {
+                    if (array_key_exists($key, $appConfig)) {
                         $config['application'][$key] = $appConfig[$key];
                     }
                 }
@@ -134,8 +131,9 @@ class ConfigStore extends ConfigStoreBase
 
     public function getApplicationRoute(string $applicationId, ?string $sourceAlias = null): Route
     {
+        $config = $this->getApplication($applicationId);
         if ($sourceAlias) {
-            $applicationId = $this->getSourceConfigByAlias($this->getApplication($applicationId), $sourceAlias)->getAppId();
+            $applicationId = $config->getSourceId($sourceAlias);
         }
         $config = $this->getApplication($applicationId);
 
@@ -152,7 +150,7 @@ class ConfigStore extends ConfigStoreBase
 
         $config = $this->getApplication($applicationId);
         if ($sourceAlias) {
-            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
+            $config = $config->getSourceConfig($sourceAlias);
         }
 
         // fixme: asFileSystem should include DIRECTORY_SEPARATOR for non-unix deployments
@@ -170,52 +168,10 @@ class ConfigStore extends ConfigStoreBase
     {
         $config = $this->getApplication($applicationId);
         if ($sourceAlias) {
-            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
+            $config = $config->getSourceConfig($sourceAlias);
         }
 
         return Property::foreignKey($config->appId);
     }
 
-    /**
-     * @param string      $applicationId
-     * @param string|null $sourceAlias
-     * @param string|null $module
-     *
-     * @return bool
-     * @fixme factor out
-     */
-    public function isAuthorized(string $applicationId, ?string $sourceAlias = null, ?string $module = null): bool
-    {
-        $config = $this->getApplication($applicationId);
-        if ($sourceAlias) {
-            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
-        }
-
-        $authorized = $config->isPublic() || $this->isAuthenticated();
-        if ($authorized && $module) {
-            return !empty($config->getModule($module));
-        }
-
-        return $authorized;
-    }
-
-    /**
-     * @param \App\System\Configuration\ApplicationConfig $config
-     * @param string                                      $source
-     *
-     * @return \App\System\Configuration\ApplicationConfig
-     * @throws \InvalidArgumentException Unknown source
-     */
-    private function getSourceConfigByAlias(ApplicationConfig $config, string $source): ApplicationConfig
-    {
-        if (!isset($config->sources[$source])) {
-            throw new \InvalidArgumentException("Unconfigured source $source in application " . $config->appId);
-        }
-
-        $sourceAppId = $config->getSource($source)['application'] ?? null;
-        if (!$sourceAppId) {
-            throw new \InvalidArgumentException("Unconfigured source application for <$source> in" . $config->appId);
-        }
-        return $this->getApplication($sourceAppId);
-    }
 }

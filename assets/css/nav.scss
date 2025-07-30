@@ -1,7 +1,18 @@
 @import 'globals';
 
 .navbar {
+    &.navbar-light {
+        background-color: var(--brand-primary);
+        .navbar-nav {
+            --bs-nav-link-color: var(--bs-body-color);
+        }
+    }
     .dropdown-menu {
+        --bs-dropdown-link-active-bg: var(--brand-primary-dark);
+        --bs-dropdown-link-hover-bg: var(--brand-primary-dark);
+
+        background-color: var(--brand-primary);
+        padding: 0;
         .dropdown-item.app.plus {
             width: auto;
         }
@@ -20,7 +31,7 @@
 
     .offcanvas-header {
         width: 100%;
-        background-color: #117;
+        background-color: var(--brand-primary);
         text-align: center;
         .offcanvas-title {
             width: 100%;

@@ -95,7 +95,7 @@ class Router
             $request->getSession()->set('_locale', $route->getLocale());
         }
 
-        if ($route->isAuthenticationRequired() && !$this->isAuthenticated()) {
+        if ($route->isAuthenticationRequired() && !$route->isAuthenticated()) {
             $redirect = new RedirectResponse($this->sfRouter->generate('admin_login', ['redirect' => $route->getUri()]));
         }
 

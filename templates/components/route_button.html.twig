@@ -1,0 +1,5 @@
+{% set color = color ?? 'primary' %}
+{% set class = "btn btn-"~color %}
+{% set url = url(route.getName(), route.getParams()) %}
+
+{% include "components/link.html.twig" %}

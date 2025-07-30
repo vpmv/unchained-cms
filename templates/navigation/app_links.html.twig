@@ -8,7 +8,7 @@
     {% endif %}
     <span class="d-flex justify-content-between">
 
-        <a class="{{ class }} app app-{{ application.appId }} {{ active_app == appId ? 'active' : '' }}" href="{{ url(application.route.getName(), application.route.getParams()) }}">
+        <a class="{{ class }} app app-{{ application.appId }} {{ active_app == appId ? 'active' : '' }}" href="{{ route(application.route) }}">
             {{ application.config.meta.title|trans([], application.translation_domain) }}
         </a>
 

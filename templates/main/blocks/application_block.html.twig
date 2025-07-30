@@ -6,7 +6,7 @@
 {% set links = links is defined ? links : [] %}
 
 <div class="app-block {{ class }} app-{{ appId }}">
-    <a class="app app-{{ appId }}" href="{{ url(application.route.getName(), application.route.getParams()) }}">
+    <a class="app app-{{ appId }}" href="{{ route(application.route) }}">
         {% if with_image %}
             <img src="/assets/images/design/{{ appId }}.jpg">
         {% endif %}

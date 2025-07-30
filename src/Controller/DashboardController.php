@@ -4,18 +4,14 @@ namespace App\Controller;
 
 use App\System\Application\Category;
 use App\System\ApplicationManager;
-use App\System\Configuration\ApplicationType;
 use App\System\Configuration\ConfigStore;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Translation\LocaleSwitcher;
 
 /**
  * Main application parser

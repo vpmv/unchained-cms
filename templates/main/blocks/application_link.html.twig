@@ -6,7 +6,7 @@
 {% set links = links is defined ? links : [] %}
 
 <div class="app app-{{ appId }}">
-    <a class="title" href="{{ url(application.route.getName(),application.route.getParams()) }}">
+    <a class="title" href="{{ route(application.route) }}">
         {% if icon %}
             <i class="{{ icon }}"></i>
         {% endif %}

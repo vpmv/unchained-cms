@@ -34,8 +34,14 @@ $(function() {
         table.columns().draw();
     });
 
-    if (window.location.hash) {
-        search = decodeURI(window.location.hash.substr(1));
-        table.search(search).draw();
+    if (window.location.search) {
+        queryPart = window.location.search.substring(window.location.search.indexOf('?') + 1);
+        query = new URLSearchParams(queryPart);
+
+        let reference = query.get('reference');
+        if (reference) {
+            table.search(decodeURI(reference)).draw();
+        }
+
     }
 });

@@ -43,6 +43,10 @@ class AdminController extends AbstractController
     #[Route("/login", name: "login")]
     public function login(AuthenticationUtils $utils, ApplicationManager $factory): Response
     {
+        if ($this->isGranted('IS_AUTHENTICATED')) {
+            return $this->redirectToRoute('dash_main');
+        }
+
         $error    = $utils->getLastAuthenticationError();
         $lastUser = $utils->getLastUsername();
 

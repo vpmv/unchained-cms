@@ -658,11 +658,6 @@ class Field
         switch ($this->config['form_type']) {
             case 'date':
             case 'datetime':
-                // @deprecated
-                //$this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMdd';
-                //if ($config['type'] == 'datetime') {
-                //    $this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMddHHii';
-                //}
                 $yearsRange = [
                     (int)date('Y') - 10,
                     (int)date('Y') + 10,

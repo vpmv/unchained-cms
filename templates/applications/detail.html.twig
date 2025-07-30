@@ -30,28 +30,26 @@
 
 
 {% block dashboard_links %}
-    <a class="btn btn-light" href="{{ url(application.route.getName(), application.route.getParams()) }}"><i class="fa fa-arrow-left"></i> {{ 'label.overview'|trans }}</a>
+    {% include "components/route_button.html.twig" with {route: application.route, color:"light", icon: "arrow-left", label: 'label.overview' } %}
 
     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
         <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId, uuid: application.data.pk.value, action: 'edit'}) }}">
             <i class="fa fa-edit"></i> {{ 'label.edit'|trans }}
         </a>
 
-        <a class="btn btn-outline-dark" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}" title="{{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}">
-            <i class="fa fa-plus"></i>
-        </a>
+        {% include "components/button.html.twig" with {url: url('admin_edit', {app: application.appId, category: application.categoryId}), color:"outline-dark", icon: "plus", title: 'action.entity.create.verbose'|trans({verbose: ('entity.verbose')|trans}) } %}
     {% endif %}
 {% endblock %}
 
 {% block content %}
-    {# TODO move to base #}
-    {% block links %}
-            <div class="row">
-                <div class="col-sm-12 col-md-6 float-right">
+    {# TODO  #}
+{#    {% block links %}#}
+{#            <div class="row">#}
+{#                <div class="col-sm-12 col-md-6 float-right">#}
 
-                </div>
-            </div>
-    {% endblock %}
+{#                </div>#}
+{#            </div>#}
+{#    {% endblock %}#}
 
     {% if application.data %}
         <table class="table">

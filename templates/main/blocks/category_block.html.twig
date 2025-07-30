@@ -9,7 +9,7 @@
 
 {% if catId != '_default' %}
     <div class="cat-block {{ class }} cat-{{ catId }}">
-        <a class="cat cat-{{ catId }}" href="{{ url(category.route.getName(), category.route.getParams()) }}">
+        <a class="cat cat-{{ catId }}" href="{{ route(category.route) }}">
             {% if with_image %}
                 <img src="/assets/images/design/{{ catId }}.jpg">
             {% endif %}

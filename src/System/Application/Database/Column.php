@@ -12,10 +12,12 @@ class Column implements ValueInterface
     private function setValue($value): void
     {
         $this->value = $value;
-        if (is_array($v = json_decode($value, true))) {
-            $this->value = $v;
-        } elseif (is_array($v = @unserialize($value))) {
-            $this->value = $v;
+        if ($this->value !== null) {
+            if (is_array($v = json_decode($value, true))) {
+                $this->value = $v;
+            } elseif (is_array($v = @unserialize($value))) {
+                $this->value = $v;
+            }
         }
     }
 

@@ -12,10 +12,7 @@
 
 {% block dashboard_links %}
     {% if application.category.categoryId != '_default' %}
-        <a class="btn btn-light" href="{{ url(application.categoryRoute.getName(), application.categoryRoute.getParams()) }}" >
-            <i class="fa fa-arrow-left"></i>
-            {{ application.category.label|trans }}
-        </a>
+        {% include "components/route_button.html.twig" with {route: application.categoryRoute, color:"light", icon: "arrow-left", label: application.category.label} %}
     {% endif %}
 
     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
@@ -46,7 +43,7 @@
                 </thead>
                 <tbody>
                 {% for row in application.data %}
-                    <tr {% if row.detail is defined %}data-detail-url="{{ url(row.detail.link.getName(), row.detail.link.getParams()) }}"{% endif %}>
+                    <tr {% if row.detail is defined %}data-detail-url="{{ route(row.detail.link) }}"{% endif %}>
                         {% for cell in row %}
                             {% if cell.visible %}
                                 <td class="{{ cell.field.type }}">{% include 'applications/blocks/cell.html.twig' with {cell: cell} %}</td>
@@ -60,20 +57,19 @@
                             {% if row.detail is defined or is_granted('IS_AUTHENTICATED_FULLY') %}
                                 <div class="btn-group">
                                     {% if row.detail is defined %}
-                                        <a class="btn btn-primary btn-sm"
-                                           href="{{ url(row.detail.link.getName(), row.detail.link.getParams()) }}"
-                                           title="{{ 'label.details' | trans }}">
-                                            <i class="fa fa-info"></i>
-                                        </a>
+                                        {% include "components/route_button.html.twig" with {route: row.detail.link, color:"info btn-sm", icon: "info", title: 'label.details'|trans } %}
+{#                                        <a class="btn btn-primary btn-sm"#}
+{#                                           href="{{ url(row.detail.link.getName(), row.detail.link.getParams()) }}"#}
+{#                                           title="{{  | trans }}">#}
+{#                                            <i class="fa fa-info"></i>#}
+{#                                        </a>#}
                                     {% endif %}
 
                                     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
-                                        <a class="btn btn-light btn-sm"
-                                           href="{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'edit'}) }}"><i
-                                                    class="fa fa-edit"></i>
-                                        </a>
+                                        {% include "components/button.html.twig" with {url: url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'edit'}), color:"light btn-sm", icon: "edit", title: 'label.edit'|trans } %}
+
                                         <a class="btn btn-danger btn-sm"
-                                           href="javascript:;"
+                                           href="javascript:;" title="{{ 'label.delete'|trans }}"
                                            onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'delete'}) }}'; }">
                                             <i class="fa fa-trash-alt"></i>
                                         </a>

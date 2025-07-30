@@ -1,8 +1,7 @@
 @import "globals";
 
 body {
-  background-color: #fefefe;
-  color: #101010;
+  background-image: url("../images/bg-light.webp");
 }
 
 .main {
@@ -96,7 +95,7 @@ body {
           right: .5em;
           top: .5em;
           padding: .2em .5em;
-          background-color: rgba(200, 200, 200, .3);
+          background-color: rgba(200, 200, 200, .4);
           text-decoration: none;
           border-radius: 25%;
           text-align: center;
@@ -248,36 +247,24 @@ img.media {
 
 /* DARK THEME */
 [data-bs-theme="dark"] {
-
-  .table {
-    --bs-link-color-rgb: 150, 150, 200;
+  body {
+    --bs-body-color: #{$brand-white};
+    background-image: url("../images/bg-dark.webp");
   }
-
-  .btn-primary {
-    --bs-btn-bg: #2337b4;
-    --bs-btn-hover-bg: #3e57dd;
-    --bs-btn-active-bg: #3e57dd;
-  }
-  .btn-outline-primary {
-    --bs-btn-border-color: #2337b4;
-    --bs-btn-active-border-color: #3e57dd;
-    --bs-btn-color: #fff;
-  }
-
   .btn-light {
     --bs-btn-color: #f8f9fa;
     --bs-btn-bg: #333;
-    --bs-btn-border-color: #333;
+    --bs-btn-border-color: #ccc;
   }
-
-  .toggle-group {
-    --bs-primary: #2337b4;
-    --bs-btn-border-color: #2337b4;
-    --bs-btn-active-border-color: #3e57dd;
+  .btn-dark {
+    --bs-btn-color: #333;
+    --bs-btn-bg: #f8f9fa;
+    --bs-btn-border-color: #f8f9fa;
   }
-
-  .dropdown-menu {
-    --bs-dropdown-link-hover-bg: #2337b4;
-    --bs-dropdown-link-active-bg: #2337b4;
+  .btn-outline-dark {
+    --bs-btn-color: #ccc;
+    --bs-btn-border-color: #ccc;
+    --bs-btn-active-border-color: #f8f9fa;
+    --bs-btn-hover-border-color: #f8f9fa;
   }
 }

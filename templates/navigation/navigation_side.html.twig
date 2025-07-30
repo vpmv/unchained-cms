@@ -19,7 +19,7 @@
             {% include '/navigation/applications.html.twig' %}
         </ul>
         <ul class="nav user-menu">
-        {% include '/navigation/user.html.twig' %}
+        {% include '/navigation/user.html.twig' with {theme_dropdown: "px-2 dropup"} %}
         </ul>
     </nav>
 </div>

@@ -76,21 +76,16 @@ class Application
         return $translation;
     }
 
-    public function getRoute(?string $source = null, array $parameters = []): ?Route
+    public function getRoute(?string $source = null, array $parameters = []): Route
     {
-        if (!$this->configStore->isAuthorized($this->appId, $source)) {
-            return null;
-        }
-
         $route = $this->configStore->getApplicationRoute($this->appId, $source);
-        if (!empty($parameters['slug'])) {
-            if (!$this->configStore->isAuthorized($this->appId, $source, 'detail')) {
-                return null;
-            }
-        } elseif ($parameters && !isset($parameters['slug'])) {
-            $parameters = ['?' => $parameters];
-        }
         $route->addParameters($parameters);
+        if (!empty($parameters['slug'])) {
+            $config = $source ? $this->config->getSourceConfig($source) : $this->config;
+            if (empty($config->getModule('detail'))) {
+                $route->setAuthenticated(false);
+            }
+        }
 
         return $route;
     }
@@ -286,7 +281,7 @@ class Application
             'frontend'           => compact('uniqueConstraint'),
             'route'         => $this->configStore->getApplicationRoute($this->appId),
             // fixme
-            'categoryRoute' => $this->configStore->router->matchApp($this->config->getCategory()->getCategoryId(), $this->appId),
+            'categoryRoute' => $this->configStore->router->matchApp($this->config->getCategory()->getCategoryId()),
         ];
         $moduleData = $this->module->getData();
         if ($moduleData && ctype_alpha(key($moduleData))) {
@@ -464,4 +459,6 @@ class Application
     {
         return $this->requestStack->getMainRequest();
     }
+
+
 }

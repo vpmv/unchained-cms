@@ -26,7 +26,7 @@ class ApplicationConfig
     /** @var array Raw config */
     private array $raw;
 
-    public function __construct(ConfigStore $configStore, protected ApplicationCategory $category, array $configuration, string $appId, string $projectDir)
+    public function __construct(private readonly ConfigStore $configStore, protected ApplicationCategory $category, array $configuration, string $appId, string $projectDir)
     {
         $this->basePath = $projectDir . '/config/';
 
@@ -35,8 +35,8 @@ class ApplicationConfig
 
         $this->setSources();
         $this->setModules();
-        $this->prepareFields($configStore);
-        $this->prepareFrontend($configStore);
+        $this->prepareFields();
+        $this->prepareFrontend();
     }
 
     public function isPublic(): bool {
@@ -144,6 +144,21 @@ class ApplicationConfig
         return $this->sources[$alias];
     }
 
+    public function getSourceId(string $alias): string
+    {
+        return $this->getSource($alias)['application'];
+    }
+
+    /**
+     * @param string $alias
+     *
+     * @return \App\System\Configuration\ApplicationConfig
+     */
+    public function getSourceConfig(string $alias): ApplicationConfig
+    {
+        return $this->configStore->getApplication($this->getSourceId($alias));
+    }
+
     /**
      * @return array
      */
@@ -237,14 +252,14 @@ class ApplicationConfig
         $this->modules = $modules;
     }
 
-    protected function prepareFields(ConfigStore $configStore): void
+    protected function prepareFields(): void
     {
         foreach ($this->raw['fields'] as $id => $config) {
-            $this->fields[$id] = new Field($this->appId, $id, $config ?? [], $configStore, $this);
+            $this->fields[$id] = new Field($this->appId, $id, $config ?? [], $this->configStore, $this);
         }
     }
 
-    protected function prepareFrontend(ConfigStore $configStore): void
+    protected function prepareFrontend(): void
     {
         $this->meta = [
             'title'               => $this->raw['label'] ?? Property::displayLabel($this->raw['name'], 'title'),
@@ -283,11 +298,11 @@ class ApplicationConfig
         ];
         if ($this->meta['slug'] ?? null) {
             $slugConfig['pointer']['fields'] = (array)$this->meta['slug'];
-            $this->fields['_slug'] = new Field($this->appId, '_slug', $slugConfig, $configStore);
+            $this->fields['_slug'] = new Field($this->appId, '_slug', $slugConfig, $this->configStore);
         } else {
             if ($this->meta['exposes'] != 'id') {
                 $slugConfig['pointer']['fields'] = (array)$this->meta['exposes'];
-                $this->fields['_slug'] = new Field($this->appId, '_slug', $slugConfig, $configStore);
+                $this->fields['_slug'] = new Field($this->appId, '_slug', $slugConfig, $this->configStore);
             }
         }
 

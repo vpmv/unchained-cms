@@ -1,7 +1,8 @@
 {% if cell.field %}
+
     {% if cell.field.type == 'image' and cell.value %}
         {% if cell.link %}
-            {% include 'applications/blocks/link.html.twig' with {image: cell.value, link: url(cell.link.getName(), cell.link.getParams()), title: cell.title} %}
+            {% include 'applications/blocks/cell_link.html.twig' with {image: cell.value, link: route(cell.link), title: cell.title} %}
         {% else %}
             <span class="media-box">
                 {% include 'applications/blocks/image_small.html.twig' with {source: cell.value, title: cell.title} %}
@@ -47,27 +48,18 @@
     {% elseif cell.field.type == 'textbox' %}
         {{ cell.value|nl2br }}
     {% else %}
-
         {% if cell.link or cell.field.type == 'url' %}
             {% if cell.value is iterable and cell.link is iterable %}
                 {% for k,link in cell.link %}
-                    {% if link %}
-                        {% include 'applications/blocks/link.html.twig' with {text: cell.value[k], link: url(link.getName(), link.getParams())} %}
-                    {% else %}
-                        {{ cell.value[k] }}
-                    {% endif %}
+                    {% include 'applications/blocks/cell_link.html.twig' with {text: cell.value[k], link: link} %}
                 {% endfor %}
             {% elseif cell.field.type == 'url' and cell.value %}
-                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: cell.value, target: "blank"} %}
+                {% include 'applications/blocks/cell_link.html.twig' with {text: cell.value, link: cell.value, target: "blank"} %}
             {% elseif cell.field.type != 'url' %}
-                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: url(cell.link.getName(), cell.link.getParams())} %}
+                {% include 'applications/blocks/cell_link.html.twig' with {text: cell.value, link: cell.link} %}
             {% endif %}
         {% elseif cell.reference %}
-            {% if cell.reference.isAuthenticated() %}
-                {% include 'applications/blocks/link.html.twig' with {text: cell.value, link: url(cell.reference.getName(), cell.reference.getParams()) ~ '#' ~ cell.reference.getParam('reference'), icon: 'fa fa-search'} %}
-            {% else %}
-                {{ cell.value }}
-            {% endif %}
+            {% include 'applications/blocks/cell_link.html.twig' with {text: cell.value, link: cell.reference, icon: 'fa fa-search'} %}
         {% else %}
             {#  todo: choice translations -> dash builder #}
             {% if cell.value is iterable %}

@@ -10,7 +10,7 @@
             {{ title|trans([], ('category.'~catId)) }}
             <small class="subtitle">{{ category.description | trans([], domain) }}</small>
         </h3>
-        <a class="btn" href="{{ url(category.route.getName(), category.route.getParams()) }}">
+        <a class="btn" href="{{ route(category.route) }}">
             <i class="fa fa-arrow-right"></i>
         </a>
     </div>
