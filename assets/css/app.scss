@@ -261,6 +261,9 @@ img.media {
     --bs-btn-bg: #f8f9fa;
     --bs-btn-border-color: #f8f9fa;
   }
+  .btn-outline-primary {
+    --bs-btn-color: var(--brand-primary-subtle);
+  }
   .btn-outline-dark {
     --bs-btn-color: #ccc;
     --bs-btn-border-color: #ccc;

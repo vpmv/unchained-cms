@@ -11,6 +11,7 @@ use App\System\Application\Module\RedirectModule;
 use App\System\Configuration\ApplicationConfig;
 use App\System\Configuration\ConfigStore;
 use App\System\Configuration\Route;
+use App\System\Helpers\Hash;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -46,7 +47,7 @@ class Application
         public FormBuilderInterface $formBuilder, // fixme: ?
         protected TranslatorInterface $translator,
     ) {
-        $this->config = $configStore->getApplication($this->appId);
+        $this->config          = $configStore->getApplication($this->appId);
         $this->isAuthenticated = $configStore->isAuthenticated();
     }
 
@@ -165,11 +166,24 @@ class Application
         return $this->repository->getDistinct($column);
     }
 
-    public function getFieldOptions(Field $field, ?int $currentValue = null): array
+    public function getFieldChoices(array $options, Field $field, ?int $currentValue = null): array
     {
-        if ($field->getSourceIdentifier()) {
+        if ($fieldSourceAlias = $field->getSourceIdentifier()) {
             $rawData = $this->getRepository()->getForeignData($field->getSourceIdentifier());
-            $data    = array_combine(array_column($rawData, 'pk'), array_column($rawData, '_exposed'));
+            if ($options['group'] ?? false && $options['group']['source']) {
+                $sourceAlias = $options['group']['source'];
+
+                $fieldSourceId     = $this->config->getSourceId($fieldSourceAlias);
+                $fieldSourceRepo   = $this->getRepository()->getForeignRepo($fieldSourceId);
+                $fieldSourceConfig = $fieldSourceRepo->getSourceConfig($sourceAlias);
+
+                $sourceExposed = $sourceAlias . '__' . $fieldSourceConfig['columns'][0];
+
+                $data = Hash::combine($rawData, '{n}._exposed', '{n}.pk', '{n}.' . $sourceExposed);
+            } else {
+                $data = array_combine(array_column($rawData, 'pk'), array_column($rawData, '_exposed'));
+            }
+
         } else {
             $data = $field->getChoiceOptions();
         }
@@ -279,9 +293,9 @@ class Application
             'translation_domain' => Property::schemaName($this->appId),
             'meta'               => $this->config->meta,
             'frontend'           => compact('uniqueConstraint'),
-            'route'         => $this->configStore->getApplicationRoute($this->appId),
+            'route'              => $this->configStore->getApplicationRoute($this->appId),
             // fixme
-            'categoryRoute' => $this->configStore->router->matchApp($this->config->getCategory()->getCategoryId()),
+            'categoryRoute'      => $this->configStore->router->matchApp($this->config->getCategory()->getCategoryId()),
         ];
         $moduleData = $this->module->getData();
         if ($moduleData && ctype_alpha(key($moduleData))) {
@@ -328,7 +342,6 @@ class Application
             ],
         ];
 
-        // fixme: add wait group for external/pointer fields until all is resolved
         foreach ($this->getFields() as $field) {
             $field->authenticateVisibility($this->module, $this->configStore->router->isAuthenticated());
             if (!$field->isVisible($this->module) && !$field->isSlug()) { // fixme: append data into modules directly

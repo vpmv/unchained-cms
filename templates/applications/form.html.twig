@@ -73,6 +73,7 @@
                             </span>
 
                         {% else %} {# not a file #}
+                            {# add markers before range field #}
                             {% if formField.type == 'range' %}
                                 <div class="markers">
                                     {% for i in range(f.vars.attr.min, f.vars.attr.max) %}
@@ -80,6 +81,7 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
+
                             {{ form_widget(f) }}
                         {% endif %}
                     {% else %} {# no element data #}

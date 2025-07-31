@@ -648,6 +648,7 @@ class Field
             'form'     => [
                 'required' => filter_var($config['required'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'attr'     => [],
+                'options' => [],
             ],
         ];
 
@@ -690,7 +691,26 @@ class Field
                 $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
                 $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
                 $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
-                $this->moduleConfig['unique']           = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN); // fixme: different position
+                $this->moduleConfig['unique'] = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                if ($config['group'] ?? null) {
+                    $this->moduleConfig['form']['options']['group'] = 'true';
+                }
+
+                if ($config['group_source'] ?? null) {
+                    $this->moduleConfig['form']['options']['group'] = [
+                        'source' => $config['group_source'],
+                    ];
+                    $this->moduleConfig['form']['attr']['data-group'] = 'true';
+                    $this->moduleConfig['form']['attr']['data-hide-disabled'] = 'true';
+                }
+                if ($config['condition'] ?? null) {
+                    if ($this->moduleConfig['form']['attr']['data-group'] ?? false) {
+                        $this->moduleConfig['form']['attr']['data-group'] = $config['condition'];
+                    } else {
+                        $this->moduleConfig['form']['attr']['data-condition'] = $config['condition'];
+                    }
+                }
                 break;
             case 'boolean':
             case 'checkbox':

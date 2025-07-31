@@ -39,7 +39,8 @@ class ApplicationConfig
         $this->prepareFrontend();
     }
 
-    public function isPublic(): bool {
+    public function isPublic(): bool
+    {
         return $this->raw['public'] ?? true;
     }
 
@@ -150,6 +151,8 @@ class ApplicationConfig
     }
 
     /**
+     * Shorthand helper function to fetch application config
+     *
      * @param string $alias
      *
      * @return \App\System\Configuration\ApplicationConfig
@@ -246,7 +249,7 @@ class ApplicationConfig
         if ($this->raw['modules'] ?? []) {
             $modules = array_replace_recursive($modules, $this->raw['modules']);
         }
-        $modules['form'] = ['enabled' => true]; // fixme: this shouldn't be necessary
+        $modules['form']                 = ['enabled' => true]; // fixme: this shouldn't be necessary
         $modules['dashboard']['enabled'] = true; // fixme: dito
 
         $this->modules = $modules;
@@ -262,11 +265,11 @@ class ApplicationConfig
     protected function prepareFrontend(): void
     {
         $this->meta = [
-            'title'               => $this->raw['label'] ?? Property::displayLabel($this->raw['name'], 'title'),
-            'exposes'             => $this->raw['meta']['exposes'] ?? null, // <= slugs output
-            'icon'                => $this->raw['meta']['icon'] ?? null,
-            'sort'                => $this->raw['meta']['sort'] ?? null,
-            'slug'                => $this->raw['meta']['slug'] ?? null,
+            'title'   => $this->raw['label'] ?? Property::displayLabel($this->raw['name'], 'title'),
+            'exposes' => $this->raw['meta']['exposes'] ?? null, // <= slugs output
+            'icon'    => $this->raw['meta']['icon'] ?? null,
+            'sort'    => $this->raw['meta']['sort'] ?? null,
+            'slug'    => $this->raw['meta']['slug'] ?? null,
         ];
 
         foreach ($this->fields as $field) {
@@ -298,11 +301,11 @@ class ApplicationConfig
         ];
         if ($this->meta['slug'] ?? null) {
             $slugConfig['pointer']['fields'] = (array)$this->meta['slug'];
-            $this->fields['_slug'] = new Field($this->appId, '_slug', $slugConfig, $this->configStore);
+            $this->fields['_slug']           = new Field($this->appId, '_slug', $slugConfig, $this->configStore);
         } else {
             if ($this->meta['exposes'] != 'id') {
                 $slugConfig['pointer']['fields'] = (array)$this->meta['exposes'];
-                $this->fields['_slug'] = new Field($this->appId, '_slug', $slugConfig, $this->configStore);
+                $this->fields['_slug']           = new Field($this->appId, '_slug', $slugConfig, $this->configStore);
             }
         }
 

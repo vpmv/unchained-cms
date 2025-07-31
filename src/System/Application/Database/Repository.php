@@ -49,7 +49,7 @@ class Repository extends Cacheable
         ApplicationConfig $applicationConfig,
     ) {
         $this->appId = $applicationConfig->appId;
-        $this->auth = $this->configStore->router->isAuthenticated();
+        $this->auth  = $this->configStore->router->isAuthenticated();
 
         parent::__construct('repo.' . $applicationConfig->appId . '.auth-' . intval($this->auth) . '.');
 
@@ -65,6 +65,26 @@ class Repository extends Cacheable
         $this->prepareJoins((array)$applicationConfig->sources);
         $this->prepareFields($applicationConfig->fields);
         $this->prepareExposed((array)$applicationConfig->meta['exposes']);
+    }
+
+    /**
+     *
+     * @param string $applicationId
+     *
+     * @return \App\System\Application\Database\Repository
+     * @internal Handle with care
+     */
+    public function getForeignRepo(string $applicationId): Repository
+    {
+        return $this->repositoryManager->getRepository($applicationId);
+    }
+
+    public function getSourceConfig(string $alias): array
+    {
+        if (!isset($this->config['sources'][$alias])) {
+            throw new \InvalidArgumentException("Unknown source <$alias>");
+        }
+        return $this->config['sources'][$alias];
     }
 
     public function getForeignColumn()
@@ -476,7 +496,7 @@ class Repository extends Cacheable
 
             $slugContext = [];
             foreach ($slugField->getPointer()['fields'] as $fieldId) {
-                $field = $applicationConfig->getField($fieldId);
+                $field         = $applicationConfig->getField($fieldId);
                 $slugFieldData = $data[$fieldId] ?? null;
                 if ($slugFieldData instanceof DateTime) {
                     switch ($field->getFormType()) {

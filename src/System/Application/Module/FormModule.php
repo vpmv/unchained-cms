@@ -25,6 +25,8 @@ class FormModule extends AbstractModule
 
             $fieldOptions         = $field->getModuleConfig($this);
             $fieldOptions['data'] = $this->getRequestValue($field);
+            $dataOptions          = $fieldOptions['options']; // fixme: naming things
+            unset($fieldOptions['options']);
 
             switch ($field->getFormType()) {
                 case 'checkbox':
@@ -32,7 +34,7 @@ class FormModule extends AbstractModule
                         'data-toggle'   => 'toggle',
                         'data-onlabel'  => $this->container->translate($field->getLabel('enabled')),
                         'data-offlabel' => $this->container->translate($field->getLabel('disabled')),
-                        'data-onstyle'   => 'primary',
+                        'data-onstyle'  => 'primary',
                         'data-offstyle' => 'outline-primary',
                     ];
                     $fieldOptions['label'] = false;
@@ -51,19 +53,30 @@ class FormModule extends AbstractModule
                     } elseif ($rawData instanceof Column) {
                         $fieldOptions['data'] = $rawData->getValue();
                     }
-                    $fieldOptions['attr'] += ['class' => 'selectpicker', 'title' => 'Select...', 'data-live-search' => 'true'];
+
+                    $fieldOptions['attr'] += ['title' => 'Select...'];
+                    if (!isset($fieldOptions['attr']['data-group']) || $fieldOptions['attr']['data-group'] === 'true') {
+                        $fieldOptions['attr']['class'] = 'selectpicker';
+                    }
+                    if ($field->getSourceIdentifier()) {
+                        $fieldOptions['attr']['data-live-search'] = 'true';
+                    }
                     if ($fieldOptions['required']) {
                         $fieldOptions['attr']['required'] = 'required';
                     }
 
-                    $choices = $this->container->getFieldOptions($field, (!is_array($fieldOptions['data']) ? $fieldOptions['data'] : null));
+                    $choices = $this->container->getFieldChoices($dataOptions, $field, (!is_array($fieldOptions['data']) ? $fieldOptions['data'] : null));
                     unset ($fieldOptions['choices']);
 
-                    foreach ($choices as $i => $translatable) {
-                        if ($translatable instanceof Translatable) {
-                            $translatable = $this->container->translate($translatable->getMessage());
+                    if (false === ($dataOptions['group'] ?? false)) {
+                        foreach ($choices as $i => $translatable) {
+                            if ($translatable instanceof Translatable) {
+                                $translatable = $this->container->translate($translatable->getMessage());
+                            }
+                            $fieldOptions['choices'][$translatable] = $i;
                         }
-                        $fieldOptions['choices'][$translatable] = $i;
+                    } else {
+                        $fieldOptions['choices'] = $choices;
                     }
 
                     // convert default value
@@ -73,7 +86,6 @@ class FormModule extends AbstractModule
                             $fieldOptions['data'] = $fieldOptions['data'][0];
                         }
                     }
-
                     //$fieldOptions['attr']['data-source'] = ;
 
                     break;
@@ -84,7 +96,7 @@ class FormModule extends AbstractModule
                             $fieldOptions['data'] = new \DateTime($field->getDefaultValue());
                         } elseif ($field->getDefaultValue() !== null && (empty($fieldOptions['data']) || is_string($fieldOptions['data']))) {
                             $date = $fieldOptions['data'] ?? date(max($fieldOptions['years']) . '-m-d'); // today => max year -m-d
-                            if ($time = strtotime($date)) { // test correctness of date
+                            if (strtotime($date)) { // test correctness of date
                                 $fieldOptions['data'] = new \DateTime($date);
                             }
                         }
@@ -156,7 +168,7 @@ class FormModule extends AbstractModule
         return $this->request->request->get($field->getId(), $default);
     }
 
-    private function addFieldData(Field $field, $data): void
+    private function addFieldData(Field $field, mixed $data): void
     {
         if (isset($this->output['data'][$field->getId()])) {
             return;
