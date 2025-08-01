@@ -45,7 +45,7 @@ class Kernel extends BaseKernel
         $container->parameters()->set('kernel.public_dir', $this->publicDir);
         $container->parameters()->set('timezone', '%env(string:TZ)%');
         $container->parameters()->set('unchained.locales', $unchainedConfig->getLocales());
-        $container->parameters()->set('locale', $locale);
+        $container->parameters()->set('default_locale', $locale);
         $container->parameters()->set('unchained.config', $unchainedConfig->toArray());
 
 
@@ -71,9 +71,6 @@ class Kernel extends BaseKernel
                 'toolbar'             => true,
                 'intercept_redirects' => false,
             ]);
-            //$container->loadFromExtension('framework', [
-            //    'profiler' => ['only_exceptions' => false],
-            //]);
         }
 
         $services = $container->services();
@@ -92,14 +89,8 @@ class Kernel extends BaseKernel
 
         // LocaleListener needs the default locale
         $services->set(LocaleListener::class)
-            ->args(['%kernel.default_locale%'])
-            ->autoconfigure(); // ensure it gets dispatcher listener tag if needed
-
-
-        // Twig extension: just needs to be tagged
-        //$services->set(TranslationExtension::class)
-        //    ->tag('twig.extension');
-
+            ->arg('$defaultLocale', '%kernel.default_locale%')
+            ->autoconfigure();
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void

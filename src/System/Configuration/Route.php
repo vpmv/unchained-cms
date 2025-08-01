@@ -157,7 +157,6 @@ class Route
                 $params['category'] = $baseRoute;
             }
 
-
             $routes[] = new Route(
                 ApplicationType::Category,
                 RouteType::Category,

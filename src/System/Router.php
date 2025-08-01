@@ -29,7 +29,8 @@ class Router
 
     public function __construct(Security $security, private readonly RouterInterface $sfRouter, private readonly RequestStack $requestStack, private readonly LocaleSwitcher $localeSwitcher)
     {
-        $this->locale    = $requestStack->getCurrentRequest()->getLocale();
+        $mainRequest     = $requestStack->getCurrentRequest();
+        $this->locale    = $mainRequest->hasPreviousSession() ? $mainRequest->getSession()->get('_locale') : $this->localeSwitcher->getLocale();
         $this->authRoles = $security->getToken()?->getRoleNames() ?? [];
     }
 
@@ -48,6 +49,7 @@ class Router
             throw new NotFoundHttpException('Could not resolve route to app.');
         }
 
+        // clone Route preventing alterations
         $route = clone($this->routes[$uri]);
         $route->setAuthenticated($this->isAuthenticated());
 
@@ -89,13 +91,15 @@ class Router
 
     public function resolve(Route $route): ?Response
     {
-        $redirect = null;
+        $redirect     = null;
+        $this->locale = $route->getLocale(); // set Router locale for new routes
         if ($route->getLocale() != $this->localeSwitcher->getLocale()) {
             $request = $this->requestStack->getCurrentRequest();
 
             $this->localeSwitcher->setLocale($route->getLocale());
             $request->setLocale($route->getLocale());
             $request->getSession()->set('_locale', $route->getLocale());
+            $request->attributes->set('_locale', $route->getLocale());
         }
 
         if ($route->isAuthenticationRequired() && !$route->isAuthenticated()) {
