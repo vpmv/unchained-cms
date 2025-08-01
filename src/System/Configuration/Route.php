@@ -29,9 +29,14 @@ class Route
         private array $params,
         private string $locale,
         private bool $authenticationRequired = false,
-        private bool $authenticated = true,
+        private bool $authenticated = false,
         private string $categoryId = '_default',
     ) {
+        if (!$this->authenticationRequired) {
+            $this->setAuthenticated(true);
+        }
+
+        // parse url & params
         if (!empty($this->params['application'])) {
             $this->uri = '/' . $this->params['application'];
         }
@@ -143,11 +148,6 @@ class Route
         /** @var Route[] $routes */
         $routes      = [];
         $routeConfig = $config->getRoutes();
-
-        // remove _default route if localized are configured
-        if (count($routeConfig) > 1) {
-            $routeConfig = array_diff_key($routeConfig, ['_default' => null]);
-        }
 
         foreach ($routeConfig as $locale => $route) {
             $category  = $config->getCategory();

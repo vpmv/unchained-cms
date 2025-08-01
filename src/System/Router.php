@@ -48,7 +48,10 @@ class Router
             throw new NotFoundHttpException('Could not resolve route to app.');
         }
 
-        return $this->routes[$uri];
+        $route = clone($this->routes[$uri]);
+        $route->setAuthenticated($this->isAuthenticated());
+
+        return $route;
     }
 
     public function matchApp(string $appId, ?string $childId = null, ?string $locale = null): Route|array
@@ -88,7 +91,7 @@ class Router
     {
         $redirect = null;
         if ($route->getLocale() != $this->localeSwitcher->getLocale()) {
-            $request = $this->requestStack->getMainRequest();
+            $request = $this->requestStack->getCurrentRequest();
 
             $this->localeSwitcher->setLocale($route->getLocale());
             $request->setLocale($route->getLocale());
