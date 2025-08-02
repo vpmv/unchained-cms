@@ -18,6 +18,7 @@ readonly class LocaleListener implements EventSubscriberInterface
 
     private function setRequestLocale(Request $request, $locale): void
     {
+        $this->configStore->router->setLocale($locale);
         $request->setLocale($request->getSession()->get('_locale', $this->defaultLocale));
         $request->getSession()->set('_locale', $locale);
     }
@@ -26,7 +27,6 @@ readonly class LocaleListener implements EventSubscriberInterface
      * @param \Symfony\Component\HttpKernel\Event\RequestEvent $event
      *
      * @return void
-     * @todo Redundant?
      */
     public function onKernelRequest(RequestEvent $event)
     {
@@ -39,18 +39,17 @@ readonly class LocaleListener implements EventSubscriberInterface
         $this->configStore->configureApplications();
 
         $uri      = parse_url($request->getUri(), PHP_URL_PATH);
-        $uriParts = explode('/', $uri);
+        $uriParts = explode('/', ltrim($uri, '/'));
         if (count($uriParts) > 2) {
             array_pop($uriParts);
         }
 
-        $uri    = implode('/', $uriParts);
+        $uri    = '/'.implode('/', $uriParts);
         $locale = $request->getSession()->get('_locale', $this->defaultLocale);
         try {
             $route  = $this->configStore->router->match($uri);
             $locale = $route->getLocale();
         } catch (NotFoundHttpException) {
-            $route = null;
         }
 
         $this->setRequestLocale($request, $locale);

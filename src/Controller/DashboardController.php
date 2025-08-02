@@ -103,8 +103,7 @@ class DashboardController extends AbstractController
         try {
             $route = $configStore->router->match("/$category/$application");
         } catch (NotFoundHttpException) {
-            // <application> might be a slug
-            $route = $configStore->router->match("/$category"); // hard fail
+            $route = $configStore->router->match("/$category"); // <application> might be a slug (ELSE hard fail)
             $route->addParameters(['slug' => $application]);
         }
         if ($res = $configStore->router->resolve($route)) {

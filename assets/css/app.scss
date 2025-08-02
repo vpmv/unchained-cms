@@ -1,4 +1,7 @@
-@import "globals";
+@import "variables";
+
+@import "~bootstrap/scss/bootstrap";
+@import "~flag-icon-css/sass/flag-icon";
 
 body {
   background-image: url("../images/bg-light.webp");
@@ -118,7 +121,7 @@ body {
             }
 
             .app {
-              background-color: color-mix($lightgray, $secondary, $nth-index * 10%);
+              background-color: mix($lightgray, $secondary, $nth-index * 10%);
             }
 
             @media (max-width: map-get($grid-breakpoints, md)) {
@@ -271,3 +274,4 @@ img.media {
     --bs-btn-hover-border-color: #f8f9fa;
   }
 }
+

@@ -59,6 +59,7 @@ class UnchainedConfig
 
     public function __construct(
         protected readonly string $title = 'Unchained',
+        private string $title_icon = 'fa fa-link',
         protected string $theme = 'auto',
         protected array $dashboard = [],
         protected array $navigation = [],
@@ -77,6 +78,11 @@ class UnchainedConfig
         $this->validate();
     }
 
+    /**
+     * Validate input
+     *
+     * @return void
+     */
     private function validate(): void
     {
         try {
@@ -112,31 +118,61 @@ class UnchainedConfig
         }
     }
 
+    /**
+     * Get dashboard config
+     *
+     * @param string     $elem
+     * @param mixed|null $default
+     *
+     * @return mixed
+     */
     public function getDashboard(string $elem, mixed $default = null): mixed
     {
         return $this->dashboard[$elem] ?? $default;
     }
 
+    /**
+     * Get navigation config
+     *
+     * @param string     $elem
+     * @param mixed|null $default
+     *
+     * @return mixed
+     */
     public function getNavigation(string $elem, mixed $default = null): mixed
     {
         return $this->navigation[$elem] ?? $default;
     }
 
+    /**
+     * Get default locale
+     *
+     * @return string|null
+     */
     public function getLocale(): ?string
     {
         return $this->locale;
     }
 
+    /**
+     * Get configured locales
+     *
+     * @return array
+     */
     public function getLocales(): array
     {
         return $this->locales;
     }
 
+    /**
+     * @return array
+     */
     public function toArray(): array
     {
         return [
-            'theme'      => $this->theme,
             'title'      => $this->title,
+            'title_icon' => $this->title_icon,
+            'theme'      => $this->theme,
             'locales'    => $this->locales,
             'dashboard'  => $this->dashboard,
             'navigation' => $this->navigation,

@@ -1,3 +1,5 @@
+@import "~bootstrap/scss/functions";
+
 // general colors
 $blue:   #0B3954; /*#0E1C36*/
 $indigo: #6610f2;
@@ -46,13 +48,6 @@ $nth-color: (
 
 $font-family-base: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
 
-
-//@import "~@fortawesome/fontawesome-free/css/all.min.css";
-@import "~bootstrap/scss/bootstrap";
-@import "~bootstrap-select/sass/bootstrap-select";
-@import "~bootstrap5-toggle/css/bootstrap5-toggle.min.css";
-@import "~flag-icon-css/sass/flag-icon";
-
 :root {
    --brand-primary: #{$brand-primary};
    --brand-primary-subtle: #{$brand-primary-subtle};
@@ -71,3 +66,6 @@ $font-family-base: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
    color: #{$brand-white};
    --bs-btn-color: #{$brand-white};
 }
+
+@import "~bootstrap/scss/variables";
+//@import "~bootstrap/scss/variables-dark";

@@ -25,13 +25,11 @@ class Router
      */
     private string  $locale;
     protected array $routesReverse;
-    private array   $authRoles;
 
-    public function __construct(Security $security, private readonly RouterInterface $sfRouter, private readonly RequestStack $requestStack, private readonly LocaleSwitcher $localeSwitcher)
+    public function __construct(private readonly Security $security, private readonly RouterInterface $sfRouter, private readonly RequestStack $requestStack, private readonly LocaleSwitcher $localeSwitcher)
     {
         $mainRequest     = $requestStack->getCurrentRequest();
         $this->locale    = $mainRequest->hasPreviousSession() ? $mainRequest->getSession()->get('_locale') : $this->localeSwitcher->getLocale();
-        $this->authRoles = $security->getToken()?->getRoleNames() ?? [];
     }
 
     public function addRoutes(Route ...$routes)
@@ -86,7 +84,12 @@ class Router
      */
     public function isAuthenticated(): bool
     {
-        return !empty($this->authRoles);
+        return !empty($this->security->getToken()?->getRoleNames() ?? []);
+    }
+
+    public function setLocale(string $locale): void
+    {
+        $this->locale = $locale;
     }
 
     public function resolve(Route $route): ?Response
