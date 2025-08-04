@@ -17,6 +17,7 @@ applications:
 
   authors:
     public: false
+
   # ~ (null) will deploy with default configurations
   # route: books
   # public: true
