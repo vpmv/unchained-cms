@@ -72,7 +72,7 @@ class Router
         $routes = $this->routesReverse[$appId];
 
         // clone Route preventing alterations
-        $route = clone($routes[$locale ?? $this->locale] ?? $routes['_default']);
+        $route = clone($routes[$locale ?? $this->locale] ?? $routes[array_key_first($routes)]);
         $route->setAuthenticated($this->isAuthenticated());
 
         return $route;
@@ -89,13 +89,15 @@ class Router
 
     public function setLocale(string $locale): void
     {
-        $this->locale = $locale;
+        if ($locale != '_default') {
+            $this->locale = $locale;
+        }
     }
 
     public function resolve(Route $route): ?Response
     {
         $redirect     = null;
-        $this->locale = $route->getLocale(); // set Router locale for new routes
+        $this->setLocale($route->getLocale()); // set Router locale for new routes
         if ($route->getLocale() != $this->localeSwitcher->getLocale()) {
             $request = $this->requestStack->getCurrentRequest();
 

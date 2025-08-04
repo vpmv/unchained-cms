@@ -173,6 +173,7 @@ class UnchainedConfig
             'title'      => $this->title,
             'title_icon' => $this->title_icon,
             'theme'      => $this->theme,
+            'locale'     => $this->locale,
             'locales'    => $this->locales,
             'dashboard'  => $this->dashboard,
             'navigation' => $this->navigation,

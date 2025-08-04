@@ -4,10 +4,10 @@
 {% set include_apps = include_apps is defined ? include_apps : unchained.dashboard.show_app_stack %}
 {% set domain = domain ?? category.translation_domain ?? ('category.'~catId) %}
 
-{% if catId != '_default' and path %}
+{% if catId != '_default' and category.route %}
     <div class="cat-link cat-{{ catId }} d-flex">
         <h3 class="">
-            {{ title|trans([], ('category.'~catId)) }}
+            {{ title|trans([], domain) }}
             <small class="subtitle">{{ category.description | trans([], domain) }}</small>
         </h3>
         <a class="btn" href="{{ route(category.route) }}">

@@ -1,4 +1,5 @@
-{% set loc = app.request.locale %}
+{% set loc = (application is defined ? application.route.getLocale() : (category is defined ? category.route.getLocale() : app.request.locale)) %}
+{% set loc = loc != '_default' ? loc : unchained.locale %}
 
 <li class="nav-item dropdown dropdown-locale">
     <a class="nav-link dropdown-toggle" id="dropdown-locales" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

@@ -28,4 +28,4 @@ application:
       application: books
       function: avg
       invert_join: true
-      field: rating_ride
+      field: rating

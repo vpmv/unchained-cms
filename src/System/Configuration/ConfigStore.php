@@ -100,7 +100,7 @@ class ConfigStore extends ConfigStoreBase
                 }
 
                 foreach (static::BASE_KEYS as $key) {
-                    if (array_key_exists($key, $appConfig)) {
+                    if (array_key_exists($key, $appConfig ?? [])) {
                         $config['application'][$key] = $appConfig[$key];
                     }
                 }
