@@ -1,6 +1,6 @@
 <?php
 
-class HorsesMain implements \App\System\Constructs\UserExtensionInterface
+class Horses implements \App\System\Constructs\UserExtensionInterface
 {
     public static function transformType(array $context)
     {
@@ -30,10 +30,6 @@ class HorsesMain implements \App\System\Constructs\UserExtensionInterface
 
     public static function transformStatus(array $context)
     {
-        if (!empty($context['injured']) || !empty($context['date_of_death'])) {
-            return false;
-        }
-
-        return true;
+        return empty($context['injured']) && empty($context['date_of_death']);
     }
 }

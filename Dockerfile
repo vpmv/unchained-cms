@@ -64,17 +64,12 @@ RUN mkdir -p var/cache \
     && chown -R www-data: public/media \
 ;
 
-RUN if [ -z "user/assets/user.js" ]; then \
-    ln -s user/assets/user.js.dist user/assets/user.js; fi
-RUN if [ -z "user/config.yaml" ]; then \
-    ln -s user/config.yaml.dist user/config.yaml; fi
-RUN if [ -z "user/applications.yaml" ]; then \
-    ln -s user/applications.yaml.dist user/applications.yaml; fi
-RUN if [ -z "user/config/framework/security.yaml" ]; then \
-    ln -s user/config/framework/security.yaml.dist user/config/framework/security.yaml; fi
+RUN test ! -f user/assets/user.js && cp user/assets/user.js.dist user/assets/user.js
+RUN test ! -f user/config.yaml && cp user/config/config.yaml.dist user/config/config.yaml
+RUN test ! -f user/config/applications.yaml && cp user/config/applications.yaml.dist user/config/applications.yaml
+RUN test ! -f user/config/framework/security.yaml && cp user/config/framework/security.yaml.dist user/config/framework/security.yaml
 
 USER $user:
 
 RUN bin/composer.sh $env
-
 RUN yarn install && yarn encore $env
