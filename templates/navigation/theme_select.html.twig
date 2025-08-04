@@ -18,7 +18,7 @@
             <li>
                 <button type="button" class="dropdown-item d-flex align-items-center {{ unchained.theme == theme ? 'active ' : '' }}" data-bs-theme-value="{{ theme }}" aria-pressed="false">
                     <i class="{{ icon }} me-2" data-icon="{{ icon }}"></i>
-                    {{ 'theme.' ~ theme | trans }}
+                    {{ ('theme.' ~ theme) | trans }}
                     <i class="bi bi-check2 ms-2 d-none"></i>
                 </button>
             </li>

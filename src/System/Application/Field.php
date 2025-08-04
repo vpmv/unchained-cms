@@ -348,7 +348,16 @@ class Field
                 }
                 if (!$currentModule instanceof FormModule && ($transformer = $this->getTransformer('text'))) {
                     $this->setData('transformed', true);
-                    $value .= ' ' . $transformer['suffix'];
+                    if ($transformer['abbr'] ?? false) {
+                        preg_match_all('/\b[A-Za-z]/', $value, $matches);
+                        if ($matches[0] ?? null) {
+                            $matches[0][] = '';
+                            $value = implode('. ', $matches[0]);
+                        }
+                    }
+                    if ($transformer['suffix']) {
+                        $value .= ' ' . $transformer['suffix'];
+                    }
                 }
                 break;
             case 'number':

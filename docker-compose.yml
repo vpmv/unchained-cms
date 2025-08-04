@@ -11,8 +11,6 @@ services:
       - build:/var/www/public/build
       - media:/var/www/public/media
       - /etc/localtime:/etc/localtime
-    depends_on:
-      - mariadb
 
   nginx:
     image: nginx:stable-alpine
@@ -29,4 +27,3 @@ services:
 volumes:
   build:
   media:
-  mysql:

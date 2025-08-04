@@ -89,8 +89,13 @@ form {
     border-color: var(--brand-primary-subtle);
   }
 
-  .form-range::-moz-range-thumb {
-    background-color: var(--brand-primary-subtle);
+  $thumb-selectors: '-webkit-slider-thumb', '-moz-range-thumb', '-ms-thumb';
+  .form-range {
+    @each $thumb in $thumb-selectors {
+      &::#{$thumb} {
+        background-color: var(--brand-primary-subtle);
+      }
+    }
   }
 
   .form-select .btn-light {

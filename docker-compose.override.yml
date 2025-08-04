@@ -11,12 +11,17 @@ services:
       TZ: Europe/Amsterdam # Picked up by the Kernel
     volumes:
       - .env.local:/var/www/.env.local
+      #- ./.docker/php/media:/var/www/public/media:rw
       - ./assets:/var/www/assets
       - ./user:/var/www/user
       - ./config:/var/www/config
       - ./src:/var/www/src
       - ./templates:/var/www/templates
       - ./vendor:/var/www/vendor
+
+  #nginx:
+  #  volumes:
+  #    - ./.docker/php/media:/var/www/media
 
   mariadb:
     image: mariadb
@@ -32,3 +37,6 @@ services:
       MYSQL_RANDOM_ROOT_PASSWORD: "yes"
       MYSQL_DATABASE: unchained
       MYSQL_PORT: 3306
+
+volumes:
+  mysql:

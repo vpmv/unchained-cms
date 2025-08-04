@@ -1,4 +1,5 @@
-const $groupedSelects = [];
+const $groupedSelects    = [];
+const $conditionalFields = [];
 
 function updateOptgroup($select, value)
 {
@@ -12,6 +13,28 @@ function updateOptgroup($select, value)
     $select.prop('disabled', $('optgroup', $select).length === $('optgroup:disabled', $select).length);
 
     $select.selectpicker();
+}
+
+function updateConditionalField($master, $elem)
+{
+    let isSelect = $elem.is('select');
+    if (isSelect) {
+        $elem.selectpicker('destroy');
+    }
+
+    let val = '';
+    if ($master.is('select')) {
+        val = $('option:selected', $master).val()
+    } else if ($master.is('checkbox')) {
+        val = $master.prop('checked');
+    } else {
+        val = $master.val();
+    }
+
+    $elem.prop('disabled', !val);
+    if (isSelect) {
+        $elem.selectpicker();
+    }
 }
 
 // change events only registers once
@@ -30,6 +53,23 @@ function registerSelectMaster(groupId, $child)
     });
 
     updateOptgroup($child, groupVal);
+}
+
+function registerConditionMaster(conditionId, $child)
+{
+    if ($conditionalFields.indexOf(conditionId) === -1) {
+        $conditionalFields[conditionId] = [];
+    }
+    $conditionalFields[conditionId].push($child);
+
+    let $master = $('#form_' + conditionId)
+    $master.on('change', function () {
+        let val = $('option:selected', $master).val();
+        $conditionalFields[conditionId].forEach(function ($elem) {
+            updateConditionalField($master, $elem);
+        });
+    });
+    updateConditionalField($master, $child);
 }
 
 $(function () {
@@ -86,6 +126,15 @@ $(function () {
 
         if (typeof groupId === 'string' && groupId !== 'true') {
             registerSelectMaster(groupId, $child);
+        }
+    })
+
+    $('select[data-condition]').each(function () {
+        let $child      = $(this);
+        let conditionId = $child.attr('data-condition');
+
+        if (typeof conditionId === 'string' && conditionId !== 'true') {
+            registerConditionMaster(conditionId, $child);
         }
     });
 });
