@@ -1,4 +1,4 @@
-FROM php:8.4-fpm
+FROM php:8.4-fpm-alpine
 
 ARG dir="/var/www/"
 ARG env="prod"
@@ -7,22 +7,17 @@ ARG user="www-data"
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV TZ="UTC"
 
-ENV BASE_PKG="gnupg gnupg2 tzdata" \
-    PHP_PKG="zlib1g-dev libicu-dev libzip-dev"
+ENV BASE_PKG="gnupg tzdata nodejs npm" \
+    PHP_PKG="zlib-dev icu-dev libzip-dev"
 
-RUN set -xe \
-    && apt-get update \
-    && apt-get -y install \
-        $BASE_PKG \
-        $PHP_PKG
+RUN apk add --update --no-cache \
+    $BASE_PKG \
+    $PHP_PKG
+RUN npm i -g yarn
 
 RUN docker-php-ext-install intl \
     && docker-php-ext-install zip \
     && docker-php-ext-install pdo_mysql
-
-RUN curl -sL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt update && apt install -y nodejs && \
-    npm i -g yarn
 
 RUN  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
      php -r "if (hash_file('sha384', 'composer-setup.php') === 'dac665fdc30fdd8ec78b38b9800061b4150413ff2e3b6f88543c636f7cd84f6db9189d43a81e5503cda447da73c7e5b6') { echo 'Installer verified'.PHP_EOL; } else { echo 'Installer corrupt'.PHP_EOL; unlink('composer-setup.php'); exit(1); }" && \
