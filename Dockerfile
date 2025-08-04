@@ -4,8 +4,8 @@ ARG dir="/var/www/"
 ARG env="prod"
 ARG user="www-data"
 
-ENV COMPOSER_ALLOW_SUPERUSER 1
-ENV TZ "UTC"
+ENV COMPOSER_ALLOW_SUPERUSER=1
+ENV TZ="UTC"
 
 ENV BASE_PKG="gnupg gnupg2 tzdata" \
     PHP_PKG="zlib1g-dev libicu-dev libzip-dev"
