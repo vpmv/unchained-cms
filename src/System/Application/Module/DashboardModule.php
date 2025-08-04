@@ -5,7 +5,7 @@ namespace App\System\Application\Module;
 
 class DashboardModule extends AbstractModule
 {
-    public function prepare()
+    public function prepare(): void
     {
         if ($this->container->isModuleEnabled('detail')) {
             foreach ($this->data as &$row) {
@@ -16,7 +16,7 @@ class DashboardModule extends AbstractModule
                     'raw'         => null,
                     'field'       => null,
                     'transformed' => false,
-                    'link'        => $this->container->getPublicUri(null, true, ['slug' => $detailVal]),
+                    'link' => $this->container->getRoute(null, ['slug' => $detailVal]),
                 ];
             }
         }

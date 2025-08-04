@@ -1,7 +1,7 @@
 <!doctype html>
-<html>
+<html lang="{{ app.request.locale }}" data-bs-theme="{{ unchained.theme | replace({'auto': ''}) }}">
 <head>
-    <title>{% block title %}{{ render(controller("App\\Controller\\SystemController::getSystemTitle")) }}{% endblock %}</title>
+    <title>{% block title %}{{ unchained.title }}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
 
@@ -15,14 +15,18 @@
 {% block body %}
     <div id="wrapper">
         {% block navigation %}
-            {% if app.request.pathInfo != '/login' %}
-                {% include 'navigation.html.twig' %}
+            {% if unchained.navigation.style == 'side' %}
+                {% include '/navigation/navigation_side.html.twig' %}
+            {% else %}
+                {% include '/navigation/navigation_default.html.twig' %}
             {% endif %}
         {% endblock %}
 
         {% block content_container %}
-            <div class="main container {{ application is defined ? application.appId : 'dashboard' }}" style="overflow-x: auto">
+            <div class="main container {{ application is defined ? application.appId : 'dashboard' }} {{ 'nav-'~unchained.navigation.style }}">
+                {% block content_header %}{% endblock %}
                 {% block content %}{% endblock %}
+                {% block content_footer %}{% endblock %}
             </div>
         {% endblock %}
     </div>

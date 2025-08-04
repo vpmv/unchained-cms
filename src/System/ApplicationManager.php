@@ -2,15 +2,19 @@
 
 namespace App\System;
 
+use App\System\Application\Application;
 use App\System\Application\Category;
 use App\System\Application\Property;
+use App\System\Configuration\ApplicationType;
 use App\System\Configuration\ConfigStore;
-use App\System\Application\Application;
+use App\System\Configuration\Route;
+use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -18,73 +22,91 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 /**
  * @package App\Applications
  */
-class ApplicationManager
+class ApplicationManager extends Cacheable
 {
-    /** @var \App\System\RepositoryManager|array */
-    private $repositoryManager = [];
-    /** @var array */
-    private $applications = [];
-
-    /** @var ContainerInterface */
-    private $container;
-
-    /** @var ConfigStore */
-    private $configStore;
-
-    /** @var \App\System\Helpers\Timer */
-    private $timer;
-    /** @var \Symfony\Component\Form\FormFactory */
-    private $forms;
-    /** @var \Symfony\Component\HttpFoundation\RequestStack */
-    private $requestStack;
+    /** @var array Categorized listing of applications */
+    private array  $applications = [];
+    public Application|Category $activeApp;
 
     /**
-     * ApplicationManager constructor.
-     *
-     * @param \Symfony\Component\HttpFoundation\RequestStack            $requestStack
-     * @param \App\System\RepositoryManager                             $repositoryManager
-     * @param \App\System\Helpers\Timer                                 $timer
-     * @param \Symfony\Component\Form\FormFactoryInterface              $formFactory
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
-     * @param \Symfony\Component\Translation\TranslatorInterface        $translator
-     * @param \App\System\Configuration\ConfigStore                     $configStore
-     *
-     * @throws \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     * @param \Symfony\Component\HttpFoundation\RequestStack     $requestStack
+     * @param \App\System\RepositoryManager                      $repositoryManager
+     * @param \App\System\Helpers\Timer                          $timer
+     * @param \Symfony\Component\Form\FormFactoryInterface       $forms
+     * @param \Symfony\Contracts\Translation\TranslatorInterface $translator
+     * @param \App\System\Configuration\ConfigStore              $configStore
+     * @param \Symfony\Bundle\SecurityBundle\Security            $security
      */
-    public function __construct(RequestStack $requestStack, RepositoryManager $repositoryManager, Timer $timer, FormFactoryInterface $formFactory, ContainerInterface $container, TranslatorInterface $translator, ConfigStore $configStore)
-    {
-        $this->timer = $timer;
+    public function __construct(
+        private readonly RequestStack $requestStack,
+        private readonly RepositoryManager $repositoryManager,
+        private readonly Timer $timer,
+        private readonly FormFactoryInterface $forms,
+        private readonly TranslatorInterface $translator,
+        private readonly ConfigStore $configStore,
+        private readonly Security $security,
+    ) {
+        parent::__construct('appman.');
         $this->timer->setCategory('factory.application');
-
-        $this->requestStack      = $requestStack;
-        $this->repositoryManager = $repositoryManager;
-        $this->forms             = $formFactory;
-        $this->translator        = $translator;
-        $this->container         = $container;
-        $this->configStore       = $configStore;;
     }
 
     /**
-     * @param string $appId
+     * Configures applications for current locale, nested within categories
      *
-     * @throws \InvalidArgumentException
+     * This configuration is used for dashboards
+     *
+     * @return void
      */
-    public function loadApplicationExtension(string $appId): void
+    protected function configureApplications(): void
     {
-        $appPath = $this->configStore->getDirectory(ConfigStore::DIR_EXTENSION, $appId);
-        $app     = $appPath . '/' . Property::schemaName($appId) . '.php';
-        if (file_exists($app)) {
-            require_once $app;
+        if ($this->applications) {
+            return;
         }
+        $locale = $this->requestStack->getMainRequest()->getLocale() ?: $_ENV('LOCALE') ?: 'en';
+
+        $cacheKey           = ['applications', $locale, $this->isAuthorizedFully() ? 'auth' : 'pub'];
+        $this->applications = $this->remember(implode('.', $cacheKey), function () use ($locale) {
+            $applications = [];
+            $baseApps     = $this->configStore->getApplications();
+            foreach ($baseApps as $appId => $app) {
+                try {
+                    $config = $this->configStore->getApplication($appId);
+                } catch (NoConfigurationException) {
+                    continue;
+                }
+
+                $category = $config->getCategory();
+                if (!isset($applications[$category->getCategoryId()])) {
+                    $applications[$category->getCategoryId()] = [
+                        'label'        => $category->getLabel(),
+                        'description'  => $category->getDescription(),
+                        'route'        => $this->configStore->router->matchApp($category->getCategoryId()),
+                        'visible'      => $category->isVisible() || $this->isAuthorizedFully(),
+                        'applications' => [],
+                    ];
+                }
+
+                $applications[$category->getCategoryId()]['applications'][$appId] = [
+                    'appId'              => $appId,
+                    'order'              => $app->getConfig('order', 0),
+                    'public'             => $app->isPublic(),
+                    'visible'            => $this->isAuthorizedFully() || (!$this->isAuthorizedFully() && ($app->isPublic())),
+                    'config'             => $config,
+                    'route'              => $this->configStore->router->matchApp($category->getCategoryId(), $appId),
+                    'translation_domain' => Property::schemaName($appId),
+                    'entry_count'        => -1,
+                ];
+            }
+
+            return $applications;
+        });
     }
 
     /**
      * @param string $appId
-     * @param array  $extra
+     * @param string $categoryId
      *
      * @return \App\System\Application\Application
-     * @throws \InvalidArgumentException
-     * @throws \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
      */
     public function getApplication(string $appId, string $categoryId = '_default'): Application
     {
@@ -103,77 +125,25 @@ class ApplicationManager
         $filesPath  = $this->configStore->getDirectory(ConfigStore::DIR_FILES, $appId, null, true);
         if (!file_exists($imagesPath)) {
             mkdir($imagesPath, 0777, true);
-        };
+        }
+
         if (!file_exists($filesPath)) {
             mkdir($filesPath, 0777, true);
-        };
+        }
 
-        $app = new Application($appId, $this->container->get('request_stack'), $this->configStore, $this->repositoryManager->getRepository($appId), $this->getFormBuilder($appId), $this->translator);
+        $app = new Application($appId, $this->requestStack, $this->configStore, $this->repositoryManager->getRepository($appId), $this->getFormBuilder($appId), $this->translator);
         $this->loadApplicationExtension($appId);
 
         return $app;
     }
 
     /**
-     * @param $path
-     *
-     * @return \App\System\Application\Application|null
-     * @throws \LogicException
-     * @throws \Symfony\Component\OptionsResolver\Exception\InvalidOptionsException
-     */
-    public function getApplicationByPath($path): ?Application
-    {
-        $this->configureApplications();
-        $locale = $this->requestStack->getMasterRequest()->getLocale();
-        foreach ($this->applications as $categoryId => $category) {
-            $categoryRoute = $this->configStore->getCategoryUri($categoryId, $locale);
-            if ($categoryRoute && preg_match('/^' . str_replace('/', '\/', $categoryRoute) . '(\/(charts))?$/', $path) && true === $category['visible']) {
-                $_application = $this->getCategory($categoryId);
-                $matchedRoute = $categoryRoute;
-                break;
-            }
-
-            foreach ($category['applications'] as $appId => $application) {
-                $appRoute = $this->configStore->getApplicationUri($appId, null, $locale);
-                if (preg_match('/^' . str_replace('/', '\/', $appRoute) . '(\/(charts|detail|[\w\-]{2,}))?$/', $path) && true === $application['visible']) {
-                    if (!$application['visible']) {
-                        throw new NotFoundHttpException('Application is not public');
-                    }
-
-                    $_application = $this->getApplication($application['appId'], $categoryId);
-                    $matchedRoute = $appRoute;
-                    break 2;
-                }
-            }
-
-        }
-
-        if (empty($_application)) {
-            throw new NotFoundHttpException('Application could not be found within the path. Wrong locale?');
-        }
-
-        $routeParams = array_filter(explode('/', ltrim(str_replace($matchedRoute, '', $path), '/')));
-        $module      = null;
-        if (!empty($routeParams)) {  // fixme
-            if ($routeParams == 'charts') {
-                $module      = 'charts';
-                $routeParams = [];
-            } else {
-                $module = 'detail';
-            }
-        }
-        $_application->boot($module);
-        $_application->apply($routeParams ? ['_slug' => $routeParams[0]] : []); // fixme routeparams
-
-        return $_application;
-    }
-
-    /**
      * @param bool $visibleOnly
      *
-     * @return array
+     * @return array Categories;
+     *               If application is uncategorized, it's placed under _default
      */
-    public function getApplications(bool $visibleOnly = false)
+    public function getApplications(bool $visibleOnly = false): array
     {
         $this->configureApplications();
 
@@ -193,6 +163,9 @@ class ApplicationManager
                 });
             }
         }
+        $categories = array_filter($categories, function ($cat) {
+            return !!$cat['applications'];
+        });
 
         return $categories;
     }
@@ -205,62 +178,78 @@ class ApplicationManager
         if (!$config) {
             throw new NotFoundHttpException('Category does not exist');
         }
-        $category = new Category($categoryId, $this->requestStack, $this->configStore, $this->translator);
-
-        return $category;
+        return new Category($categoryId, $this->requestStack, $this->configStore, $this->translator);
     }
 
     /**
+     * @param string $appId
+     *
      * @throws \InvalidArgumentException
      */
-    protected function configureApplications(): void
+    public function loadApplicationExtension(string $appId): void
     {
-        if ($this->applications) {
-            return;
+        $appPath = $this->configStore->getDirectory(ConfigStore::DIR_EXTENSION, $appId);
+        $app     = $appPath . '/' . Property::schemaName($appId) . '.php';
+        if (file_exists($app)) {
+            require_once $app;
         }
-        $locale = $this->requestStack->getMasterRequest()->getLocale();
+    }
 
-        $this->applications = [];
-        $appConfig          = $this->configStore->readSystemConfig('applications');
-        foreach ($appConfig['applications'] as $appId => $app) {
-            try {
-                $config = $this->configStore->getApplicationConfig($appId);
-            } catch (NoConfigurationException $e) {
+    /**
+     * @param \App\System\Configuration\Route $route
+     * @param string                          $module
+     *
+     * @return array
+     */
+    public function runApplication(Route $route): array
+    {
+        if ($route->applicationType == ApplicationType::Category) {
+            $this->activeApp = $this->getCategory($route->getAppId());
+        } else {
+            $this->activeApp = $this->getApplication($route->getAppId(), $route->getCategoryId()); // category should always be _default in this case
+        }
+
+        $module = 'dashboard';
+        $params = $route->getParams(true);
+        if ($params['slug'] ?? false) {
+            $module = 'detail';
+            $params = ['_slug' => $params['slug']];
+        }
+
+        $this->activeApp->boot($module);
+        $this->activeApp->apply($params);
+        $data = $this->activeApp->run();
+        if (null === $data) {
+            throw new BadRequestHttpException('Not accepted');
+        }
+
+        return $data;
+    }
+
+    public function addRecordCount(array &$applications, ?string $onlyCategoryId = null): array
+    {
+        foreach ($applications as $categoryId => &$category) {
+            if ($onlyCategoryId && $onlyCategoryId != $categoryId) {
                 continue;
             }
-
-            $category = $config->getCategory();
-            if (!isset($this->applications[$category->getCategoryId()])) {
-                $this->applications[$category->getCategoryId()] = [
-                    'label'        => $category->getLabel(),
-                    'description'  => $category->getDescription(),
-                    'route'        => $category->getRoute($locale),
-                    'visible'      => $category->isVisible() || $this->isAuthorizedFully(),
-                    'applications' => [],
-                ];
+            foreach ($category['applications'] as $appId => &$app) {
+                $app['entry_count'] = $this->getApplication($appId, $categoryId)->getRepository()->getCount('', null);
             }
-
-            $this->applications[$category->getCategoryId()]['applications'][$appId] = [
-                'appId'              => $appId,
-                'order'              => $app['order'] ?? 0,
-                'public'             => $app['public'],
-                'visible'            => $this->isAuthorizedFully() || (!$this->isAuthorizedFully() && ($app['public'] ?? true)),
-                'config'             => $config,
-                'route'              => $this->configStore->getApplicationUri($appId, null, $locale),
-                'translation_domain' => Property::schemaName($appId),
-            ];
         }
+
+        return $this->applications;
     }
 
     private function isAuthorizedFully(): bool
     {
-        return !empty($this->container->get('security.token_storage')->getToken()->getRoleNames());
+        return !empty($this->security->getToken()?->getRoleNames());
     }
 
-    private function getFormBuilder(string $applicationId)
+    private function getFormBuilder(string $applicationId): \Symfony\Component\Form\FormBuilderInterface
     {
         return $this->forms->createBuilder(FormType::class, [], [
             'translation_domain' => Property::schemaName($applicationId),
         ]);
     }
+
 }

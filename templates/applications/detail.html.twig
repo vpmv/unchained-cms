@@ -4,6 +4,7 @@
 {% set exposedField = application.meta.exposes %}
 
 {% block title %}
+    {{ parent() }} -
     {% if exposedField is iterable %}
         {% for field in exposedField %}
             {% include 'applications/blocks/title.html.twig' with {value: application.data[field].value, type: application.data[field].field.type} %}
@@ -14,32 +15,41 @@
     &laquo; {{ application.meta.title|trans }}
 {% endblock %}
 
+{% block dashboard_title %}
+    {{ application.meta.title|trans }}
+    <small class="text-muted">
+        {% if exposedField is iterable %}
+            {% for field in exposedField %}
+                {% include 'applications/blocks/cell.html.twig' with {cell: application.data[field]} %}
+            {% endfor %}
+        {% else %}
+            {% include 'applications/blocks/cell.html.twig' with {cell: application.data[exposedField]} %}
+        {% endif %}
+    </small>
+{% endblock %}
+
+
+{% block dashboard_links %}
+    {% include "components/route_button.html.twig" with {route: application.route, color:"light", icon: "arrow-left", label: 'label.overview' } %}
+
+    {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+        <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId, uuid: application.data.pk.value, action: 'edit'}) }}">
+            <i class="fa fa-edit"></i> {{ 'label.edit'|trans }}
+        </a>
+
+        {% include "components/button.html.twig" with {url: url('admin_edit', {app: application.appId, category: application.categoryId}), color:"outline-dark", icon: "plus", title: 'action.entity.create.verbose'|trans({verbose: ('entity.verbose')|trans}) } %}
+    {% endif %}
+{% endblock %}
+
 {% block content %}
-    <h2>
-        {{ application.meta.title|trans }}
-        <small class="text-muted">
-            {% if exposedField is iterable %}
-                {% for field in exposedField %}
-                    {% include 'applications/blocks/cell.html.twig' with {cell: application.data[field]} %}
-                {% endfor %}
-            {% else %}
-                {% include 'applications/blocks/cell.html.twig' with {cell: application.data[exposedField]} %}
-            {% endif %}
-        </small>
-    </h2>
+    {# TODO  #}
+{#    {% block links %}#}
+{#            <div class="row">#}
+{#                <div class="col-sm-12 col-md-6 float-right">#}
 
-    {# TODO move to base #}
-    {% block links %}
-            <div class="row">
-                <div class="col-sm-12 col-md-6 float-right">
-                    <a class="btn btn-secondary" href="{{ url('dash_app', {app: application.public_uri}) }}"><i class="fa fa-arrow-left"></i> {{ 'label.overview'|trans }}</a>
-
-                    {% if is_granted('IS_AUTHENTICATED_FULLY') %}
-                        <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId, uuid: application.data.pk.value, action: 'edit'}) }}"><i class="fa fa-edit"></i> {{ 'label.edit'|trans }}</a>
-                    {% endif %}
-                </div>
-            </div>
-    {% endblock %}
+{#                </div>#}
+{#            </div>#}
+{#    {% endblock %}#}
 
     {% if application.data %}
         <table class="table">

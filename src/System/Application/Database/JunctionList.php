@@ -4,14 +4,11 @@ namespace App\System\Application\Database;
 
 class JunctionList implements ValueInterface
 {
-    /** @var string */
-    private $application;
     /** @var Junction[] */
     private $junctions = [];
 
-    public function __construct(string $application, Junction ...$junctions)
+    public function __construct(private readonly string $application, Junction ...$junctions)
     {
-        $this->application = $application;
         foreach ($junctions as $junction) {
             $this->junctions[$junction->getPrimaryKey()] = $junction;
         }

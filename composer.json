@@ -1,40 +1,40 @@
 {
-    "name": "vpmv/unchained-skeleton",
+    "name": "vpmv/unchained-cms",
     "type": "project",
     "authors": [
         {
             "name": "Valentijn Verhallen",
             "email": "contact@valentijn.co",
-            "role": "core, backend"
+            "role": "author"
         }
     ],
     "require": {
-        "php": "^7.2.0",
+        "php": "^8.4",
         "ext-json": "*",
-        "cocur/slugify": "^3.2",
-        "doctrine/annotations": "^1.6",
-        "symfony/asset": "^4.2",
-        "symfony/cache": "^5.1",
-        "symfony/config": "^4.2",
-        "symfony/dependency-injection": "^4.2",
-        "symfony/form": "^4.2",
-        "symfony/framework-bundle": "^4.2",
-        "symfony/http-foundation": "^4.2",
-        "symfony/http-kernel": "^4.2",
-        "symfony/monolog-bundle": "^3.8",
-        "symfony/orm-pack": "^1.0",
-        "symfony/routing": "^4.2",
-        "symfony/security-bundle": "^4.2",
-        "symfony/translation": "^4.2",
-        "symfony/twig-bundle": "^4.2",
-        "symfony/validator": "^4.2",
-        "symfony/web-profiler-bundle": "^4.2",
-        "symfony/yaml": "^4.2",
-        "twig/extensions": "^1.5",
-        "symfony/dotenv": "^4.2"
+        "ext-pdo": "*",
+        "symfony/asset": "^7.3",
+        "symfony/cache": "^7.3",
+        "symfony/config": "^7.3",
+        "symfony/debug-bundle": "^7.3",
+        "symfony/dependency-injection": "^7.3",
+        "symfony/dotenv": "^7.3",
+        "symfony/form": "^7.3",
+        "symfony/framework-bundle": "^7.3",
+        "symfony/http-foundation": "^7.3",
+        "symfony/http-kernel": "^7.3",
+        "symfony/monolog-bundle": "^3.10",
+        "symfony/orm-pack": "^2.4",
+        "symfony/routing": "^7.3",
+        "symfony/security-bundle": "^7.3",
+        "symfony/translation": "^7.3",
+        "symfony/twig-bundle": "^7.3",
+        "symfony/validator": "^7.3",
+        "symfony/webpack-encore-bundle": "^2.2",
+        "symfony/yaml": "^7.3"
     },
     "require-dev": {
-        "symfony/debug-pack": "^1.0"
+        "symfony/var-dumper": "^7.3",
+        "symfony/web-profiler-bundle": "^7.3"
     },
     "autoload": {
         "psr-4": {

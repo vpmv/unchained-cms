@@ -3,32 +3,38 @@
 namespace App\System\Application;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception;
 
-class ApplicationSchema
+readonly class ApplicationSchema
 {
-    private $connection;
-    /** @var string */
-    private $table;
-
-    /** @var \App\System\Application\Field[] */
-    private $fields = [];
-
-    public function __construct(Connection $connection, $table, $fields)
+    /**
+     * @param \Doctrine\DBAL\Connection       $connection
+     * @param string                          $table
+     * @param \App\System\Application\Field[] $fields
+     */
+    public function __construct(private Connection $connection, private string $table, private array $fields)
     {
-        $this->connection = $connection;
-        $this->table      = $table;
-        $this->fields     = $fields;
-
         $this->validateTable();
     }
 
-    public function getData(array $conditions = [], array $columns = [], array $sort = [], array $joins = [], array $subQueries = [])
+    public function countRecords(): int {
+        $b = $this->connection->createQueryBuilder()
+            ->from($this->table, '_curr')
+            ->select('COUNT(_curr.id)');
+        $count = $b->executeQuery()->fetchOne();
+        if (!$count) {
+            return 0;
+        }
+
+        return (int)$count;
+    }
+
+    public function getData(array $conditions = [], array $columns = [], array $sort = [], array $joins = [], array $subQueries = []): array
     {
         $columns = $columns ?: ['*'];
 
         $b = $this->connection->createQueryBuilder()
-                              ->from($this->table, '_curr');
+            ->from($this->table, '_curr');
 
         foreach ($columns as $column) {
             if (is_array($column) && !empty($column['fields'])) {
@@ -44,12 +50,12 @@ class ApplicationSchema
         foreach ($subQueries as $alias => $query) {
             $subBuilder = $this->connection->createQueryBuilder();
             $subBuilder
-                ->select('count(id)')// fixme
+                ->select($query['function'] .'('. $query['field'] . ')') // e.g.: count(id) / max(date) / avg(rating)
                 ->from($query['from'], '_' . $alias);
             foreach ($query['conditions'] as $key => $cond) {
                 if (is_array($cond)) {
                     if (!empty($cond['in'])) {// fixme: prettify
-                        $subBuilder->andWhere("LOCATE(\",\"+_curr.$key+\",\", REPLACE(REPLACE(_$alias.$cond[in], \"]\", \",\"), \"[\", \",\")) > 0"); // fixme: only works for json array
+                        $subBuilder->andWhere("LOCATE(concat(concat(\",\",_curr.$key), \",\"), REPLACE(REPLACE(_$alias.$cond[in], \"]\", \",\"), \"[\", \",\")) > 0");
                     }
                     continue;
                 }
@@ -85,13 +91,12 @@ class ApplicationSchema
         }
 
         $b->setParameters($conditions);
-
-        $rows = $b->execute()->fetchAll(\PDO::FETCH_ASSOC) ?: [];
+        $rows = $b->executeQuery()->fetchAllAssociative() ?: [];
 
         return $rows;
     }
 
-    public function delete(array $params)
+    public function delete(array $params): bool
     {
         if (!$params) {
             return false;
@@ -99,7 +104,7 @@ class ApplicationSchema
 
         try {
             $this->connection->delete($this->table, $params);
-        } catch (DBALException $e) {
+        } catch (Exception $e) {
             return false;
         } catch (\InvalidArgumentException $e) {
             return false;
@@ -108,42 +113,50 @@ class ApplicationSchema
         return true;
     }
 
-    public function persist(array $data, $id = null)
+    public function persist(array $data, $id = null): void
     {
         $data = array_filter($data, function ($v) {
             return $v !== null; // strong type null only
         });
 
+        $keys = $values = $updates = [];
         foreach ($data as $k => $v) {
             if ($v instanceof \DateTime) {
                 $v = $v->format('Y-m-d H:i:s');
             }
-            $keys[]   = "`$k`";
-            $values[] = $this->connection->quote($v);
+
+            $key   = "`$k`";
+            $value = $this->connection->quote($v);
+
+            $keys[]    = $key;
+            $values[]  = $value;
+            $updates[] = "$key = $value";
+        }
+
+        if (!$keys || !$values) {
+            return;
         }
 
         if ($id > 0) {
-            foreach ($keys as $i => $key) {
-                $updates[] = "$key = $values[$i]";
-            }
             $query = sprintf('UPDATE `%s` SET %s WHERE `id` = %s', $this->table, implode(', ', $updates), $id);
         } else {
             $query = sprintf('INSERT INTO `%s` (%s) VALUES (%s)', $this->table, implode(',', $keys), implode(',', $values)); // todo: id
         }
 
+
         $this->connection->executeQuery($query);
     }
 
-    private function validateTable()
+    private function validateTable(): void
     {
-        $res = $this->connection->executeQuery('SHOW TABLES LIKE "' . $this->table . '"')->fetchAll();
+        $res = $this->connection->executeQuery('SHOW TABLES LIKE "' . $this->table . '"')->fetchAllAssociative();
         if (empty($res)) {
             $this->createSchema();
 
             return;
         }
 
-        $res     = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAll();
+        $res     = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAllAssociative();
         $columns = array_column($res, 'Field');
         foreach ($this->fields as $name => $field) {
             $def = $this->getColumnDefinition($name, $field);
@@ -153,9 +166,19 @@ class ApplicationSchema
         }
     }
 
-    private function createSchema()
+    /**
+     * @return void
+     * @throws \Doctrine\DBAL\Exception
+     *
+     * @todo UUIDs not implemented;
+     *       Functionally no difference when everything is converted to JSON
+     */
+    private function createSchema(): void
     {
-        $cols = ['`id` int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY'];
+        $cols = [
+            '`id` int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY',
+            //'`_uuid` uuid not null DEFAULT uuid()',
+        ];
         foreach ($this->fields as $name => $col) {
             if ($def = $this->getColumnDefinition($name, $col)) {
                 $cols[] = $def['fmt'];
@@ -186,7 +209,7 @@ class ApplicationSchema
                 $schema['length'] ? '(' . $schema['length'] . ')' : '',
                 !$schema['nullable'] ? 'NOT NULL' : '',
                 strtoupper(implode(' ', $schema['options'])),
-                $schema['default'] ? ' DEFAULT ' . $schema['default'] : ''
+                $schema['default'] ? ' DEFAULT ' . $schema['default'] : '',
             );
 
             return $result;
@@ -195,7 +218,7 @@ class ApplicationSchema
         return [];
     }
 
-    private function concatSelector(array $columns, string $name, ?string $tableAlias = null)
+    private function concatSelector(array $columns, string $name, ?string $tableAlias = null): string
     {
         if (count($columns) > 1) {
             foreach ($columns as &$col) {

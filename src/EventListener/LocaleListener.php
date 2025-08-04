@@ -2,38 +2,67 @@
 
 namespace App\EventListener;
 
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\KernelEvents;
+use App\System\Configuration\ConfigStore;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\KernelEvents;
 
-class LocaleListener implements EventSubscriberInterface
+readonly class LocaleListener implements EventSubscriberInterface
 {
-    private $defaultLocale;
 
-    public function __construct($defaultLocale = 'nl')
+    public function __construct(private ConfigStore $configStore, private string $defaultLocale = 'en')
     {
-        $this->defaultLocale = $defaultLocale;
     }
 
-    public function onKernelRequest(GetResponseEvent $event)
+    private function setRequestLocale(Request $request, $locale): void
     {
-        $request = $event->getRequest();
+        $this->configStore->router->setLocale($locale);
+        $request->setLocale($request->getSession()->get('_locale', $this->defaultLocale));
+        $request->getSession()->set('_locale', $locale);
+    }
 
-        // NOTE TO FUTURE SELF:
-        // hasPreviousSession prevents anonymous users from starting a session
-
-        // overwrite _locale with request _locale first, otherwise use session variable
+    /**
+     * @param \Symfony\Component\HttpKernel\Event\RequestEvent $event
+     *
+     * @return void
+     */
+    public function onKernelRequest(RequestEvent $event)
+    {
+        $request  = $event->getRequest();
         if ($locale = $request->attributes->get('_locale')) {
-            $request->getSession()->set('_locale', $locale);
-        } else {
-            $request->setLocale($request->getSession()->get('_locale', $this->defaultLocale));
+            $this->setRequestLocale($request, $locale);
+            return;
         }
+
+        $this->configStore->configureApplications();
+
+        $uri      = parse_url($request->getUri(), PHP_URL_PATH);
+        $uriParts = explode('/', ltrim($uri, '/'));
+        if (count($uriParts) > 2) {
+            array_pop($uriParts);
+        }
+
+        $uri    = '/'.implode('/', $uriParts);
+        $locale = $request->getSession()->get('_locale', $this->defaultLocale);
+        try {
+            $route  = $this->configStore->router->match($uri);
+            $locale = $route->getLocale();
+        } catch (NotFoundHttpException) {
+        }
+
+        if ($locale == '_default') {
+            return;
+        }
+
+        $this->setRequestLocale($request, $locale);
     }
 
     public static function getSubscribedEvents()
     {
-        return array(
-            KernelEvents::REQUEST => array(array('onKernelRequest', 20)), // higher prio than kernel localelistener
-        );
+        return [
+            KernelEvents::REQUEST => [['onKernelRequest', 20]], // higher prio than kernel localelistener
+        ];
     }
 }

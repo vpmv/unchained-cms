@@ -1,3 +1,6 @@
+@import "~bootstrap-select/sass/bootstrap-select";
+@import "~bootstrap5-toggle/css/bootstrap5-toggle.min.css";
+
 form {
   [class^=col-] > .form-check {
     padding-left: 0;
@@ -14,23 +17,18 @@ form {
     border-radius: 2rem;
   }
 
-  .btn-upload {
-    background-color: #dedede;
-    color: #444;
-  }
-
   .image-preview {
     cursor: pointer;
 
     .media-box {
-      max-height: 150px;
-      max-width: 200px;
       position: relative;
       overflow: hidden;
+      display: inline-block;
 
       img {
         max-height: 150px;
         max-width: 200px;
+        width: initial;
       }
 
       .media-edit {
@@ -59,5 +57,49 @@ form {
         display: block;
       }
     }
+  }
+
+  .toggle-group {
+    .toggle-handle {
+      box-shadow: 0 1px 5px black;
+    }
+  }
+  .form-group {
+    &.row {
+      --bs-gutter-y: .2rem;
+      margin-top: var(--bs-gutter-y);
+    }
+
+    .form-select {
+      width: 100% !important;
+      padding: 0 !important;
+    }
+
+    .markers {
+      display: flex;
+      justify-content: space-between;
+    }
+
+  }
+}
+
+[data-bs-theme="dark"] {
+  .toggle:not(:hover):not(:focus).btn-outline-primary > .toggle-group > .toggle-handle {
+    background-color: var(--brand-primary-subtle);
+    border-color: var(--brand-primary-subtle);
+  }
+
+  $thumb-selectors: '-webkit-slider-thumb', '-moz-range-thumb', '-ms-thumb';
+  .form-range {
+    @each $thumb in $thumb-selectors {
+      &::#{$thumb} {
+        background-color: var(--brand-primary-subtle);
+      }
+    }
+  }
+
+  .form-select .btn-light {
+    --bs-btn-bg: var(--bs-body-bg);
+    --bs-btn-border-color: var(--bs-border-color);
   }
 }

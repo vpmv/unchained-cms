@@ -6,5 +6,5 @@ use App\System\Constructs\Translatable;
 
 class TranslatableValue extends Translatable
 {
-    protected $type = 'value';
+    protected string $type = 'value';
 }

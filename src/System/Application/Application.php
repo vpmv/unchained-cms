@@ -8,56 +8,47 @@ use App\System\Application\Module\DashboardModule;
 use App\System\Application\Module\DetailModule;
 use App\System\Application\Module\FormModule;
 use App\System\Application\Module\RedirectModule;
+use App\System\Configuration\ApplicationConfig;
 use App\System\Configuration\ConfigStore;
+use App\System\Configuration\Route;
+use App\System\Helpers\Hash;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Intl\Exception\NotImplementedException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class Application
 {
     /** @var \App\System\Configuration\ApplicationConfig */
-    private   $config;
-    protected $data     = [];
-    protected $accepted = true;
+    private ApplicationConfig $config;
+    protected array           $data = [];
+    /** @var bool Requested module accepted */
+    protected bool $accepted = true;
 
-    /** @var string */
-    public    $appId;
-    protected $isPublic        = true;
-    protected $isAuthenticated = false;
-
-    /** @var \Symfony\Component\HttpFoundation\RequestStack */
-    protected $requestStack;
+    protected bool $isAuthenticated = false;
 
     /** @var \App\System\Application\Module\ApplicationModuleInterface */
-    protected $module;
-    /** @var \App\System\Application\Database\Repository */
-    protected $repository;
-
-    /** @var \Symfony\Component\Form\FormBuilderInterface */
-    public $formBuilder; // fixme
-    /** @var \Symfony\Contracts\Translation\TranslatorInterface */
-    protected $translator;
+    protected ApplicationModuleInterface $module;
 
     /**
      * Application constructor.
      *
-     * @param array                                        $configuration
-     * @param \App\System\Application\ApplicationSchema    $schema
-     * @param \Symfony\Component\Form\FormBuilderInterface $formBuilder
+     * @param string                                             $appId
+     * @param \Symfony\Component\HttpFoundation\RequestStack     $requestStack
+     * @param \App\System\Configuration\ConfigStore              $configStore
+     * @param \App\System\Application\Database\Repository        $repository
+     * @param \Symfony\Component\Form\FormBuilderInterface       $formBuilder
+     * @param \Symfony\Contracts\Translation\TranslatorInterface $translator
      */
-    public function __construct(string $applicationId, RequestStack $requestStack, ConfigStore $configStore, Repository $repository, FormBuilderInterface $formBuilder, TranslatorInterface $translator)
-    {
-        $this->appId           = $applicationId;
-        $this->config          = $configStore->getApplicationConfig($applicationId);
-        $this->isPublic        = $configStore->isAuthorized($applicationId);
+    public function __construct(
+        public string $appId,
+        protected RequestStack $requestStack,
+        protected ConfigStore $configStore,
+        protected Repository $repository,
+        public FormBuilderInterface $formBuilder, // fixme: ?
+        protected TranslatorInterface $translator,
+    ) {
+        $this->config          = $configStore->getApplication($this->appId);
         $this->isAuthenticated = $configStore->isAuthenticated();
-
-        $this->requestStack = $requestStack;
-        $this->repository   = $repository;
-        $this->formBuilder  = $formBuilder;
-        $this->translator   = $translator;
-        $this->configStore  = $configStore;
     }
 
     public function getRepository(): Repository
@@ -74,7 +65,7 @@ class Application
      *
      * @todo translation helper
      */
-    public function translate(string $message, array $arguments = [])
+    public function translate(string $message, array $arguments = []): string
     {
         $translation   = $this->translator->trans($message, $arguments, Property::schemaName($this->appId));
         $defaultOutput = str_replace(array_keys($arguments), array_values($arguments), $message);
@@ -86,39 +77,21 @@ class Application
         return $translation;
     }
 
-    public function getPublicUri(string $source = null, bool $getPath = false, array $parameters = [])
+    public function getRoute(?string $source = null, array $parameters = []): Route
     {
-        if (!$this->configStore->isAuthorized($this->appId, $source)) {
-            return null;
-        }
-
-        $uri = $this->configStore->getApplicationUri($this->appId, $source);
-        if ($getPath) {
-            $uri = [
-                'route'  => 'dash_app',
-                'params' => [
-                    'app' => $uri,
-                ],
-            ];
-
-            if (!empty($parameters['slug'])) {
-                if (!$this->configStore->isAuthorized($this->appId, $source, 'detail')) {
-                    return null;
-                }
-
-                $slug = trim($parameters['slug']);
-                unset($parameters['slug']);
-                $uri['params']['app'] .= '/' . $slug;
-            }
-            if (!empty($parameters)) {
-                $uri['params']['?'] = $parameters;
+        $route = $this->configStore->getApplicationRoute($this->appId, $source);
+        $route->addParameters($parameters);
+        if (!empty($parameters['slug'])) {
+            $config = $source ? $this->config->getSourceConfig($source) : $this->config;
+            if (empty($config->getModule('detail'))) {
+                $route->setAuthenticated(false);
             }
         }
 
-        return $uri;
+        return $route;
     }
 
-    public function getDirectory(string $type = ConfigStore::DIR_FILES, ?string $sourceAlias = null)
+    public function getDirectory(string $type = ConfigStore::DIR_FILES, ?string $sourceAlias = null): string
     {
         return $this->configStore->getDirectory($type, $this->appId, $sourceAlias, false);
     }
@@ -126,11 +99,11 @@ class Application
     /**
      * Get active module name
      *
-     * @param string $name Give name of module if module is enabled
+     * @param string|null $name Give name of module if module is enabled
      *
-     * @return string
+     * @return bool
      */
-    public function isModuleEnabled(string $name = null): bool
+    public function isModuleEnabled(?string $name = null): bool
     {
         return null !== $this->config->getModule($name);
     }
@@ -174,30 +147,43 @@ class Application
 
     public function getIdField(): Field
     {
-        return new Field('id', [
+        return new Field($this->appId, 'id', [
             'type'      => 'number',
             'public'    => false,
             'dashboard' => false,
             'detail'    => false,
             'ignored'   => true,
-        ]);
+        ], $this->configStore, $this->config);
     }
 
-    public function getData(array $columns = [])
+    public function getData(array $columns = []): array
     {
         return $this->repository->getData($columns);
     }
 
-    public function getDistinctData(string $column)
+    public function getDistinctData(string $column): array
     {
         return $this->repository->getDistinct($column);
     }
 
-    public function getFieldOptions(Field $field, int $currentValue = null)
+    public function getFieldChoices(array $options, Field $field, ?int $currentValue = null): array
     {
-        if ($field->getSourceIdentifier()) {
+        if ($fieldSourceAlias = $field->getSourceIdentifier()) {
             $rawData = $this->getRepository()->getForeignData($field->getSourceIdentifier());
-            $data    = array_combine(array_column($rawData, 'pk'), array_column($rawData, '_exposed'));
+            if ($options['group'] ?? false && $options['group']['source']) {
+                $sourceAlias = $options['group']['source'];
+
+                $fieldSourceId     = $this->config->getSourceId($fieldSourceAlias);
+                $fieldSourceRepo   = $this->getRepository()->getForeignRepo($fieldSourceId);
+                $fieldSourceConfig = $fieldSourceRepo->getSourceConfig($sourceAlias);
+
+                $sourceExposed = $sourceAlias . '__' . $fieldSourceConfig['columns'][0];
+
+                $data = Hash::combine($rawData, '{n}._exposed', '{n}.pk', '{n}.' . $sourceExposed);
+            } else {
+                $data = array_combine(array_column($rawData, 'pk'), array_column($rawData, '_exposed'));
+            }
+
         } else {
             $data = $field->getChoiceOptions();
         }
@@ -233,17 +219,11 @@ class Application
             return;
         }
 
-        switch ($module) {
-            case 'detail':
-                $this->module = new DetailModule($this, $this->getRequest());
-                break;
-            case 'form':
-                $this->module = new FormModule($this, $this->getRequest());
-                break;
-            case 'dashboard':
-            default:
-                $this->module = new DashboardModule($this, $this->getRequest());
-        }
+        $this->module = match ($module) {
+            'detail' => new DetailModule($this, $this->getRequest()),
+            'form' => new FormModule($this, $this->getRequest()),
+            default => new DashboardModule($this, $this->getRequest()),
+        };
     }
 
     public function apply(array $params = []): void
@@ -267,14 +247,12 @@ class Application
                 }
 
                 $this->module = new RedirectModule($this, $this->getRequest());
-                $this->module->setData(['redirect' => $this->getPublicUri(null, true)]);
+                $this->module->setData(['redirect' => $this->getRoute()]);
                 $this->module->prepare();
 
                 return;
-                break;
             case 'duplicate':
-                throw new NotImplementedException('Can\'t duplicate yet');
-                break;
+                throw new \LogicException('Can\'t duplicate yet');
             case 'edit':
             default: // dashboard / detail
                 if ($query = $this->getRequest()->query->get('q')) {
@@ -314,8 +292,10 @@ class Application
             // todo: remove
             'translation_domain' => Property::schemaName($this->appId),
             'meta'               => $this->config->meta,
-            'public_uri'         => $this->getPublicUri(),
             'frontend'           => compact('uniqueConstraint'),
+            'route'              => $this->configStore->getApplicationRoute($this->appId),
+            // fixme
+            'categoryRoute'      => $this->configStore->router->matchApp($this->config->getCategory()->getCategoryId()),
         ];
         $moduleData = $this->module->getData();
         if ($moduleData && ctype_alpha(key($moduleData))) {
@@ -327,39 +307,30 @@ class Application
         return $data;
     }
 
-    protected function prepareData()
+    protected function prepareData(): void
     {
         $this->data = [];
 
-        // globally modify visibility
-        foreach ($this->getFields() as $field) {
-            $field->setModuleVisibility($this->module, $this->isAuthenticated); // fixme: adapt in data assignment
-        }
-
-        switch ($this->module->getName()) {
-            case 'dashboard':
-                while ($row = $this->repository->next()) {
-                    $this->addDataRow($row);
-                }
-                break;
-            case 'form':
-                try {
-                    $row = $this->repository->getActiveRecord();
-                    $this->addDataRow($row, true);
-                } catch (\LogicException $e) {
-                    $this->addDataRow([], true);
-                }
-                $this->data = $this->data[0];
-                break;
-            case 'detail':
-                $row = $this->repository->getActiveRecord();
+        if ($this->module instanceof DashboardModule) {
+            while ($row = $this->repository->next()) {
                 $this->addDataRow($row);
-                $this->data = $this->data[0];
-                break;
+            }
+        } elseif ($this->module instanceof FormModule) {
+            try {
+                $row = $this->repository->getActiveRecord();
+                $this->addDataRow($row, true);
+            } catch (\LogicException $e) {
+                $this->addDataRow([], true);
+            }
+            $this->data = $this->data[0];
+        } elseif ($this->module instanceof DetailModule) {
+            $row = $this->repository->getActiveRecord();
+            $this->addDataRow($row);
+            $this->data = $this->data[0];
         }
     }
 
-    private function addDataRow(array $sqlData, bool $includeField = false)
+    private function addDataRow(array $sqlData, bool $includeField = false): void
     {
         $row = [
             'pk' => [
@@ -372,6 +343,7 @@ class Application
         ];
 
         foreach ($this->getFields() as $field) {
+            $field->authenticateVisibility($this->module, $this->configStore->router->isAuthenticated());
             if (!$field->isVisible($this->module) && !$field->isSlug()) { // fixme: append data into modules directly
                 continue;
             }
@@ -394,7 +366,6 @@ class Application
 
     protected function getUniqueValues(Field $field): ?array
     {
-        $result = null;
         if ($field->getSourceIdentifier()) {
             $result = array_keys($this->repository->getForeignData($field->getSourceIdentifier()));
         } else {
@@ -425,14 +396,13 @@ class Application
      * @param string|\DateTime $datetime
      * @param string           $round
      * @param string|null      $suffix
-     * @param int              $level
+     * @param string           $transformTo
      *
      * @return string
-     * @throws \LogicException
-     *
+     * @throws \DateMalformedStringException
      * @todo move to Helpers
      */
-    public function timeElapsedString($datetime, $round = 'floor', $suffix = null, $transformTo = 'auto'): string
+    public function timeElapsedString(string|\DateTime $datetime, string $round = 'floor', ?string $suffix = null, string $transformTo = 'auto'): string
     {
         $now  = new \DateTime();
         $ago  = !$datetime instanceof \DateTime ? new \DateTime($datetime) : $datetime;
@@ -442,16 +412,8 @@ class Application
             return $ago->format('Y M d');
         }
 
-        if (!in_array($round, [
-            'floor',
-            'ceil',
-            'round',
-        ])) {
-            throw new \LogicException('"' . $round . '" is not a valid Math function');
-        }
-
-        $diff->w = call_user_func($round, $diff->d / 7);
-        $diff->d -= $diff->w * 7;
+        $diffWeeks = call_user_func($round, $diff->d / 7);
+        $diff->d   -= $diffWeeks * 7;
 
         $dateSlices = [
             'year'   => 'y',
@@ -462,7 +424,7 @@ class Application
             'minute' => 'm',
         ];
         foreach ($dateSlices as &$v) {
-            $v = $diff->$v;
+            $v = $v == 'w' ? $diff->days / 7 : $diff->$v;
         }
 
         if ($transformTo != 'auto') {
@@ -493,10 +455,8 @@ class Application
      * @return mixed|null
      * @throws \LogicException
      */
-    public function resolveExtension($fieldId, array $context)
+    public function resolveExtension($fieldId, array $context): mixed
     {
-        $result = null;
-
         $className  = str_replace(' ', '', ucwords(preg_replace('/[\W]+/', ' ', $this->appId)));
         $methodName = 'transform' . str_replace(' ', '', ucwords(preg_replace('/[^a-zA-Z]/', ' ', $fieldId)));
 
@@ -508,8 +468,10 @@ class Application
         return $result;
     }
 
-    private function getRequest()
+    private function getRequest(): ?\Symfony\Component\HttpFoundation\Request
     {
-        return $this->requestStack->getMasterRequest();
+        return $this->requestStack->getMainRequest();
     }
+
+
 }

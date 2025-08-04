@@ -1,0 +1,31 @@
+services:
+  php:
+    # use the image instead of build context for production
+    #image: unchained-cms:latest
+    build:
+      context: .
+    environment:
+      INCLUDE_EXAMPLES: "true"
+    networks:
+      default:
+        aliases:
+          - php-fpm
+    volumes:
+      - ./.docker/php/conf.d/php-upload.ini:/usr/local/etc/php/conf.d/php-upload.ini:ro
+      - build:/var/www/public/build
+      - media:/var/www/public/media
+
+  nginx:
+    image: nginx:stable-alpine
+    depends_on:
+      - php
+    volumes:
+      - ./.docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - media:/var/www/media
+      - build:/var/www/build
+    ports:
+     - 8080:80
+
+volumes:
+  build:
+  media:

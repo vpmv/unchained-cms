@@ -1,17 +1,9 @@
 {
     "devDependencies": {
-        "@fortawesome/fontawesome-free": "^5.3.1",
-        "@symfony/webpack-encore": "^0.22.2",
-        "bootstrap": "^4.1.3",
-        "bootstrap-select": "^1.13.2",
-        "bootstrap-toggle": "^2.2.2",
-        "flag-icon-css": "^3.0.0",
-        "fontawesome": "^4.7.2",
-        "jquery": "^3.5.0",
-        "node-sass": "^4.9.3",
-        "popper.js": "^1.14.4",
-        "sass-loader": "^7.1.0",
-        "webpack-notifier": "^1.6.0"
+        "@babel/preset-env": "^7.28.0",
+        "webpack": "^5.100.2",
+        "webpack-cli": "^6.0.1",
+        "yarn-audit-fix": "^10.1.1"
     },
     "license": "GNU",
     "private": true,
@@ -22,7 +14,23 @@
         "build": "encore production"
     },
     "dependencies": {
-        "datatables.net-bs4": "^1.10.19",
-        "datatables.net-responsive-bs4": "^2.2.3"
+        "@babel/core": "^7.28.0",
+        "@fortawesome/fontawesome-free": "^5.15.4",
+        "@popperjs/core": "^2.11.8",
+        "@symfony/webpack-encore": "^0.",
+        "bootstrap": "^5.2",
+        "bootstrap-icons": "^1.13.1",
+        "bootstrap-select": "^1.14.0-beta3",
+        "bootstrap5-toggle": "^5.1.2",
+        "datatables.net-bs5": "^2.3.2",
+        "datatables.net-responsive-bs5": "^3.0.5",
+        "flag-icon-css": "^3.0.0",
+        "fontawesome": "^5.6.3",
+        "jquery": "^3.7.1",
+        "node-gyp": "^11.2.0",
+        "popper.js": "^1.16.1",
+        "sass": "^1.89.2",
+        "sass-loader": "^16.0.5",
+        "webpack-notifier": "^1.6.0"
     }
 }

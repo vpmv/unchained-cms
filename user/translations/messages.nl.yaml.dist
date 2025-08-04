@@ -1,0 +1,77 @@
+### Default translations
+
+theme.light: Lichte modus
+theme.dark: Donkere modus
+theme.auto: Automatisch
+
+text.dashboard.empty.verbose: "Geen verbose bekend"
+action.entity.create.verbose: "verbose aanmaken"
+text.entity.create.verbose: Aanmaken
+text.entity.edit.verbose: Bewerken
+
+dialog.delete_warning: Weet je zeker dat je dit wil verwijderen?
+
+label.new: Nieuw
+label.details: Details
+label.edit: Bewerk
+label.editing: Bewerken
+label.save: Opslaan
+label.cancel: Annuleren
+label.back: Terug
+label.overview: Overzicht
+label.select...: Maak een keuze...
+Select...: Maak een keuze...
+
+label.photo: Foto
+label.type: Soort
+label.name: Naam
+label.gender: Geslacht
+label.age: Leeftijd
+label.comment: Commentaar
+label.address: Adres
+
+choice.gender.male: Man
+choice.gender.female: Vrouw
+
+### Date / time
+
+value.date.year-mo-MO-day-DAY: DAY. day-mo-year
+value.date.year-mo-MO-day: day-mo-year
+value.time.year.nn: nn jaar
+value.time.year_plural.nn: nn jaar
+value.time.month.nn: nn mnd
+value.time.month_plural.nn: nn mnd.
+value.time.day.nn: nn dag
+value.time.day_plural.nn: nn dg.
+value.time.minute.nn: nn min.
+value.time.minute_plural.nn: nn min.
+value.time.just_now: zojuist
+
+time.month.jan: jan
+time.month.feb: feb
+time.month.mar: mrt
+time.month.apr: apr
+time.month.may: mei
+time.month.jun: jun
+time.month.jul: jul
+time.month.aug: aug
+time.month.sep: sep
+time.month.oct: okt
+time.month.nov: nov
+time.month.dec: dec
+
+time.dow.mon: ma
+time.dow.tue: di
+time.dow.wed: wo
+time.dow.thu: do
+time.dow.fri: vr
+time.dow.sat: za
+time.dow.sun: zo
+
+time.dow.monday: maandag
+time.dow.tuesday: dinsdag
+time.dow.wednesday: woensdag
+time.dow.thursday: donderdag
+time.dow.friday: vrijdag
+time.dow.saturday: zaterdag
+time.dow.sunday: zondag

@@ -1,0 +1,71 @@
+@import "~bootstrap/scss/functions";
+
+// general colors
+$blue:   #0B3954; /*#0E1C36*/
+$indigo: #6610f2;
+$purple: #533A71;
+$pink:   #bbacc1;
+$red:    #9e0031;
+$orange: #E09F3E;
+$yellow: #F5BB00;
+$green:  #198754;
+$teal:   #20c997;
+$cyan:   #BEDCFE;
+
+// named colors
+$brand-primary:        #642d28;
+$brand-primary-subtle: #f9b5ac;
+$brand-primary-dark:   darken($brand-primary, 10%);
+$brand-secondary:      #909580;
+$brand-tertiary:       $purple;
+$brand-black:          #2a2d34;
+$brand-white:          #eee5e9;
+$brand-blue:           #6761a8;
+
+$primary:    $brand-primary;
+$secondary:  $brand-secondary;
+$tertiary:   $brand-tertiary;
+$danger:     #9e0031;
+$warning:    $yellow;
+$info:       $brand-blue;
+$success:    #a8c686;
+$lightgray:  #ccc;
+
+$primary-subtle: $brand-primary-subtle;
+// nth-child color; for rainbow effect
+$nth-color: (
+   #7d5d81,
+   #314190,
+   #ec1b5a,
+   #79aefe,
+   #14636e,
+   $success,
+   $warning,
+   $danger,
+   $info,
+   #7e4b17,
+);
+
+$font-family-base: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+:root {
+   --brand-primary: #{$brand-primary};
+   --brand-primary-subtle: #{$brand-primary-subtle};
+   --brand-primary-dark: #{$brand-primary-dark};
+   --bs-body-color: #{$brand-black};
+}
+
+[class$="bg-brand-primary"] {
+  background-color: var(--brand-primary);
+}
+[class$="bg-brand-primary-subtle"] {
+  background-color: var(--brand-primary-subtle);
+}
+
+[class$="-primary"], a[class$="-primary"], .btn-primary {
+   color: #{$brand-white};
+   --bs-btn-color: #{$brand-white};
+}
+
+@import "~bootstrap/scss/variables";
+//@import "~bootstrap/scss/variables-dark";

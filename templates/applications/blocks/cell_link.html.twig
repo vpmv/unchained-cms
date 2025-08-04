@@ -3,7 +3,10 @@
 {% set title = title is defined ? title : '' %}
 {% set target = target is defined ? 'target="'~target~'"' : '' %}
 
-<a title="{{ title }}" href="{{ link }}" {{ target }}>{% spaceless %}
+{% if not routeAuthenticated(link)  %}
+    {{ text }}
+{% else %}
+    <a title="{{ title }}" href="{{ route(link) }}" {{ target }}>{% apply spaceless %}
         {% if image is defined %}
             <div class="media-box">
                 {% include 'applications/blocks/image_small.html.twig' with {source: image, alt: title} %}
@@ -14,10 +17,12 @@
         {% elseif text is defined %}
             {{ text }}
         {% else %}
-            link
+            link {# fixme #}
         {% endif %}
-    {% endspaceless %}</a>
+    {% endapply %}
+    </a>
 
-{% if use_icon %}
-    <sup><i class="{{ icon }} fa-xs"></i></sup>
+    {% if use_icon %}
+        <sup><i class="{{ icon }} fa-xs"></i></sup>
+    {% endif %}
 {% endif %}

@@ -1,0 +1,44 @@
+<?php
+
+class LibraryAuthors implements \App\System\Constructs\UserExtensionInterface
+{
+    use \App\System\Helpers\DateTransformerTrait;
+
+    /**
+     * @param array $context
+     *
+     * @return \App\System\Constructs\Translatable
+     */
+    public static function transformAge(array $context): \App\System\Constructs\Translatable
+    {
+        return static::timeAgo($context['date_of_birth'] ?? null, $context['date_of_death'] ?? null);
+    }
+
+    /**
+     * Example returning static (non-translatable) string
+     *
+     * @param array $context
+     *
+     * @return string
+     */
+    public static function transformRegular(array $context): string
+    {
+        return implode('-', array_values($context));
+    }
+
+    /**
+     * Example returning boolean value (displayed as X/V)
+     *
+     * @param array $context
+     *
+     * @return bool
+     */
+    public static function transformStatus(array $context)
+    {
+        if (!empty($context['date_of_death'])) {
+            return false;
+        }
+
+        return true;
+    }
+}

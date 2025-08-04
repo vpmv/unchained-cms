@@ -6,7 +6,7 @@ use App\System\Constructs\Translatable;
 
 class TranslatableUserOutput extends Translatable
 {
-    protected $type = 'user';
+    protected string $type = 'user';
 
     public function __construct(string $subject, string $message, array $arguments = [])
     {

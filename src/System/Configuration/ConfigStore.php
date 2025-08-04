@@ -2,193 +2,50 @@
 
 namespace App\System\Configuration;
 
-use App\System\Application\Field;
 use App\System\Application\Property;
-use App\System\Constructs\Cacheable;
-use App\System\Helpers\Timer;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use App\System\Configuration\Exception\SequenceException;
+use App\System\Router;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
 
-class ConfigStore extends Cacheable
+class ConfigStore extends ConfigStoreBase
 {
-    use YamlReader;
+    public const string DIR_PUBLIC    = 'public';
+    public const string DIR_FILES     = 'files';
+    public const string DIR_IMAGES    = 'images';
+    public const string DIR_EXTENSION = 'extension';
 
-    public const DIR_PUBLIC    = 'public';
-    public const DIR_FILES     = 'files';
-    public const DIR_IMAGES    = 'images';
-    public const DIR_EXTENSION = 'extension';
+    protected $paths = [];
 
-    /** @var \Symfony\Component\DependencyInjection\ContainerInterface */
-    private $container;
-
-    /** @var \Psr\Log\LoggerInterface */
-    private $logger;
-    /** @var \App\System\Helpers\Timer */
-    private $timer;
-
+    protected bool $authenticated = false;
     /** @var \App\System\Configuration\ApplicationConfig[] */
-    private $applications      = [];
-    private $applicationConfig = [];
+    protected $applications = [];
+
     /** @var ApplicationCategory[] */
-    private $applicationCategories = [];
+    protected        $categories = [];
+    protected string $locale;
 
-    private $systemConfig = [];
 
-    private $paths         = [];
-    private $authenticated = false;
+    public function __construct(
+        public readonly Router $router,
+        private readonly RequestStack $requestStack,
+        //private readonly LoggerInterface $logger,
+        //private readonly Timer $timer,
+        Security $security,
+        protected readonly string $projectDir,
+        private readonly string $publicDir,
+    ) {
+        parent::__construct($this->projectDir);
 
-    public function __construct(ContainerInterface $container, LoggerInterface $logger, Timer $timer)
-    {
-        parent::__construct('config.');
-        $this->container = $container;
-        $this->basePath  = $container->getParameter('kernel.project_dir') . '/user/config/';
-        $this->logger    = $logger;
-        $this->timer     = $timer;
-
-        $this->paths         = [
-            'root'   => $container->getParameter('kernel.project_dir'),
-            'public' => $container->getParameter('kernel.public_dir'),
+        $this->basePath = $this->projectDir . '/user/config/';
+        $this->paths = [
+            'root'   => $this->projectDir,
+            'public' => $this->publicDir,
         ];
-        $this->authenticated = !empty($this->container->get('security.token_storage')->getToken()->getRoleNames());
-    }
 
-    /**
-     * @param string      $name
-     * @param null|string $attribute
-     *
-     * @return mixed
-     * @throws \InvalidArgumentException
-     */
-    public function readSystemConfig(string $name, ?string $attribute = null, $default = null)
-    {
-        $this->systemConfig[$name] = $this->remember('system.' . $name, function () use ($name) {
-            return $this->readYamlFile('system/' . $name . '.yaml');
-        });
-
-        if ($attribute) {
-            return $this->systemConfig[$name][$attribute] ?? $default;
-        }
-
-        return $this->systemConfig[$name] ?? $default;
-    }
-
-    public function readApplicationConfig(string $appId)
-    {
-        return $this->remember('application.raw.' . $appId, function () use ($appId) {
-            $config = $this->readYamlFile('applications/' . $appId . '.yaml');
-            if (empty($config['application'])) {
-                $this->logger->alert('Application configuration missing <application> attribute', ['appId' => $appId]);
-                throw new NoConfigurationException('No configuration found for App<' . $appId . '>');
-            }
-
-            return $config['application'];
-        });
-    }
-
-    /**
-     * Retrieve and parse application configuration
-     *
-     * @param string $appId
-     *
-     * @return \App\System\Configuration\ApplicationConfig
-     * @throws \InvalidArgumentException if configuration file is not found
-     * @throws \Symfony\Component\Routing\Exception\NoConfigurationException If configuration is missing mandatory 'application' attribute
-     */
-    public function getApplicationConfig(string $appId): ApplicationConfig
-    {
-        if (!isset($this->applications[$appId])) {
-            $this->timer->start('config.' . $appId);
-            $this->applications[$appId] = $this->remember('application.' . $appId, function () use ($appId) {
-                $config = $this->readApplicationConfig($appId);
-                $config = new ApplicationConfig($this->container, $this, $config, $appId);
-
-                return $config;
-            });
-            $this->timer->stop('config.' . $appId);
-        }
-        $this->setApplicationSystemConfig($appId);
-
-        return $this->applications[$appId];
-    }
-
-    public function getCategoryConfig(string $categoryId): ApplicationCategory
-    {
-        if (!isset($this->applicationCategories[$categoryId])) {
-            $categories = $this->readSystemConfig('applications', 'categories', []) + ['_default' => []];
-            if (!array_key_exists($categoryId, $categories)) {
-                $categoryId = '_default';
-            }
-
-            $this->applicationCategories[$categoryId] = $this->remember('category.' . $categoryId, function () use ($categories, $categoryId) {
-                return new ApplicationCategory($categoryId, $categories[$categoryId] ?? []);
-            });
-        }
-
-        return $this->applicationCategories[$categoryId];
-    }
-
-    /**
-     * @param $applicationId
-     *
-     * @throws \Symfony\Component\Routing\Exception\NoConfigurationException   Application not defined
-     */
-    private function setApplicationSystemConfig($applicationId)
-    {
-        if (isset($this->applicationConfig[$applicationId])) {
-            return;
-        }
-
-        $applications = $this->readSystemConfig('applications', 'applications');
-        if (!array_key_exists($applicationId, $applications)) {
-            throw new NoConfigurationException('Application not configured');
-        }
-        $userLocale = $this->container->get('request_stack')->getMasterRequest()->getLocale();
-
-        $this->applicationConfig[$applicationId] = $this->remember('sysconfig.' . $applicationId . '.' . $userLocale . '-' . intval($this->authenticated), function () use ($applicationId, $applications, $userLocale) {
-            $sysConfig = $applications[$applicationId];
-            $appConfig = $this->applications[$applicationId];
-
-            $routePrefix = null;
-            if ($categoryId = $appConfig->getCategory()->getCategoryId()) {
-                try {
-                    $categoryConfig = $this->getCategoryConfig($categoryId);
-                    $routePrefix    = $categoryConfig->getRoute($userLocale, true);
-                } catch (NoConfigurationException $e) {
-                    $this->logger->warning(sprintf('No configuration for category "%s"', $categoryId));
-                }
-            }
-
-            $routes = $appConfig->getRoutes() + ['_active' => $appConfig->getRoutes($userLocale)];
-            foreach ($routes as &$route) {
-                $route = $routePrefix . $route;
-            }
-
-            return [
-                'uri'        => $routes,
-                'authorized' => ($sysConfig['public'] ?? true) || $this->authenticated,
-            ];
-        });
-    }
-
-    public function isAuthorized(string $applicationId, ?string $sourceAlias = null, ?string $module = null): bool
-    {
-        $config = $this->getApplicationConfig($applicationId);
-        if ($sourceAlias) {
-            $config        = $this->getSourceConfigByAlias($config, $sourceAlias);
-            $applicationId = $config->getAppId();
-        }
-
-        if (!isset($this->applicationConfig[$applicationId])) {
-            throw new \InvalidArgumentException('Unconfigured application: ' . $applicationId);
-        }
-
-        $authorized = $this->applicationConfig[$applicationId]['authorized'];
-        if ($authorized && $module) {
-            return !empty($config->getModule($module));
-        }
-
-        return $authorized;
+        $this->locale = $this->requestStack->getMainRequest()->getLocale();
+        $this->authenticated = !empty($security->getToken()?->getRoleNames());
     }
 
     public function isAuthenticated(): bool
@@ -196,43 +53,91 @@ class ConfigStore extends Cacheable
         return $this->authenticated;
     }
 
-    public function getApplicationUri(string $applicationId, ?string $sourceAlias = null, string $locale = null)
+    public function configureApplications(): void
     {
-        if ($sourceAlias) {
-            $applicationId = $this->getSourceConfigByAlias($this->getApplicationConfig($applicationId), $sourceAlias)->appId;
+        $config       = $this->readSystemConfig('applications');
+        $applications = $config['applications'];
+        $categories   = ($config['categories'] ?? []) + ['_default' => []];
+
+        foreach ($categories as $categoryId => $category) {
+            $this->categories[$categoryId] = $this->remember('category.' . $categoryId, function () use ($categoryId, $category) {
+                return new ApplicationCategory($categoryId, $category);
+            });
         }
 
-        if (!isset($this->applicationConfig[$applicationId])) {
-            throw new \InvalidArgumentException('Unconfigured application: ' . $applicationId);
+        foreach ($applications as $appId => $appConfig) {
+            $this->getApplication($appId, $appConfig); // populate $this->applications[$appId]
+            $this->router->addRoutes(...
+                $this->remember("routes.app.$appId", function () use ($appId) {
+                    return Route::create($this->applications[$appId]);
+                }),
+            );
         }
-        if (empty($this->applicationConfig[$applicationId]['uri'][$locale ?: '_active'])) {
-            return $this->applicationConfig[$applicationId]['uri']['_default'];
-        }
-
-        return $this->applicationConfig[$applicationId]['uri'][$locale ?: '_active'];
     }
 
-    public function getApplicationField(string $applicationId, string $field, ?string $sourceAlias = null): Field
+    /**
+     * @return \App\System\Configuration\ApplicationConfig[]
+     */
+    public function getApplications(): array
     {
-        $config = $this->getApplicationConfig($applicationId);
-        if ($sourceAlias) {
-            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
-        }
-
-        return $config->getField($field);
+        return $this->applications;
     }
 
-    public function getCategoryUri(string $categoryId, string $locale = null): ?string
+    /**
+     * @param string $appId
+     *
+     * @return \App\System\Configuration\ApplicationConfig
+     */
+    public function getApplication(string $appId, ?array $appConfig = null): ApplicationConfig
     {
-        if (!isset($this->applicationCategories[$categoryId])) {
-            try {
-                $this->getCategoryConfig($categoryId);
-            } catch (NoConfigurationException $e) {
-                return null;
-            }
+        if (!isset($this->applications[$appId])) {
+            $this->applications[$appId] = $this->remember("application.$appId", function () use ($appId, $appConfig) {
+                $appConfig ??= $this->readSystemConfig('applications', 'applications')[$appId];
+
+                $config = $this->readYamlFile('applications/' . $appId . '.yaml');
+                if (empty($config['application'])) {
+                    throw new NoConfigurationException('No configuration found for App<' . $appId . '>');
+                }
+
+                foreach (static::BASE_KEYS as $key) {
+                    if (array_key_exists($key, $appConfig ?? [])) {
+                        $config['application'][$key] = $appConfig[$key];
+                    }
+                }
+
+                /** @var \App\System\Configuration\ApplicationCategory $category */
+                $category = $this->categories[$config['application']['category'] ?? '_default'];
+
+                return new ApplicationConfig($this, $category, $config['application'], $appId, $this->projectDir);
+            });
         }
 
-        return $this->applicationCategories[$categoryId]->getRoute($locale);
+        return $this->applications[$appId];
+    }
+
+    /**
+     * @param string $categoryId
+     *
+     * @return \App\System\Configuration\ApplicationCategory
+     */
+    public function getCategoryConfig(string $categoryId): ApplicationCategory
+    {
+        if (!isset($this->categories[$categoryId])) {
+            throw new SequenceException('unconfigured category');
+        }
+
+        return $this->categories[$categoryId];
+    }
+
+    public function getApplicationRoute(string $applicationId, ?string $sourceAlias = null): Route
+    {
+        $config = $this->getApplication($applicationId);
+        if ($sourceAlias) {
+            $applicationId = $config->getSourceId($sourceAlias);
+        }
+        $config = $this->getApplication($applicationId);
+
+        return $this->router->matchApp($config->getCategory()->getCategoryId(), $applicationId);
     }
 
     public function getDirectory(string $type, string $applicationId, ?string $sourceAlias = null, bool $asFileSystem = false): string
@@ -243,9 +148,9 @@ class ConfigStore extends Cacheable
             return $this->paths['root'] . '/user/extensions';
         }
 
-        $config = $this->getApplicationConfig($applicationId);
+        $config = $this->getApplication($applicationId);
         if ($sourceAlias) {
-            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
+            $config = $config->getSourceConfig($sourceAlias);
         }
 
         // fixme: asFileSystem should include DIRECTORY_SEPARATOR for non-unix deployments
@@ -261,48 +166,12 @@ class ConfigStore extends Cacheable
 
     public function getForeignColumn(string $applicationId, ?string $sourceAlias): string
     {
-        $config = $this->getApplicationConfig($applicationId);
+        $config = $this->getApplication($applicationId);
         if ($sourceAlias) {
-            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
+            $config = $config->getSourceConfig($sourceAlias);
         }
 
         return Property::foreignKey($config->appId);
     }
 
-    /**
-     * @param string      $applicationId
-     * @param string|null $sourceAlias
-     *
-     * @return Field[]
-     * @throws \InvalidArgumentException Unknown source
-     */
-    public function getExposedFields(string $applicationId, ?string $sourceAlias = null): array
-    {
-        $config = $this->getApplicationConfig($applicationId);
-        if ($sourceAlias) {
-            $config = $this->getSourceConfigByAlias($config, $sourceAlias);
-        }
-        $fields = array_filter((array)$config->getMeta('exposes'));
-        foreach ($fields as &$field) {
-            $field = $config->fields[$field];
-        }
-
-        return $fields;
-    }
-
-    /**
-     * @param \App\System\Configuration\ApplicationConfig $config
-     * @param string                                      $source
-     *
-     * @return \App\System\Configuration\ApplicationConfig
-     * @throws \InvalidArgumentException Unknown source
-     */
-    private function getSourceConfigByAlias(ApplicationConfig $config, string $source): ApplicationConfig
-    {
-        if (!isset($config->sources[$source])) {
-            throw new \InvalidArgumentException("Unconfigured source $source in application " . $config->appId);
-        }
-
-        return $this->getApplicationConfig($config->sources[$source]['application']);
-    }
 }

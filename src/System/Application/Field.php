@@ -37,10 +37,13 @@ class Field
 
     private $data = [];
 
-    public function __construct(string $appId, string $identifier, array $config, ConfigStore $configStore, ?ApplicationConfig $context = null)
-    {
-        $this->appId = $appId; // fixme
-
+    public function __construct(
+        private readonly string $appId, // fixme
+        string $identifier,
+        array $config,
+        ConfigStore $configStore,
+        ?ApplicationConfig $context = null,
+    ) {
         $this->id = $identifier;
 
         $this->setConfiguration($config);
@@ -225,23 +228,22 @@ class Field
             $this->setData('value', $value->getValue());
         } elseif ($value instanceof Junction) {
             $this->setData('value', $value->getValue());
-            $this->setData('url', $application->getPublicUri($value->getApplication(), true, ['slug' => $value->getSlug()]));
+            $this->setData('url', $application->getRoute($value->getApplication(), ['slug' => $value->getSlug()]));
             $this->setData('title', $value->getExposed());
         } elseif ($value instanceof JunctionList) {
             $values = $links = [];
             foreach ($value->getJunctions() as $junction) {
                 $values[] = $junction->getValue();
-                $links[]  = $application->getPublicUri($junction->getApplication(), true, ['slug' => $junction->getSlug()]);
+                $links[] = $application->getRoute($junction->getApplication(), ['slug' => $junction->getSlug()]);
             }
             $this->setData('value', $values);
             $this->setData('url', $links);
         }
 
-        // fixme: pretty url
         if ($reference) {
-            $path              = $application->getPublicUri($reference->getApplicationAlias(), true);
-            $path['reference'] = $reference->getValue();
-            $this->setData('reference', $path);
+            $route = $application->getRoute($reference->getApplicationAlias());
+            $route->addParameters(['reference' => $reference->getValue()]);
+            $this->setData('reference', $route);
         }
 
         if ($this->config['pointer']) {
@@ -276,8 +278,7 @@ class Field
 
         $value = $this->getData('value');
         if ($value === null || $value === self::VALUE_UNSET) {
-            $this->setData('value', null);
-
+            $this->setData('value');
             return;
         }
 
@@ -285,6 +286,7 @@ class Field
             $filesPath  = $application->getDirectory(ConfigStore::DIR_FILES, $this->getSourceIdentifier());
             $imagesPath = $application->getDirectory(ConfigStore::DIR_IMAGES, $this->getSourceIdentifier());
         }
+
         switch ($this->getDisplayType()) {
             case 'boolean':
                 $value = intval($value);
@@ -346,7 +348,16 @@ class Field
                 }
                 if (!$currentModule instanceof FormModule && ($transformer = $this->getTransformer('text'))) {
                     $this->setData('transformed', true);
-                    $value .= ' ' . $transformer['suffix'];
+                    if ($transformer['abbr'] ?? false) {
+                        preg_match_all('/\b[A-Za-z]/', $value, $matches);
+                        if ($matches[0] ?? null) {
+                            $matches[0][] = '';
+                            $value = implode('. ', $matches[0]);
+                        }
+                    }
+                    if ($transformer['suffix']) {
+                        $value .= ' ' . $transformer['suffix'];
+                    }
                 }
                 break;
             case 'number':
@@ -369,15 +380,72 @@ class Field
         $this->setData('value', $value);
     }
 
-    private function getTransformer(?string $fieldType = null)
+    private function getTransformer(?string $fieldType = null): mixed
     {
         $transformer = $this->extra['transformers'][$fieldType ?? $this->getDisplayType()] ?? [];
-        if (isset($transformer['transform']) && $transformer['transform'] === false) {
+        if (empty($transformer['transform'])) {
             return null;
         }
 
         return $transformer;
     }
+
+    /**
+     * @param array $config
+     *
+     * @return void
+     *
+     * @fixme changing scalar value is illegal?
+     */
+    private function setTransformer(array $config): void
+    {
+        $transformers = [
+            'date'   => [
+                'suffix'        => ['key' => 'suffix', 'value' => null,],
+                'math_round'    => ['key' => 'round', 'value' => 'floor', 'validate' => true],
+                'math_round_to' => ['key' => 'round_to', 'value' => 'auto',],
+            ],
+            'number' => [
+                'scalar'               => ['key' => 'scalar', 'value' => 'string'],
+                'math_round'           => ['key' => 'round', 'value' => false, 'validate' => true],
+                'math_round_precision' => ['key' => 'round_precision', 'value' => 2],
+                'suffix'               => ['key' => 'suffix', 'value' => null],
+            ],
+            'text'   => [
+                'suffix' => ['key' => 'suffix', 'value' => null],
+                'abbr' => ['key' => 'abbr', 'value' => false],
+            ],
+        ];
+
+        $validate = function (mixed $fn): bool|string {
+            if (true === $fn) {
+                return 'round';
+            } elseif (false === $fn) {
+                return false;
+            }
+            if (!in_array($fn, ['round', 'floor', 'ceil'])) {
+                throw new \InvalidArgumentException(sprintf('Invalid option value <round: "%s"> for Field<%s.%s>; choices [ceil, floor, round]', $fn, $this->appId, $this->id));
+            }
+            return $fn;
+        };
+
+        // find transformer
+        $transformerType = array_key_first($config);
+        if ($transformer = $transformers[$transformerType] ?? false) {
+            $config = $config[$transformerType];
+            $result = $transformer + ['transform' => true];
+
+            foreach ($transformer as $key => $cond) {
+                $result[$key] = $config[$cond['key']] ?? $cond['value'];
+                if ($cond['validate'] ?? false) {
+                    $result[$key] = $validate($result[$key]);
+                }
+            }
+
+            $this->extra['transformers'] = [$transformerType => $result];
+        }
+    }
+
 
     public function isVisible(?ApplicationModuleInterface $module): bool
     {
@@ -393,9 +461,9 @@ class Field
      *
      * @param bool $visible
      *
-     * @deprecated To be factored out
+     * @fixme To be factored out
      */
-    public function setModuleVisibility(ApplicationModuleInterface $module, bool $isAuthenticated = false)
+    public function authenticateVisibility(ApplicationModuleInterface $module, bool $isAuthenticated = false): void
     {
         if ($this->visibility[$module->getName()] && !$this->visibility['public']) {
             $this->visibility[$module->getName()] = $isAuthenticated;
@@ -417,7 +485,6 @@ class Field
             'boolean'  => 'checkbox',
             'datetime' => 'dateTime',
             'image'    => 'file',
-            'rating'   => 'choice', // fixme: range slider / stars
             'textbox'  => 'textarea',
             'url'      => 'text',
         ];
@@ -426,7 +493,6 @@ class Field
         }
 
         switch ($this->config['type']) {
-            case 'rating': // fixme
             case 'choice':
                 $this->config['options'] = $config['options'] ?? [];
                 foreach ($this->config['options'] as &$value) {
@@ -464,6 +530,8 @@ class Field
             'boolean'  => 'tinyint',
             'checkbox' => 'tinyint',
             'rating'   => 'int',
+            'range'    => 'int',
+            'uuid'     => 'uuid',
         ];
 
         $this->schema = [
@@ -471,7 +539,7 @@ class Field
             'type'      => $schemaTypes[$config['type'] ?? 'text'],
             'type_meta' => null,
             'nullable'  => !filter_var($config['required'] ?? false, FILTER_VALIDATE_BOOLEAN),
-            'default'   => $config['default'] ?? ($config['required'] ?? false) ? '' : null,
+            'default'   => ($config['type'] ?? 'text') == 'uuid' ? 'uuid()' : ($config['default'] ?? ($config['required'] ?? false) ? '' : null),
             'options'   => [],
             'column'    => $this->id,
         ];
@@ -527,6 +595,7 @@ class Field
             $contextSourceConfig = $context->getSource($sourceIdentifier);
             $foreignColumn       = $contextSourceConfig['foreign_column'];
 
+            $this->schema['column'] = $foreignColumn;
             $this->config['source'] = [
                 'id'      => $sourceIdentifier,
                 'visible' => (array)$visibleFields,
@@ -541,7 +610,6 @@ class Field
                 'context' => 'column_source',
                 'value'   => $this->id,
             ];
-            $this->schema['column']                     = $foreignColumn;
 
             if ($contextSourceConfig['function'] || $contextSourceConfig['join_source']) {
                 $this->extra['ignored'] = true;
@@ -552,31 +620,29 @@ class Field
             // convert display type
             if ($visibleFields) {
                 $sourceAppId     = $contextSourceConfig['application'];
-                $sourceAppConfig = $configStore->readApplicationConfig($sourceAppId);
+                $sourceAppConfig = $configStore->getApplication($sourceAppId);
 
-                if (is_string($visibleFields) && !empty($sourceAppConfig['fields'][$visibleFields])) {
-                    $sourceField = $sourceAppConfig['fields'][$visibleFields];
-                } elseif (is_array($visibleFields)) {
-                    if ($visibleFields) {
-                        if ($sourceAppConfig['meta']['exposes']) {
-                            $sourceField = (array)$sourceAppConfig['meta']['exposes'];
-                        } else {
-                            $sourceField = (array)array_filter($sourceAppConfig['fields'], function ($field) {
-                                return filter_var($field['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                            })[0];
-                        }
-                        //} else {
-                        //    $sourceField = (array)array_filter($visibleFields, function ($field) use ($sourceAppConfig) {
-                        //        return isset($sourceAppConfig['fields'][$field]) && filter_var($sourceAppConfig['fields'][$field]['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                        //    })[0];
-                        //}
+                if (is_string($visibleFields)) {
+                    $sourceField = $sourceAppConfig->getField($visibleFields);
+                } elseif (is_array($visibleFields) && count($visibleFields)) {
+                    if ($sourceAppConfig->getMeta('exposes')) {
+                        $sourceField = (array)$sourceAppConfig->getMeta('exposes');
+                    } else {
+                        $sourceField = (array)array_filter($sourceAppConfig->getFields(), function ($field) {
+                            return filter_var($field['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                        })[0];
                     }
+                    //} else {
+                    //    $sourceField = (array)array_filter($visibleFields, function ($field) use ($sourceAppConfig) {
+                    //        return isset($sourceAppConfig['fields'][$field]) && filter_var($sourceAppConfig['fields'][$field]['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                    //    })[0];
+                    //}
                     if (count($sourceField) > 1) {
                         return; // combined fields are always textual
                     }
                     $sourceField = $sourceField[0];
                 }
-                $this->config['type'] = $sourceField['type']; // source DisplayType overrules our DisplayType, whilst maintaining the FormType
+                $this->config['type'] = $sourceField->getDisplayType(); // source DisplayType overrules our DisplayType, whilst maintaining the FormType
             }
         }
     }
@@ -591,6 +657,7 @@ class Field
             'form'     => [
                 'required' => filter_var($config['required'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'attr'     => [],
+                'options' => [],
             ],
         ];
 
@@ -601,20 +668,16 @@ class Field
         switch ($this->config['form_type']) {
             case 'date':
             case 'datetime':
-                $this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMdd';
-                if ($config['type'] == 'datetime') {
-                    $this->moduleConfig['form']['format'] = $config['format'] ?? 'yyyyMMddHHii';
-                }
                 $yearsRange = [
-                    date('Y') - 10,
-                    date('Y') + 10,
+                    (int)date('Y') - 10,
+                    (int)date('Y') + 10,
                 ];
 
                 if (isset($config['year_min'])) {
-                    $yearsRange[0] = strlen($config['year_min']) <= 3 ? date('Y') - $config['year_min'] : $config['year_min'];
+                    $yearsRange[0] = strlen($config['year_min']) <= 3 ? (int)date('Y') - $config['year_min'] : $config['year_min'];
                 }
                 if (isset($config['year_max'])) {
-                    $yearsRange[1] = strlen($config['year_max']) <= 3 ? date('Y') + $config['year_max'] : $config['year_max'];
+                    $yearsRange[1] = strlen($config['year_max']) <= 3 ? (int)date('Y') + $config['year_max'] : $config['year_max'];
                 }
                 $this->moduleConfig['form']['years'] = range(...$yearsRange);
                 break;
@@ -623,13 +686,40 @@ class Field
             case 'text':
                 $this->moduleConfig['form']['attr']['maxlength'] = $config['maxlength'] ?? 255;
                 break;
-            case 'rating': // fixme
+            case 'range':
+            case 'rating':
+                $choices                                   = $config['options'] ?? [1, 10];
+                $this->moduleConfig['form']['attr']['min'] = $config['min'] ?? $choices[0];
+                $this->moduleConfig['form']['attr']['max'] = $config['max'] ?? $choices[array_key_last($choices)];
+                $this->moduleConfig['form']['required']    = filter_var($config['required'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                $this->moduleConfig['form']['row_attr']    = $this->moduleConfig['form']['attr'];
+                $this->config['form_type']                 = 'range';
+                break;
             case 'choice':
-                    $this->moduleConfig['form']['required'] = filter_var($config['required'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                    $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
-                    $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
-                    $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
-                    $this->moduleConfig['unique']           = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN); // fixme: different position
+                $this->moduleConfig['form']['required'] = filter_var($config['required'] ?? true, FILTER_VALIDATE_BOOLEAN);
+                $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
+                $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
+                $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
+                $this->moduleConfig['unique'] = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+                if ($config['group'] ?? null) {
+                    $this->moduleConfig['form']['options']['group'] = 'true';
+                }
+
+                if ($config['group_source'] ?? null) {
+                    $this->moduleConfig['form']['options']['group'] = [
+                        'source' => $config['group_source'],
+                    ];
+                    $this->moduleConfig['form']['attr']['data-group'] = 'true';
+                    $this->moduleConfig['form']['attr']['data-hide-disabled'] = 'true';
+                }
+                if ($config['condition'] ?? null) {
+                    if ($this->moduleConfig['form']['attr']['data-group'] ?? false) {
+                        $this->moduleConfig['form']['attr']['data-group'] = $config['condition'];
+                    } else {
+                        $this->moduleConfig['form']['attr']['data-condition'] = $config['condition'];
+                    }
+                }
                 break;
             case 'boolean':
             case 'checkbox':
@@ -669,36 +759,14 @@ class Field
             $this->extra['constraint'] = 'unique';
         }
 
-        $this->extra['transformers'] = [
-            // fixme a field is only one type
-            'date'   => [
-                'transform'     => !empty($config['_transform']['date']),
-                'suffix'        => $config['_transform']['date']['suffix'] ?? null,
-                'math_round'    => $config['_transform']['date']['round'] ?? 'floor',
-                'math_round_to' => $config['_transform']['date']['round_to'] ?? 'auto',
-            ],
-            'number' => [
-                'scalar'               => $config['_transform']['number']['scalar'] ?? 'string',
-                'math_round'           => $config['_transform']['number']['round'] ?? false,
-                'math_round_precision' => $config['_transform']['number']['round_precision'] ?? 2,
-                'suffix'               => $config['_transform']['number']['suffix'] ?? null,
-            ],
-            'text'   => [
-                'suffix' => $config['_transform']['text']['suffix'] ?? null,
-            ],
-        ];
+        if (!empty($config['_transform'])) {
+            $this->setTransformer($config['_transform']);
+        }
     }
 
     private function setVisibility(array $config)
     {
-        $this->visibility = [
-            'public'    => filter_var($config['public'] ?? true, FILTER_VALIDATE_BOOLEAN),
-            'dashboard' => !empty($config['dashboard'] ?? true),
-            'detail'    => filter_var($config['detail'] ?? true, FILTER_VALIDATE_BOOLEAN),
-            'form'      => !$this->extra['ignored'],
-        ];
-
-        $classes                                  = [
+        $classes = [
             'all'       => 'all',
             'visible'   => 'all',
             'invisible' => 'never',
@@ -711,6 +779,18 @@ class Field
             'mobile'    => 'mobile-p',
             'tablet'    => 'tablet-l tablet-p',
         ];
-        $this->moduleConfig['dashboard']['class'] = $classes[$config['dashboard']['visibility'] ?? 'all'] ?? 'all';
+
+        $this->visibility = [
+            'public'    => filter_var($config['public'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            'dashboard' => !empty($config['dashboard'] ?? true),
+            'detail'    => filter_var($config['detail'] ?? true, FILTER_VALIDATE_BOOLEAN),
+            'form'      => !$this->extra['ignored'],
+        ];
+
+        // allow setting `field.visibility: 'value'`
+        if (!is_array($v = $config['dashboard'] ?? 'all')) {
+            $config['dashboard'] = ['visibility' => $v];
+        }
+        $this->moduleConfig['dashboard']['class'] = $classes[$config['dashboard']['visibility']] ?? 'all';
     }
 }

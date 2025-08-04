@@ -2,6 +2,7 @@
 {% trans_default_domain application.translation_domain %}
 
 {% block title %}
+    {{ parent() }} -
     {% if application.hasData %}
         {% if application.meta.exposes is iterable %}
             {% for field in application.meta.exposes %}
@@ -18,36 +19,27 @@
     {% endif %}
 {% endblock %}
 
+{% block dashboard_title %}
+    {{ application.meta.title|trans }}
+    <small class="text-muted">
+        {% if application.hasData %}
+            {{ ('text.entity.edit.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
+        {% else %}
+            {{ ('text.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
+        {% endif %}
+    </small>
+{% endblock %}
+
+{% block dashboard_links %}
+    {% if application.hasData %}
+        <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
+            <i class="fa fa-plus"></i>
+            {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
+        </a>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
-    <h2>
-        {{ application.meta.title|trans }}
-        <small class="text-muted">
-            {% if application.hasData %}
-                {{ ('text.entity.edit.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
-            {% else %}
-                {{ ('text.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
-            {% endif %}
-        </small>
-    </h2>
-
-
-    {# TODO move to base #}
-    {% block links %}
-        <div class="row no-gutters">
-            <div class="col-sm-12">
-                <a class="btn btn-secondary" href="{{ url('dash_app', {app: application.public_uri}) }}"><i
-                            class="fa fa-ban"></i> {{ 'label.cancel'|trans }}</a>
-                {% if application.hasData %}
-                    <a class="btn btn-light" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
-                        <i class="fa fa-plus"></i>
-                        {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    {% endblock %}
-
-
     {{ form_start(application.form) }}
     {% for f in application.form.children %}
         {% if f.vars.name != '_token' %}
@@ -73,7 +65,7 @@
                                 </div>
                             {% endif %}
 
-                            <span class="col-sm-2 btn btn-upload {{ formField.value ? 'd-none' : '' }}">
+                            <span class="col-sm-2 btn btn-upload btn-light {{ formField.value ? 'd-none' : '' }}">
                                     <i class="fa fa-upload"></i>
                             </span>
                             <span class="form-control d-none">
@@ -81,6 +73,15 @@
                             </span>
 
                         {% else %} {# not a file #}
+                            {# add markers before range field #}
+                            {% if formField.type == 'range' %}
+                                <div class="markers">
+                                    {% for i in range(f.vars.attr.min, f.vars.attr.max) %}
+                                        <span class="marker">{{ i }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
                             {{ form_widget(f) }}
                         {% endif %}
                     {% else %} {# no element data #}
@@ -98,11 +99,14 @@
             </div>
         {% endif %}
     {% endfor %}
-    {#{{ form_widget(application.form)  }}#}
+    {# {{ form_widget(application.form)  }} #}
     <div class="form-group row">
         <div class="col-sm-2"></div>
         <div class="col-sm-10">
-            <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> {{ 'Save'|trans }}</button>
+            {# SAVE #}
+            {% include "components/submit.html.twig" with {icon: "save", label: "label.save"} %}
+            {# CANCEL #}
+            {% include "components/route_button.html.twig" with {route: application.route, color:"light", icon: "ban", label: 'label.cancel' } %}
         </div>
     </div>
     {{ form_end(application.form) }}

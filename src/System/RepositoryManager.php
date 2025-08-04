@@ -7,28 +7,16 @@ use App\System\Configuration\ConfigStore;
 use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class RepositoryManager extends Cacheable
 {
-    /** @var \Symfony\Component\DependencyInjection\ContainerInterface */
-    private $container;
-    /** @var \App\System\Configuration\ConfigStore */
-    private $configStore;
-    /** @var \Doctrine\ORM\EntityManagerInterface  */
-    private $em;
-    /** @var \App\System\Helpers\Timer */
-    private $timer;
+    private array $repositories = [];
 
-    private $repositories = [];
-
-    public function __construct(ContainerInterface $container, ConfigStore $configStore, EntityManagerInterface $entityManager, Timer $timer)
-    {
-        $this->container   = $container;
-        $this->configStore = $configStore;
-        $this->em          = $entityManager;
-        $this->timer       = $timer;
-
+    public function __construct(
+        private readonly ConfigStore $configStore,
+        private readonly EntityManagerInterface $em,
+        private readonly Timer $timer,
+    ) {
         parent::__construct('repoman.');
         $this->initialize();
     }
@@ -44,9 +32,11 @@ class RepositoryManager extends Cacheable
     private function initialize(): void
     {
         $this->remember('init', function () {
-            $applications = $this->configStore->readSystemConfig('applications', 'applications');
+            $this->configStore->configureApplications();
+
+            $applications = $this->configStore->getApplications();
             foreach ($applications as $appId => $application) {
-                new Repository($this, $this->em, $this->timer, $this->configStore, $this->configStore->getApplicationConfig($appId));
+                new Repository($this, $this->em, $this->timer, $this->configStore, $application);
             }
         });
     }
@@ -57,13 +47,8 @@ class RepositoryManager extends Cacheable
             return $this->repositories[$applicationId];
         }
 
-        $this->repositories[$applicationId] = new Repository($this, $this->em, $this->timer, $this->configStore, $this->configStore->getApplicationConfig($applicationId));
+        $this->repositories[$applicationId] = new Repository($this, $this->em, $this->timer, $this->configStore, $this->configStore->getApplication($applicationId));
 
         return $this->repositories[$applicationId];
-    }
-
-    public function isAuthorizedFully(): bool
-    {
-        return !empty($this->container->get('security.token_storage')->getToken()->getRoleNames());
     }
 }

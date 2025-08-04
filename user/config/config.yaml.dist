@@ -1,0 +1,52 @@
+# Unchained configuration
+# changes to this configuration require a "refresh"
+config:
+  # Unchained title
+  title: Unchained
+
+  # Color theme: light, dark, auto
+  # Default: auto
+  theme: auto
+
+  # List of supported locales for your app
+  # The list will be presented in this order
+  locales : [en, nl, fr, de]
+
+  # Default locale (optional)
+  # Defaults to first element in <locales>
+  locale : en
+
+  # Dashboard
+  dashboard:
+    # Application overview style (default (textual) / block (decorative blocks))
+    style: default
+
+    # Show apps nested under their respective categories on main dashboard
+    show_app_stack: true
+
+    # Show application image (/assets/images/design/<appID>.jpg)
+    # Only for style "block"
+    app_block_image: false
+
+    # Show a small counter for the amount of records within an app
+    # Displays as a widget in block mode
+    show_count: true
+
+  # Navigation
+  navigation:
+    # Navigation style: default (top) / side (offcanvas)
+    style: top
+
+    # Show navigation button "Home"
+    show_home: true
+
+    # Home icon: e.g. "🏠 Home"
+    # use ~ (tilde) to disable
+    home_icon: fa fa-home
+
+    # Home button icon instead of label "Home"
+    home_icon_only: true
+
+    # Show quicklinks to jump to create record screen
+    # Also visible in textual dashboard layout (dashboard.style = default)
+    show_quicklinks: true

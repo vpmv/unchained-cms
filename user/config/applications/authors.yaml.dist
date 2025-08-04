@@ -10,6 +10,12 @@ application:
     books:
       type: number
       source: count_books
+    average_score:
+      source: avg_score
+      _transform:
+        number:
+          round: round
+          round_precision: 1
 
   meta:
     exposes: [name, surname]
@@ -18,3 +24,8 @@ application:
     count_books:
       application: books
       function: count
+    avg_score:
+      application: books
+      function: avg
+      invert_join: true
+      field: rating

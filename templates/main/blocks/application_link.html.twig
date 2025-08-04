@@ -1,0 +1,35 @@
+{% set domain = application.translation_domain ?: 'messages' %}
+{% set appId = appId is defined ? appId : application.appId %}
+{% set title = title is defined ? title : application.config.meta.title %}
+{% set path = path is defined ? path : application.route %}
+{% set icon = icon is defined ? icon : application.config.meta.icon %}
+{% set links = links is defined ? links : [] %}
+
+<div class="app app-{{ appId }}">
+    <a class="title" href="{{ route(application.route) }}">
+        {% if icon %}
+            <i class="{{ icon }}"></i>
+        {% endif %}
+        {{ title|trans([], domain) }}
+    </a>
+
+    <span class="actions">
+        {% if unchained.dashboard.show_count and application.entry_count > 0 %}
+            <span class="count">{{ application.entry_count }}</span>
+        {% endif %}
+
+        {% include '/navigation/app_quicklinks.html.twig' with {class: 'btn'} %}
+    </span>
+</div>
+
+{% if links and links is iterable %}
+    <div class="app-links">
+        <ul>
+            {% for link in links %}
+                <li>
+                    <a href="{{ url(link.route, {app: link.application}|merge(link.params)) }}">{{ link.label|trans([], domain) }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}

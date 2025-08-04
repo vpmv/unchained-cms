@@ -10,66 +10,81 @@ use App\System\Configuration\ConfigStore;
 use App\System\Constructs\Cacheable;
 use App\System\Helpers\Timer;
 use App\System\RepositoryManager;
-use Cocur\Slugify\Slugify;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use LogicException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 class Repository extends Cacheable
 {
-    /** @var \App\System\RepositoryManager */
-    private $repositoryManager;
-    private $appId;
-    /** @var \App\System\Configuration\ConfigStore */
-    private $configStore;
-    private $config = [];
+    private string $appId;
+    private array  $config = [];
 
-    private $auth   = false;
-    private $schema;
-    private $sortBy = [];
+    private bool              $auth   = false;
+    private ApplicationSchema $schema;
+    private mixed             $sortBy = [];
 
-    private $fields = [];
+    private array $fields = [];
     /** @var string */
-    private $slugField    = 'id';
-    private $exposedField = null;
-    private $joins        = [];
-    private $subQuery     = [];
+    private string $slugField    = 'id';
+    private        $exposedField = null;
+    private array  $joins        = [];
+    private array  $subQuery     = [];
 
-    private $data       = [];
-    private $dataByPk   = [];
-    private $dataBySlug = [];
+    private array $data       = [];
+    private array $dataByPk   = [];
+    private array $dataBySlug = [];
 
-    private $activeRow  = [];
-    private $primaryKey = 0;
-    private $iterator   = 0;
+    private array $activeRow  = [];
+    private int   $primaryKey = 0;
+    private int   $iterator   = 0;
 
-    /** @var \App\System\Helpers\Timer */
-    private $timer;
-
-    public function __construct(RepositoryManager $repositoryManager, EntityManagerInterface $entityManager, Timer $timer, ConfigStore $configStore, ApplicationConfig $applicationConfig)
-    {
-        $this->appId             = $applicationConfig->appId;
-        $this->auth              = $repositoryManager->isAuthorizedFully();
-        $this->repositoryManager = $repositoryManager;
-        $this->timer             = $timer;
-        $this->configStore       = $configStore;
+    public function __construct(
+        private RepositoryManager $repositoryManager,
+        EntityManagerInterface $entityManager,
+        private Timer $timer,
+        private ConfigStore $configStore,
+        ApplicationConfig $applicationConfig,
+    ) {
+        $this->appId = $applicationConfig->appId;
+        $this->auth  = $this->configStore->router->isAuthenticated();
 
         parent::__construct('repo.' . $applicationConfig->appId . '.auth-' . intval($this->auth) . '.');
 
         $this->sortBy                    = $applicationConfig->sort;
-        $this->config['exposed_columns'] = (array)$applicationConfig->meta['exposes'];
+        $this->config['exposed_columns'] = (array)$applicationConfig->getMeta('exposes') ?? [];
         $this->config['foreign_column']  = Property::foreignKey($applicationConfig->appId);
 
         $this->schema = new ApplicationSchema(
             $entityManager->getConnection(),
             Property::schemaName($applicationConfig->appId),
-            $applicationConfig->fields
+            $applicationConfig->getFields(),
         );
         $this->prepareJoins((array)$applicationConfig->sources);
         $this->prepareFields($applicationConfig->fields);
         $this->prepareExposed((array)$applicationConfig->meta['exposes']);
+    }
+
+    /**
+     *
+     * @param string $applicationId
+     *
+     * @return \App\System\Application\Database\Repository
+     * @internal Handle with care
+     */
+    public function getForeignRepo(string $applicationId): Repository
+    {
+        return $this->repositoryManager->getRepository($applicationId);
+    }
+
+    public function getSourceConfig(string $alias): array
+    {
+        if (!isset($this->config['sources'][$alias])) {
+            throw new \InvalidArgumentException("Unknown source <$alias>");
+        }
+        return $this->config['sources'][$alias];
     }
 
     public function getForeignColumn()
@@ -82,7 +97,7 @@ class Repository extends Cacheable
         return $this->config['exposed_columns'];
     }
 
-    public function getData(array $columns = [])
+    public function getData(array $columns = []): array
     {
         if (!$this->data) {
             $this->fetchData();
@@ -100,7 +115,7 @@ class Repository extends Cacheable
         return $this->data;
     }
 
-    public function getActiveRecord()
+    public function getActiveRecord(): array
     {
         if (!$this->activeRow) {
             throw new LogicException('No data selected');
@@ -188,9 +203,7 @@ class Repository extends Cacheable
      * @param string|null $source
      * @param null        $default
      *
-     * @return \App\System\Application\Database\Column|\App\System\Application\Database\Junction|\App\System\Application\Database\JunctionList
-     * @throws \InvalidArgumentException
-     * @throws \LogicException
+     * @return \App\System\Application\Database\Column
      */
     public function getColumn(string $field, ?string $source = null, $default = null): ValueInterface
     {
@@ -212,10 +225,30 @@ class Repository extends Cacheable
         return new Column($field, $this->activeRow[$this->getFieldColumn($field)] ?? $default);
     }
 
+    /**
+     * @param string                                      $field
+     * @param \App\System\Application\Database\Repository $repo
+     *
+     * @return \App\System\Application\Database\Column
+     */
+    private function getSourceColumn(string $field, Repository $repo): Column
+    {
+        $fields     = $this->fields[$field]['source']['fields']['columns'];
+        $fieldAlias = $this->fields[$field]['source']['fields']['alias'];
+        $fieldValue = [];
+        foreach ($fields as $f) {
+            $fieldValue[] = $repo->getColumn($f)->getValue();
+        }
+        $value = new Column($fieldAlias, implode(' ', $fieldValue));
+
+        return $value;
+    }
+
     private function createJunction(string $field, ?string $source = null, $default = null): ValueInterface
     {
         $this->timer->start('column-junction.' . $field);
 
+        $value       = null;
         $fieldColumn = $this->getFieldColumn($field);
         if ($this->hasSource($source, $field)) {
             $fieldColumn = $this->getFieldColumn($field, true);
@@ -251,13 +284,7 @@ class Repository extends Cacheable
         if (!isset($value) && $foreignColumn != $fieldColumn && isset($this->activeRow[$fieldColumn])) {
             $value = new Column($field, $this->activeRow[$fieldColumn] ?? null);
         } else {
-            $fields     = $this->fields[$field]['source']['fields']['columns'];
-            $fieldAlias = $this->fields[$field]['source']['fields']['alias'];
-            $fieldValue = [];
-            foreach ($fields as $f) {
-                $fieldValue[] = $repo->getColumn($f)->getValue();
-            }
-            $value = new Column($fieldAlias, implode(' ', $fieldValue));
+            $value = $this->getSourceColumn($field, $repo);
         }
 
         // fixme: replace with latter
@@ -291,13 +318,7 @@ class Repository extends Cacheable
             $repo->reset();
             $repo->getRecord($key);
 
-            $fields     = $this->fields[$field]['source']['fields']['columns'];
-            $fieldAlias = $this->fields[$field]['source']['fields']['alias'];
-            $fieldValue = [];
-            foreach ($fields as $f) {
-                $fieldValue[] = $repo->getColumn($f)->getValue();
-            }
-            $value  = new Column($fieldAlias, implode(' ', $fieldValue));
+            $value  = $this->getSourceColumn($field, $repo);
             $list[] = new Junction($source, $key, $value, $repo->getColumn('_exposed'), $repo->getColumn('_slug'));
         }
         $this->timer->stop('column-junction.list.' . $field);
@@ -305,7 +326,7 @@ class Repository extends Cacheable
         return new JunctionList($source, ...$list);
     }
 
-    public function getColumns(array $columns, $default = null)
+    public function getColumns(array $columns, $default = null): array
     {
         if (!$this->activeRow) {
             throw new LogicException('No data selected');
@@ -351,7 +372,7 @@ class Repository extends Cacheable
         return $result;
     }
 
-    public function filterData(array $conditions)
+    public function filterData(array $conditions): void
     {
         $pk = $conditions['id'] ?? ($conditions['pk'] ?? null);
         if ($pk) {
@@ -376,9 +397,19 @@ class Repository extends Cacheable
         return $this->activeRow['_exposed'] ?? $default;
     }
 
-    public function getCount(string $column, $value) // todo
+    /**
+     * @param string $column
+     * @param mixed  $value
+     *
+     * @return int
+     * @todo Implement conditional
+     */
+    public function getCount(string $column, mixed $value): int
     {
-        return count($this->data);
+        if (!empty($column)) {
+            throw new \LogicException('count by param not implemented');
+        }
+        return $this->schema->countRecords();
     }
 
     public function getDistinctCount(string $column, $value)
@@ -390,7 +421,7 @@ class Repository extends Cacheable
         return count($data);
     }
 
-    public function getDistinct(string $column)
+    public function getDistinct(string $column): array
     {
         if (!$this->data) {
             $this->fetchData();
@@ -399,19 +430,20 @@ class Repository extends Cacheable
         return array_unique(array_column($this->data, $column));
     }
 
-    public function persist(array $data)
+    public function persist(array $data): void
     {
         $this->filterUnknownColumns($data);
 
-        $cacheKeys   = ['data', 'record.' . $this->primaryKey];
-        $persistData = [];
+        $applicationConfig = $this->configStore->getApplication($this->appId);
+        $cacheKeys         = ['data', 'record.' . $this->primaryKey];
+        $persistData       = [];
 
         /**
          * @var Field $field
          * @var mixed $value
          */
         foreach ($data as $field => $value) {
-            $field = $this->configStore->getApplicationField($this->appId, $field);
+            $field = $applicationConfig->getField($field);
             switch ($field->getFormType()) {
                 case 'file':
                     if ($value instanceof UploadedFile) {
@@ -455,7 +487,7 @@ class Repository extends Cacheable
         }
 
         if ($this->slugField != 'id') {
-            $slugField = $this->configStore->getApplicationField($this->appId, $this->slugField);
+            $slugField = $applicationConfig->getField($this->slugField);
             try {
                 $currentValue = $this->getColumn($this->slugField)->getValue();
             } catch (LogicException $e) {
@@ -464,7 +496,7 @@ class Repository extends Cacheable
 
             $slugContext = [];
             foreach ($slugField->getPointer()['fields'] as $fieldId) {
-                $field         = $this->configStore->getApplicationField($this->appId, $fieldId);
+                $field         = $applicationConfig->getField($fieldId);
                 $slugFieldData = $data[$fieldId] ?? null;
                 if ($slugFieldData instanceof DateTime) {
                     switch ($field->getFormType()) {
@@ -479,7 +511,7 @@ class Repository extends Cacheable
                 }
                 $slugContext[] = $slugFieldData;
             }
-            $newValue = Slugify::create()->slugify(implode('-', $slugContext));
+            $newValue = strtolower(new AsciiSlugger()->slug(implode('-', $slugContext))->toString());
             if ($currentValue != $newValue) {
                 $cacheKeys[] = 'record.slug.' . $newValue;
                 if (isset($this->dataBySlug[$newValue])) {
@@ -561,14 +593,14 @@ class Repository extends Cacheable
         return $cols;
     }
 
-    private function filterUnknownColumns(array &$columns)
+    private function filterUnknownColumns(array &$columns): void
     {
         $columns = array_filter($columns, function ($v) {
             return isset($this->fields[$v]) && $this->fields[$v]['authorized'];
         }, ctype_digit(key($columns)) ? 0 : ARRAY_FILTER_USE_KEY);
     }
 
-    private function prepareJoins(array $sources)
+    private function prepareJoins(array $sources): void
     {
         $this->config['sources'] = $this->remember('config.sources', function () use ($sources) {
             $config = [];
@@ -603,24 +635,49 @@ class Repository extends Cacheable
                             'id' => $source['column'],
                         ],
                         'alias'      => 'count',
+                        'function'   => 'count',
+                        'field'      => 'id',
                     ];
                     if ($source['function'] == 'count_in') {
                         $result['subQueries'][$alias]['conditions']['id'] = ['in' => $source['column']];
                     }
-                    continue;
+                    continue; // note to self: no need to nest If control statement
                 }
-                if (in_array($source['function'], ['find_in', 'find_in_max'])) {
+
+                if (in_array($source['function'], ['avg', 'average'])) {
+                    if (empty($source['field'])) {
+                        throw new \InvalidArgumentException('Missing attribute <field> for source configuration');
+                    }
+                    $result['subQueries'][$alias] = [
+                        'from'       => Property::schemaName($source['application']),
+                        'conditions' => [
+                            'id' => $source['column'],
+                        ],
+                        'alias'      => 'avg',
+                        'function'   => 'avg',
+                        'field'      => $source['field'],
+                    ];
+                    continue; // note to self: no need to nest If control statement
+                }
+
+                if ($source['function'] && str_starts_with($source['function'], 'find_in')) {
+                    $function = ltrim(str_replace('find_in', '', $source['function']), '_');
+                    if (empty($source['field'])) {
+                        throw new \InvalidArgumentException('Missing attribute <field> for source configuration');
+                    } elseif ($function && !in_array($function, ['max', 'min', 'avg'])) {
+                        throw new \InvalidArgumentException('Invalid <function> for source configuration');
+                    }
+
                     $result['subQueries'][$alias] = [
                         'from'       => Property::schemaName($source['application']),
                         'conditions' => [
                             'id' => ['in' => $source['column']],
                         ],
                         'alias'      => 'find_in',
+                        'function'   => $function,
+                        'field'      => $source['field'],
                     ];
-                    if ($source['function'] == 'find_in_max') {
-                        $result['subQueries'][$alias]['function'] = 'max';
-                    }
-                    continue;
+                    continue; // note to self: no need to nest If control statement
                 }
 
                 $result['joins'][$alias] = [
@@ -655,7 +712,7 @@ class Repository extends Cacheable
     /**
      * @param Field[] $fields
      */
-    private function prepareFields(array $fields)
+    private function prepareFields(array $fields): void
     {
         $this->slugField = $this->remember('fields_slug', function () use ($fields) {
             foreach ($fields as $field) {
@@ -741,13 +798,12 @@ class Repository extends Cacheable
         });
     }
 
-    private function getFieldSource(Field $field)
+    private function getFieldSource(Field $field): ?array
     {
         $source = null;
         if ($field->getSourceIdentifier() && isset($this->joins[$field->getSourceIdentifier()])) {
             $source = [
-                'alias'  => $field->getSourceIdentifier(),
-                'fields' => [],
+                'alias' => $field->getSourceIdentifier(),
             ];
 
             if ($field->getSourceFields()) {
@@ -767,11 +823,11 @@ class Repository extends Cacheable
         return $source;
     }
 
-    private function prepareExposed(array $exposedFieldIdentifiers)
+    private function prepareExposed(array $exposedFieldIdentifiers): void
     {
         $fields = [];
         foreach ($exposedFieldIdentifiers as $id) {
-            if ($this->fields[$id]['column']) { // fixme: should authorize?
+            if ($this->fields[$id]['column']) {
                 $fields[] = $this->fields[$id]['column'];
             }
         }
@@ -801,9 +857,9 @@ class Repository extends Cacheable
         return $this->repositoryManager->getRepository($this->config['sources'][$source]['application']);
     }
 
-    private function getFieldColumn(string $fieldId, bool $virtualColumn = false)
+    private function getFieldColumn(string $fieldId, bool $virtualColumn = false): mixed
     {
-        if (strpos($fieldId, '_') === 0) { // virtual field
+        if (str_starts_with($fieldId, '_')) { // virtual field
             return $this->getVirtualField($fieldId);
         }
 
@@ -822,6 +878,6 @@ class Repository extends Cacheable
 
     private function getVirtualField(string $field): ?string
     {
-        return in_array($field, ['_exposed', '_slug', '_title']) ? $field : null;
+        return in_array($field, ['_exposed', '_slug', '_title', '_uuid']) ? $field : null;
     }
 }

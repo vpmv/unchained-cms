@@ -4,24 +4,20 @@ namespace App\System\Application\Database;
 
 class Column implements ValueInterface
 {
-    /** @var string */
-    private $name;
-    /** @var mixed|null */
-    private $value = null;
-
-    public function __construct(string $name, $value = null)
+    public function __construct(private readonly string $name, private mixed $value = null)
     {
-        $this->name  = $name;
         $this->setValue($value);
     }
 
     private function setValue($value): void
     {
         $this->value = $value;
-        if (is_array($v = json_decode($value, true))) {
-            $this->value = $v;
-        } elseif (is_array($v = @unserialize($value))) {
-            $this->value = $v;
+        if ($this->value !== null) {
+            if (is_array($v = json_decode($value, true))) {
+                $this->value = $v;
+            } elseif (is_array($v = @unserialize($value))) {
+                $this->value = $v;
+            }
         }
     }
 
@@ -36,7 +32,7 @@ class Column implements ValueInterface
     /**
      * @return mixed|null
      */
-    public function getValue()
+    public function getValue(): mixed
     {
         return $this->value;
     }

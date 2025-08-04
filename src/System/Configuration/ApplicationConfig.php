@@ -5,7 +5,6 @@ namespace App\System\Configuration;
 use App\System\Application\Field;
 use App\System\Application\Property;
 use InvalidArgumentException;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Routing\Exception\NoConfigurationException;
 
 class ApplicationConfig
@@ -13,34 +12,36 @@ class ApplicationConfig
     use YamlReader;
 
     /** @var string Application identifier */
-    public $appId;
-    /** @var \App\System\Configuration\ApplicationCategory */
-    private $category;
+    public string $appId;
     /** @var array Configuration */
-    private $config = [];
+    private array $config = [];
 
     /** @var Field[] */
-    public $fields  = [];
-    public $sort    = [];
-    public $sources = [];
-    public $modules = [];
-    public $meta    = [];
+    public array $fields  = [];
+    public array $sort    = [];
+    public array $sources = [];
+    public array $modules = [];
+    public array $meta    = [];
 
     /** @var array Raw config */
-    private $raw;
+    private array $raw;
 
-    public function __construct(ContainerInterface $container, ConfigStore $configStore, array $configuration, string $appId)
+    public function __construct(private readonly ConfigStore $configStore, protected ApplicationCategory $category, array $configuration, string $appId, string $projectDir)
     {
-        $this->basePath = $container->getParameter('kernel.project_dir') . '/config/';
+        $this->basePath = $projectDir . '/config/';
 
         $this->appId = $appId;
-        $this->raw = $configuration + ['appId' => $appId, 'name' => $appId];
+        $this->raw   = $configuration + ['appId' => $appId, 'name' => $appId];
 
         $this->setSources();
         $this->setModules();
-        $this->prepareFields($configStore);
-        $this->prepareFrontend($configStore);
-        $this->setCategory($configStore);
+        $this->prepareFields();
+        $this->prepareFrontend();
+    }
+
+    public function isPublic(): bool
+    {
+        return $this->raw['public'] ?? true;
     }
 
     /**
@@ -59,9 +60,15 @@ class ApplicationConfig
         return $this->category;
     }
 
-    private function setCategory(ConfigStore $configStore)
+    /**
+     * @param string     $key
+     * @param mixed|null $default
+     *
+     * @return mixed
+     */
+    public function getConfig(string $key, mixed $default = null): mixed
     {
-        $this->category = $configStore->getCategoryConfig($this->raw['category'] ?? 'default');
+        return $this->raw[$key] ?? $default;
     }
 
     /**
@@ -75,6 +82,8 @@ class ApplicationConfig
     }
 
     /**
+     * @param string $field
+     *
      * @return \App\System\Application\Field
      */
     public function getField(string $field): Field
@@ -99,7 +108,7 @@ class ApplicationConfig
      *
      * @return array|string
      */
-    public function getRoutes(?string $locale = null)
+    public function getRoutes(?string $locale = null): array|string
     {
         $routes = [
             '_default' => $this->appId,
@@ -123,6 +132,8 @@ class ApplicationConfig
     }
 
     /**
+     * @param string $alias
+     *
      * @return array
      */
     public function getSource(string $alias): array
@@ -132,6 +143,23 @@ class ApplicationConfig
         }
 
         return $this->sources[$alias];
+    }
+
+    public function getSourceId(string $alias): string
+    {
+        return $this->getSource($alias)['application'];
+    }
+
+    /**
+     * Shorthand helper function to fetch application config
+     *
+     * @param string $alias
+     *
+     * @return \App\System\Configuration\ApplicationConfig
+     */
+    public function getSourceConfig(string $alias): ApplicationConfig
+    {
+        return $this->configStore->getApplication($this->getSourceId($alias));
     }
 
     /**
@@ -160,14 +188,16 @@ class ApplicationConfig
     }
 
     /**
-     * @return array
+     * @param string|null $attribute
+     *
+     * @return array|null
      */
-    public function getMeta(?string $attribute = null)
+    public function getMeta(?string $attribute = null): mixed
     {
         return $attribute ? ($this->meta[$attribute] ?? null) : $this->meta;
     }
 
-    protected function setSources()
+    protected function setSources(): void
     {
         $sources = $this->raw['sources'] ?? [];
         foreach ($sources as $name => &$source) {
@@ -198,15 +228,18 @@ class ApplicationConfig
         }
     }
 
-    protected function setModules()
+    protected function setModules(): void
     {
         $modules = [
-            'detail' => [
+            'dashboard' => [
+                'sort' => [],
+            ],
+            'detail'    => [
                 'enabled' => true,
                 'params'  => ['slug'], // fixme: architecture prevents configuration
                 'public'  => true, // todo
             ],
-            'charts' => [
+            'charts'    => [
                 'enabled' => false,
                 'public'  => true, // todo
             ],
@@ -216,28 +249,29 @@ class ApplicationConfig
         if ($this->raw['modules'] ?? []) {
             $modules = array_replace_recursive($modules, $this->raw['modules']);
         }
-        $modules['form'] = ['enabled' => true]; // fixme: this shouldn't be necessary
+        $modules['form']                 = ['enabled' => true]; // fixme: this shouldn't be necessary
+        $modules['dashboard']['enabled'] = true; // fixme: dito
 
         $this->modules = $modules;
     }
 
-    protected function prepareFields(ConfigStore $configStore)
+    protected function prepareFields(): void
     {
         foreach ($this->raw['fields'] as $id => $config) {
-            $this->fields[$id] = new Field($this->appId, $id, $config ?? [], $configStore, $this);
+            $this->fields[$id] = new Field($this->appId, $id, $config ?? [], $this->configStore, $this);
         }
     }
 
-    protected function prepareFrontend(ConfigStore $configStore)
+    protected function prepareFrontend(): void
     {
         $this->meta = [
-            'title'               => $this->raw['label'] ?? Property::displayLabel($this->raw['name'], 'title'),
-            'verbose_name'        => 'entity.verbose', // fixme: remove
-            'verbose_name_plural' => 'entity.verbose_plural', // fixme: remove
-            'exposes'             => $this->raw['meta']['exposes'] ?? null, // <= slugs output
+            'title'   => $this->raw['label'] ?? Property::displayLabel($this->raw['name'], 'title'),
+            'exposes' => $this->raw['meta']['exposes'] ?? null, // <= slugs output
+            'icon'    => $this->raw['meta']['icon'] ?? null,
+            'sort'    => $this->raw['meta']['sort'] ?? null,
+            'slug'    => $this->raw['meta']['slug'] ?? null,
         ];
 
-        /** @var Field $field */
         foreach ($this->fields as $field) {
             if ($field->getConstraint()) {
                 $this->config['constraints'][$field->getConstraint()][] = $field->getId();
@@ -254,33 +288,28 @@ class ApplicationConfig
         }
 
         // add slug field
+        $slugConfig = [
+            'dashboard' => false,
+            'detail'    => false,
+            'public'    => false,
+            'type'      => 'text',
+            'length'    => 100,
+            'pointer'   => [
+                'fields' => [],
+                'type'   => 'slug',
+            ],
+        ];
         if ($this->meta['slug'] ?? null) {
-            $this->fields['_slug'] = new Field($this->appId, '_slug', [
-                'dashboard' => false,
-                'detail'    => false,
-                'public'    => false,
-                'type'      => 'text',
-                'length'    => 100,
-                'pointer'   => [
-                    'fields' => (array)$this->meta['slug'],
-                    'type'   => 'slug',
-                ],
-            ], $configStore);
-        } else if ($this->meta['exposes'] != 'id') {
-            $this->fields['_slug'] = new Field($this->appId, '_slug', [
-                'dashboard' => false,
-                'detail'    => false,
-                'public'    => false,
-                'type'      => 'text',
-                'length'    => 100,
-                'pointer'   => [
-                    'fields' => (array)$this->meta['exposes'],
-                    'type'   => 'slug',
-                ],
-            ], $configStore);
+            $slugConfig['pointer']['fields'] = (array)$this->meta['slug'];
+            $this->fields['_slug']           = new Field($this->appId, '_slug', $slugConfig, $this->configStore);
+        } else {
+            if ($this->meta['exposes'] != 'id') {
+                $slugConfig['pointer']['fields'] = (array)$this->meta['exposes'];
+                $this->fields['_slug']           = new Field($this->appId, '_slug', $slugConfig, $this->configStore);
+            }
         }
 
-        $sortKeys = !empty($this->raw['sort']) ? $this->raw['sort'] : (array)$this->meta['exposes'];
+        $sortKeys = $this->getSortConfiguration();
         foreach ($sortKeys as $key => $dir) {
             if (is_int($key)) {
                 $key = $dir;
@@ -289,6 +318,23 @@ class ApplicationConfig
 
             $this->sort[$this->getSchemaColumn($key)] = $dir;
         }
+    }
+
+    /**
+     * Get sorting configuration
+     *
+     * @return array
+     */
+    private function getSortConfiguration(): array
+    {
+        if (!empty($this->raw['sort'])) {
+            return $this->raw['sort'];
+        } elseif (!empty($this->meta['sort'])) {
+            return $this->meta['sort'];
+        } elseif (!empty($this->modules['dashboard']['sort'])) {
+            return $this->modules['dashboard']['sort'];
+        }
+        return (array)$this->meta['exposes'];
     }
 
     private function getSchemaColumn(string $column): string
@@ -306,7 +352,7 @@ class ApplicationConfig
             try {
                 $userDefault = $this->readYamlFile($yamlConfig);
                 $defaults    = array_replace($defaults, $userDefault);
-            } catch (NoConfigurationException $e) {
+            } catch (NoConfigurationException) {
                 // normal operation
             }
         }

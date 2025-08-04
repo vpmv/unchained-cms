@@ -6,8 +6,9 @@ categories:
     public: true
 
 applications:
-  cooking:
-    label: Cooking
+  recipes:
+    category: cooking
+    label: Recipes
     routes:
       en: recipes
       nl: recepten
@@ -16,4 +17,10 @@ applications:
 
   authors:
     public: false
+
+  # ~ (null) will deploy with default configurations
+  # route: books
+  # public: true
+  # order: auto
+  # category: _default (uncategorized)
   books: ~

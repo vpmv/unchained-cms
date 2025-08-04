@@ -1,0 +1,8 @@
+{% set class = class ?? '' %}
+
+{% if is_granted('IS_AUTHENTICATED_FULLY') and unchained.navigation.show_quicklinks %}
+    <a class="{{ class }} plus" href="{{ url('admin_edit', {app: appId, category: application.config.category.categoryId}) }}"
+       title="{{ ('action.entity.create.verbose')|trans({ verbose: ('entity.verbose')|trans([], application.translation_domain) }, application.translation_domain) }}">
+        <i class="fa fa-plus"></i>
+    </a>
+{% endif %}

@@ -1,21 +1,22 @@
-{% if application is defined %}
-    {% set appId = appId is defined ? appId : application.appId %}
-    {% set title = title is defined ? title : application.config.meta.title %}
-    {% set path = path is defined ? path : application.route %}
-{% endif %}
+{% set appId = appId is defined ? appId : application.appId %}
+{% set title = title is defined ? title : application.config.meta.title %}
 {% set domain = application is defined ? application.translation_domain  : 'messages' %}
-{% set class = class is defined ? class : "col-6" %}
-{% set image = image is defined ? image : false %}
+{% set class = class ?? "col" %}
+{% set with_image = with_image ?? false %}
 {% set links = links is defined ? links : [] %}
 
 <div class="app-block {{ class }} app-{{ appId }}">
-    <a class="app app-{{ appId }}" href="{{ url('dash_app', {app: path}) }}">
-        {% if image %}
-            <img src="/media/images/design/{{ appId }}.png">
+    <a class="app app-{{ appId }}" href="{{ route(application.route) }}">
+        {% if with_image %}
+            <img src="/assets/images/design/{{ appId }}.jpg">
         {% endif %}
+
         {# style this however you like #}
         <div class="decorator"></div>
         <span class="title">{{ title|trans([], domain) }}</span>
+        {% if unchained.dashboard.show_count and application.entry_count > 0 %}
+            <span class="count">{{ application.entry_count }}</span>
+        {% endif %}
     </a>
 
     {% if links and links is iterable %}

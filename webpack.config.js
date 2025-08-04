@@ -8,8 +8,8 @@ Encore
     // only needed for CDN's or sub-directory deploy
     //.setManifestKeyPrefix('build/')
 
-    .addEntry('app', './assets/js/app.js')
-    // .addEntry('app', './user/assets/user.js')
+    // .addEntry('app', './assets/js/app.js')
+    .addEntry('app', './user/assets/user.js')
 
     /*
      * For a full list of features, see:
@@ -26,9 +26,6 @@ Encore
 
     // uncomment if you use TypeScript
     //.enableTypeScriptLoader()
-
-    // uncomment if you're having problems with a jQuery plugin
-    //.autoProvidejQuery()
 ;
 
 module.exports = Encore.getWebpackConfig();

@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SystemController extends AbstractController
 {
-    public function getConfig(Request $request, ConfigStore $configStore, string $element)
+    public function getConfig(Request $request, ConfigStore $configStore, string $element): Response
     {
         $default = $request->query->get('default');
         $config  = $configStore->readSystemConfig('config', 'config');
@@ -22,7 +22,7 @@ class SystemController extends AbstractController
         return new Response($config[$element] ?? $default);
     }
 
-    public function getSystemTitle(ConfigStore $configStore)
+    public function getSystemTitle(ConfigStore $configStore): Response
     {
         return new Response($configStore->readSystemConfig('config', 'config')['title']);
     }

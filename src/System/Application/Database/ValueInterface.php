@@ -2,4 +2,4 @@
 
 namespace App\System\Application\Database;
 
-interface ValueInterface {}
+interface ValueInterface { }

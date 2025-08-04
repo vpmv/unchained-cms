@@ -1,0 +1,155 @@
+@import 'variables';
+
+.navbar {
+    &.navbar-light {
+        background-color: var(--brand-primary);
+        .navbar-nav {
+            --bs-nav-link-color: var(--bs-body-color);
+        }
+    }
+    .dropdown-menu {
+        --bs-dropdown-link-active-bg: var(--brand-primary-dark);
+        --bs-dropdown-link-hover-bg: var(--brand-primary-dark);
+
+        background-color: var(--brand-primary);
+        padding: 0;
+        .dropdown-item.app.plus {
+            width: auto;
+        }
+    }
+}
+
+.offcanvas-button {
+    position: absolute;
+    top: 0;
+}
+
+#navbarSide {
+    width: auto;
+    background-color: rgba(0,0,0,.75);
+    color: #ddd;
+
+    .offcanvas-header {
+        width: 100%;
+        background-color: var(--brand-primary);
+        text-align: center;
+        .offcanvas-title {
+            width: 100%;
+        }
+    }
+
+    .offcanvas-body {
+        padding: 0;
+        flex-flow: column;
+
+        .sidebar-nav {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            flex-flow: column;
+            width: 100%;
+            min-width: 15rem;
+
+            .nav-link {
+                width: 100%;
+                &.app.plus {
+                    width: auto;
+                }
+            }
+
+            li, .dropdown-menu, span.d-flex {
+                &:before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    z-index: -1;
+                    height: 100%;
+                    width: 3px;
+                    background-color: #1a1a1a;
+                    -webkit-transition: width .2s ease-in;
+                    -moz-transition: width .2s ease-in;
+                    -ms-transition: width .2s ease-in;
+                    transition: width .2s ease-in;
+                }
+            }
+            li, span.d-flex {
+                position: relative;
+                line-height: 20px;
+                display: inline-block;
+                width: 100%;
+
+                &:nth-child(1):not(.dropdown-locale):before {
+                    background-color: nth($nth-color, 1);
+                }
+                &:nth-child(2):before {
+                    background-color: nth($nth-color, 2);
+                }
+                &:nth-child(3):before {
+                    background-color: nth($nth-color, 3);
+                }
+                &:nth-child(4):before {
+                    background-color: nth($nth-color, 4);
+                }
+                &:nth-child(5):before {
+                    background-color: nth($nth-color, 5);
+                }
+                &:nth-child(6):before {
+                    background-color: nth($nth-color, 6);
+                }
+                &:nth-child(7):before {
+                    background-color: nth($nth-color, 7);
+                }
+                &:nth-child(8):before {
+                    background-color: nth($nth-color, 8);
+                }
+                &:nth-child(9):before {
+                    background-color: nth($nth-color, 9);
+                }
+                &:nth-child(10):before {
+                    background-color: nth($nth-color, 10);
+                }
+                &:hover, &.active {
+                    &:before {
+                        width: 100%;
+                        -webkit-transition: width .2s ease-in;
+                        -moz-transition: width .2s ease-in;
+                        -ms-transition: width .2s ease-in;
+                        transition: width .2s ease-in;
+                    }
+                }
+                a {
+                    color: #ddd;
+                    display: inline-block;
+                    text-decoration: none;
+                    padding: 10px 15px 10px 30px;
+                    &:hover, &:active, &:focus {
+                        text-decoration: none;
+                        background-color: transparent;
+                    }
+                }
+            }
+            .dropdown-menu {
+                //position: relative;
+                width: 100%;
+                padding: 0 0 0 .5rem;
+                margin: 0;
+                border-radius: 0;
+                border: none;
+                background-color: #222;
+                box-shadow: none;
+                font-size: .9rem;
+
+            }
+        }
+
+        .user-menu {
+            a {
+                color: #ddd;
+            }
+        }
+    }
+
+
+}
+

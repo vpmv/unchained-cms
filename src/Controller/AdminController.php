@@ -4,24 +4,22 @@
 namespace App\Controller;
 
 use App\System\ApplicationManager;
-use App\System\RepositoryManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * @Route(name="admin_")
- */
+#[Route(name: "admin_")]
 class AdminController extends AbstractController
 {
-    /**
-     * @Route(path="/admin/{category}/{app}/{uuid}", requirements={"app"="[a-z\-]+", "uuid"="[\w]+"}, defaults={"uuid"=null}, name="edit")
-     */
-    public function edit($category, $app, $uuid, ApplicationManager $applicationManager)
+    #[Route("/admin/{category}/{app}/{uuid}", requirements: ["app" => "[a-z\-]+", "uuid" => "[\w]+"], defaults: ["uuid" => null], name: "edit")]
+    #[IsGranted('ROLE_ADMIN')]
+    public function edit(ApplicationManager $applicationManager, $category, $app, $uuid): Response
     {
         try {
             $application = $applicationManager->getApplication($app, $category);
@@ -34,8 +32,7 @@ class AdminController extends AbstractController
         $data = $application->run();
 
         if (!empty($data['redirect'])) {
-            $redirect = $data['redirect'];
-            return $this->redirect($this->generateUrl($redirect['route'], $redirect['params']));
+            return $this->redirect($this->generateUrl($data['redirect']->getName(), $data['redirect']->getParams()));
         }
 
         $applications = $applicationManager->getApplications(true);
@@ -43,12 +40,14 @@ class AdminController extends AbstractController
         return $this->render('applications/form.html.twig', ['applications' => $applications, 'application' => $data]);
     }
 
-    /**
-     * @Route("/login", name="login")
-     */
-    public function login(AuthenticationUtils $utils)
+    #[Route("/login", name: "login")]
+    public function login(AuthenticationUtils $utils, ApplicationManager $factory): Response
     {
-        $error = $utils->getLastAuthenticationError();
+        if ($this->isGranted('IS_AUTHENTICATED')) {
+            return $this->redirectToRoute('dash_main');
+        }
+
+        $error    = $utils->getLastAuthenticationError();
         $lastUser = $utils->getLastUsername();
 
         $form = $this->createFormBuilder(null, ['attr' => ['novalidate' => true]])
@@ -60,8 +59,9 @@ class AdminController extends AbstractController
         $form->setData(['_username' => $lastUser]);
 
         return $this->render('main/login.html.twig', [
-            'error' => $error,
-            'form' => $form->createView(),
+            'error'        => $error,
+            'form'         => $form->createView(),
+            'applications' => $factory->getApplications(true),
         ]);
     }
 }

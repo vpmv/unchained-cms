@@ -1,0 +1,15 @@
+{% set loc = (application is defined ? application.route.getLocale() : (category is defined ? category.route.getLocale() : app.request.locale)) %}
+{% set loc = loc != '_default' ? loc : unchained.locale %}
+
+<li class="nav-item dropdown dropdown-locale">
+    <a class="nav-link dropdown-toggle" id="dropdown-locales" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="flag-icon flag-icon-{{ loc|lower|replace({'en':'gb'}) }}"></i> {{ loc|upper }}
+    </a>
+    <div class="dropdown-menu" aria-labelledby="dropdown-locales">
+        {% for locale in unchained.locales %}
+            <a class="dropdown-item lang-choice {{ locale == loc ? 'active' : '' }}" href="{{ path('locale_switch', {_locale: locale}) }}">
+                <i class="flag-icon flag-icon-{{ locale|replace({'en': 'gb'}) }}"></i> {{ locale|upper }}
+            </a>
+        {% endfor %}
+    </div>
+</li>

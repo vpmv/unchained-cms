@@ -1,0 +1,28 @@
+{% set class = class ?? '' %}
+{% set url = url ?? '#' %}
+{% set label = label ?? null %}
+{% set title = title ?? null %}
+
+{% set icon = icon ?? false %}
+{% set icon_font = icon_font ?? 'fa' %}
+
+{% set trans = trans ?? true %}
+{% set trans_params = trans_params ?? [] %}
+{% set trans_domain = trans_domain ?? null %}
+
+{% apply spaceless %}
+    <a class="{{ class }}" href="{{ url }}" {% if title %}title="{{ title }}"{% endif %}>
+        {% if icon %}
+            <i class="{{ icon_font ~ ' ' ~ icon_font ~ '-' ~ icon }}"></i>
+        {% endif %}
+
+        {% if label %}
+            {% if trans %}
+                {{ label|trans(trans_params, trans_domain) }}
+            {% endif %}
+        {% else %}
+            {{ label }}
+        {% endif %}
+    </a>
+
+{% endapply %}
