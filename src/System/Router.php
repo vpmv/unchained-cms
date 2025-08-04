@@ -29,7 +29,11 @@ class Router
     public function __construct(private readonly Security $security, private readonly RouterInterface $sfRouter, private readonly RequestStack $requestStack, private readonly LocaleSwitcher $localeSwitcher)
     {
         $mainRequest     = $requestStack->getCurrentRequest();
-        $this->locale    = $mainRequest->hasPreviousSession() ? $mainRequest->getSession()->get('_locale') : $this->localeSwitcher->getLocale();
+        if ($mainRequest->hasPreviousSession() && $locale = $mainRequest->getSession()->get('_locale')) {
+            $this->locale = $locale;
+        } else {
+            $this->locale    = $this->localeSwitcher->getLocale();
+        }
     }
 
     public function addRoutes(Route ...$routes)

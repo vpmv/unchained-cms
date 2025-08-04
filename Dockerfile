@@ -2,10 +2,10 @@ FROM php:8.4-fpm-alpine
 
 ARG dir="/var/www/"
 ARG env="prod"
-ARG user="www-data"
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV TZ="UTC"
+ENV INCLUDE_EXAMPLES="false"
 
 ENV BASE_PKG="gnupg tzdata nodejs npm" \
     PHP_PKG="zlib-dev icu-dev libzip-dev"
@@ -23,25 +23,26 @@ RUN  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &
      php -r "if (hash_file('sha384', 'composer-setup.php') === 'dac665fdc30fdd8ec78b38b9800061b4150413ff2e3b6f88543c636f7cd84f6db9189d43a81e5503cda447da73c7e5b6') { echo 'Installer verified'.PHP_EOL; } else { echo 'Installer corrupt'.PHP_EOL; unlink('composer-setup.php'); exit(1); }" && \
      php composer-setup.php && \
      php -r "unlink('composer-setup.php');"
+RUN mv composer.phar /usr/local/bin/composer
 
  # PROJECT
 RUN mkdir -p $dir
 WORKDIR $dir
 
-COPY composer.* ./
-
 COPY .docker/php/bin bin/
-COPY webpack.config.js ./
-COPY yarn.lock ./
-COPY package.json ./
+RUN chmod +x bin/entrypoint.sh
 
+COPY composer.* ./
+COPY webpack.config.js ./
+COPY package.json ./
+COPY yarn.lock ./
 
 COPY assets assets/
 COPY config config/
 COPY public public/
 COPY src src/
-COPY user user/
 COPY templates templates/
+COPY user user/
 COPY .env* ./
 
 RUN mkdir -p var/cache \
@@ -59,12 +60,18 @@ RUN mkdir -p var/cache \
     && chown -R www-data: public/media \
 ;
 
-RUN test ! -f user/assets/user.js && cp user/assets/user.js.dist user/assets/user.js
-RUN test ! -f user/config.yaml && cp user/config/config.yaml.dist user/config/config.yaml
-RUN test ! -f user/config/applications.yaml && cp user/config/applications.yaml.dist user/config/applications.yaml
-RUN test ! -f user/config/framework/security.yaml && cp user/config/framework/security.yaml.dist user/config/framework/security.yaml
+RUN [ ! -f user/assets/user.js ] && cp user/assets/user.js.dist user/assets/user.js;
 
-USER $user:
+USER www-data:
 
 RUN bin/composer.sh $env
 RUN yarn install && yarn encore $env
+
+
+USER root
+
+WORKDIR $dir/public
+
+# PHP-FPM runs as www-data by default
+ENTRYPOINT ["/var/www/bin/entrypoint.sh"]
+CMD ["php-fpm", "-F"]

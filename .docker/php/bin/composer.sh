@@ -1,7 +1,7 @@
 #!/bin/sh
 
 env=$1
-phar=$(pwd)"/composer.phar"
+phar="/usr/local/bin/composer"
 base_cmd="$phar install --prefer-dist --no-progress --optimize-autoloader --no-interaction --no-scripts"
 echo $phar
 
