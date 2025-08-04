@@ -52,6 +52,10 @@ readonly class LocaleListener implements EventSubscriberInterface
         } catch (NotFoundHttpException) {
         }
 
+        if ($locale == '_default') {
+            return;
+        }
+
         $this->setRequestLocale($request, $locale);
     }
 
