@@ -66,13 +66,19 @@
                                     {% endif %}
 
                                     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
-                                        {% include "components/button.html.twig" with {url: url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'edit'}), color:"light btn-sm", icon: "edit", title: 'label.edit'|trans } %}
+                                        {% set recordID = row.pk.value %}
+                                        {% set recordActive = row._active.value %}
+
+                                        {% include "components/button.html.twig" with {url: url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'edit'}), color:"light btn-sm", icon: "edit", title: 'label.edit'|trans } %}
+
 
                                         <a class="btn btn-danger btn-sm"
                                            href="javascript:;" title="{{ 'label.delete'|trans }}"
-                                           onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: row.pk.value, action: 'delete'}) }}'; }">
+                                           onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
                                             <i class="fa fa-trash-alt"></i>
                                         </a>
+
+                                        {% include 'components/admin/active_button.html.twig' %}
                                     {% endif %}
                                 </div>
                             {% endif %}

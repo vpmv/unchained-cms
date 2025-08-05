@@ -2,6 +2,7 @@
 
 namespace App\System\Configuration;
 
+use Symfony\Component\HttpFoundation\Request;
 
 enum RouteType: string
 {
@@ -18,9 +19,11 @@ enum ApplicationType
 
 class Route
 {
-    private string $uri = '';
+    private string $uri      = '';
     private string $identifier;
-    private bool $impostor = false;
+    private bool   $impostor = false;
+
+    private Request $request;
 
     public function __construct(
         public readonly ApplicationType $applicationType,
@@ -118,6 +121,11 @@ class Route
         return $this->params;
     }
 
+    public function getQuery(string $key, mixed $default): mixed
+    {
+        return $this->request->query->get($key, $default);
+    }
+
     public function getLocale(): string
     {
         return $this->locale;
@@ -136,6 +144,16 @@ class Route
     public function setAuthenticated(bool $isAuthenticated): void
     {
         $this->authenticated = $this->authenticationRequired ? $isAuthenticated : true;
+    }
+
+    /**
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     *
+     * @return Route
+     */
+    public function setRequest(Request $request): void
+    {
+        $this->request = $request;
     }
 
     /**

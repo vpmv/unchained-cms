@@ -28,11 +28,11 @@ class Router
 
     public function __construct(private readonly Security $security, private readonly RouterInterface $sfRouter, private readonly RequestStack $requestStack, private readonly LocaleSwitcher $localeSwitcher)
     {
-        $mainRequest     = $requestStack->getCurrentRequest();
+        $mainRequest = $requestStack->getCurrentRequest();
         if ($mainRequest->hasPreviousSession() && $locale = $mainRequest->getSession()->get('_locale')) {
             $this->locale = $locale;
         } else {
-            $this->locale    = $this->localeSwitcher->getLocale();
+            $this->locale = $this->localeSwitcher->getLocale();
         }
     }
 
@@ -54,6 +54,7 @@ class Router
         // clone Route preventing alterations
         $route = clone($this->routes[$uri]);
         $route->setAuthenticated($this->isAuthenticated());
+        $route->setRequest($this->requestStack->getCurrentRequest());
 
         return $route;
     }
@@ -78,6 +79,7 @@ class Router
         // clone Route preventing alterations
         $route = clone($routes[$locale ?? $this->locale] ?? $routes[array_key_first($routes)]);
         $route->setAuthenticated($this->isAuthenticated());
+        $route->setRequest($this->requestStack->getCurrentRequest());
 
         return $route;
     }
@@ -100,7 +102,7 @@ class Router
 
     public function resolve(Route $route): ?Response
     {
-        $redirect     = null;
+        $redirect = null;
         $this->setLocale($route->getLocale()); // set Router locale for new routes
         if ($route->getLocale() != $this->localeSwitcher->getLocale()) {
             $request = $this->requestStack->getCurrentRequest();

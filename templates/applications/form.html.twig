@@ -1,6 +1,8 @@
 {% extends 'main/dashboard.html.twig' %}
 {% trans_default_domain application.translation_domain %}
 
+{% set recordID = application.data.pk.value %}
+
 {% block title %}
     {{ parent() }} -
     {% if application.hasData %}
@@ -32,10 +34,13 @@
 
 {% block dashboard_links %}
     {% if application.hasData %}
+
         <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId }) }}">
             <i class="fa fa-plus"></i>
             {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
         </a>
+
+        {% include 'components/admin/active_button.html.twig' with {recordActive: application.data._active.value} %}
     {% endif %}
 {% endblock %}
 
@@ -107,6 +112,10 @@
             {% include "components/submit.html.twig" with {icon: "save", label: "label.save"} %}
             {# CANCEL #}
             {% include "components/route_button.html.twig" with {route: application.route, color:"light", icon: "ban", label: 'label.cancel' } %}
+
+            {% if application.hasData %}
+
+            {% endif %}
         </div>
     </div>
     {{ form_end(application.form) }}

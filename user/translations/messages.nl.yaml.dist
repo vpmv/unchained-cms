@@ -18,6 +18,8 @@ label.editing: Bewerken
 label.save: Opslaan
 label.cancel: Annuleren
 label.back: Terug
+label.activate: Activeren
+label.deactivate: Deactiveren
 label.overview: Overzicht
 label.select...: Maak een keuze...
 Select...: Maak een keuze...

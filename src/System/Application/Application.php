@@ -251,6 +251,22 @@ class Application
                 $this->module->prepare();
 
                 return;
+            case 'activate':
+                if (!empty($params['id'])) {
+                    $status = filter_var($this->getRequest()->query->get('value', true), FILTER_VALIDATE_BOOL);
+                    try {
+                        $this->repository->updateRecordActive($params['id'], $status);
+                    } catch (\InvalidArgumentException $e) {
+                    }
+                } else {
+                    throw new \LogicException('missing ID');
+                }
+
+                $this->module = new RedirectModule($this, $this->getRequest());
+                $this->module->setData(['redirect' => $this->getRoute()]);
+                $this->module->prepare();
+
+                return;
             case 'duplicate':
                 throw new \LogicException('Can\'t duplicate yet');
             case 'edit':
@@ -333,10 +349,17 @@ class Application
     private function addDataRow(array $sqlData, bool $includeField = false): void
     {
         $row = [
-            'pk' => [
+            'pk'      => [
                 'visible' => false,
                 'value'   => $sqlData['pk'] ?? 0,
                 'raw'     => $sqlData['pk'] ?? 0,
+                'link'    => null,
+                'field'   => null,
+            ],
+            '_active' => [
+                'visible' => false,
+                'value'   => $sqlData['_active'] ?? 1,
+                'raw'     => $sqlData['_active'] ?? 1,
                 'link'    => null,
                 'field'   => null,
             ],
