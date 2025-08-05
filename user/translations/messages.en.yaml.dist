@@ -18,6 +18,8 @@ label.editing: Editing
 label.save: Save
 label.cancel: Cancel
 label.back: Back
+label.activate: Activate
+label.deactivate: Deactivate
 label.overview: Overview
 label.select...: Choose...
 Select...: Choose...

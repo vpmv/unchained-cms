@@ -129,7 +129,7 @@ class Repository extends Cacheable
         $this->primaryKey = 0;
         $this->activeRow  = $this->remember('record.' . $id, function () use ($id) {
             if (!$this->data) {
-                $this->fetchData();
+                $this->fetchData(['_active' => -1]);
             }
 
             return $this->dataByPk[$id] ?? [];
@@ -146,7 +146,7 @@ class Repository extends Cacheable
     {
         $this->activeRow  = $this->remember('record.slug.' . $slug, function () use ($slug) {
             if (!$this->data) {
-                $this->fetchData();
+                $this->fetchData(['_active' => -1]);
             }
 
             return $this->dataBySlug[$slug] ?? [];
@@ -533,7 +533,7 @@ class Repository extends Cacheable
             throw new InvalidArgumentException('Could not delete records with given params');
         }
 
-        $this->clearCacheKeys(['data']);
+        $this->clearCacheKeys($this->getCacheKeys(['_active'=>-1]));
     }
 
     public function deleteRecord(int $primaryKey): void
@@ -546,7 +546,36 @@ class Repository extends Cacheable
             throw new InvalidArgumentException('Could not delete records with given params');
         }
 
-        $this->clearCacheKeys(['data']);
+        $this->clearCacheKeys($this->getCacheKeys(['_active'=>-1]));
+    }
+
+    public function updateRecordActive(int $primaryKey, bool $status)
+    {
+        if (!$this->getRecord($primaryKey)) {
+            throw new InvalidArgumentException('There is no record with ID ' . $primaryKey);
+        }
+        $this->schema->persist(['_active' => (int)$status], $primaryKey);
+
+        $this->clearCacheKeys($this->getCacheKeys(['_active'=>-1]));
+    }
+
+    /**
+     * @param array $conditions
+     *
+     * @return string[]
+     * @internal
+     * @fixme Implement tagged cache
+     */
+    private function getCacheKeys(array $conditions = []): array
+    {
+        $cacheKeys = [
+            'data',
+        ];
+        if ($conditions) {
+            $cacheKeys[] = 'data.cond.' . md5(json_encode($conditions));
+        }
+
+        return $cacheKeys;
     }
 
     private function fetchData(array $conditions = []): void
@@ -555,7 +584,13 @@ class Repository extends Cacheable
         if ($conditions) {
             $key .= '.cond.' . md5(json_encode($conditions));
         }
+
         $data = $this->remember($key, function () use ($conditions) {
+            // note: keep inside scope to maintain clean cacheKey
+            if (!array_key_exists('_active', $conditions)) {
+                $conditions['_active'] = 1;
+            }
+
             $result = [
                 '_default' => [],
                 '_by_pk'   => [],
@@ -586,6 +621,7 @@ class Repository extends Cacheable
             $cols[] = $f['column'] . ($f['alias'] ? ' as ' . $f['alias'] : '');
         }
         $cols[] = $this->slugField . ' as _slug';
+        $cols[] = '_active';
         if ($this->exposedField) {
             $cols[] = ['fields' => $this->exposedField, 'alias' => '_exposed', 'concatenate' => true];
         }
@@ -729,12 +765,22 @@ class Repository extends Cacheable
                 'joins'    => $this->joins,
                 'subQuery' => $this->subQuery,
                 'fields'   => [
-                    'pk' => [
+                    'pk'      => [
                         'authorized'     => true,
                         'column'         => 'id',
                         'alias'          => 'pk',
                         'source'         => null,
                         'type'           => 'integer',
+                        'formType'       => null,
+                        'subQuery'       => false,
+                        'pointer_fields' => [],
+                    ],
+                    '_active' => [
+                        'authorized'     => true,
+                        'column'         => '_active',
+                        'alias'          => null,
+                        'source'         => null,
+                        'type'           => 'boolean',
                         'formType'       => null,
                         'subQuery'       => false,
                         'pointer_fields' => [],
@@ -878,6 +924,6 @@ class Repository extends Cacheable
 
     private function getVirtualField(string $field): ?string
     {
-        return in_array($field, ['_exposed', '_slug', '_title', '_uuid']) ? $field : null;
+        return in_array($field, ['_exposed', '_slug', '_title']) ? $field : null;
     }
 }

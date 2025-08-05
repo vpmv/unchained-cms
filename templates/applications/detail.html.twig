@@ -37,6 +37,8 @@
             <i class="fa fa-edit"></i> {{ 'label.edit'|trans }}
         </a>
 
+        {% include 'components/admin/active_button.html.twig' with { recordID: application.data.pk.value, recordActive: application.data._active.value } %}
+
         {% include "components/button.html.twig" with {url: url('admin_edit', {app: application.appId, category: application.categoryId}), color:"outline-dark", icon: "plus", title: 'action.entity.create.verbose'|trans({verbose: ('entity.verbose')|trans}) } %}
     {% endif %}
 {% endblock %}

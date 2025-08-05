@@ -16,7 +16,7 @@ class FormModule extends AbstractModule
     public function prepare(): void
     {
         foreach ($this->data as $fieldId => $data) {
-            if (!$data['visible']) {
+            if (!$this->validateDataInput($fieldId, $data)) {
                 continue;
             }
 
@@ -179,5 +179,17 @@ class FormModule extends AbstractModule
             'type'        => $field->getFormType(),
             'displayType' => $field->getDisplayType(),
         ];
+    }
+
+    private function validateDataInput(string $fieldId, array $data): bool
+    {
+        if ($data['visible']) {
+            return true;
+        }
+
+        if (in_array($fieldId, ['_active', 'pk'])) {
+            $this->output['data'][$fieldId] = $data;
+        }
+        return false;
     }
 }

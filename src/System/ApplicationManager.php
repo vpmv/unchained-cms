@@ -25,7 +25,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class ApplicationManager extends Cacheable
 {
     /** @var array Categorized listing of applications */
-    private array  $applications = [];
+    private array               $applications = [];
     public Application|Category $activeApp;
 
     /**
@@ -214,6 +214,10 @@ class ApplicationManager extends Cacheable
         if ($params['slug'] ?? false) {
             $module = 'detail';
             $params = ['_slug' => $params['slug']];
+        }
+
+        if (filter_var($route->getQuery('showHidden', true), FILTER_VALIDATE_BOOL)) {
+            $params['_active'] = -1;
         }
 
         $this->activeApp->boot($module);

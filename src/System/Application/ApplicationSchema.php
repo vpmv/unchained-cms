@@ -14,11 +14,12 @@ readonly class ApplicationSchema
      */
     public function __construct(private Connection $connection, private string $table, private array $fields)
     {
-        $this->validateTable();
+        $this->validateTable(); // fixme: cache
     }
 
-    public function countRecords(): int {
-        $b = $this->connection->createQueryBuilder()
+    public function countRecords(): int
+    {
+        $b     = $this->connection->createQueryBuilder()
             ->from($this->table, '_curr')
             ->select('COUNT(_curr.id)');
         $count = $b->executeQuery()->fetchOne();
@@ -50,7 +51,7 @@ readonly class ApplicationSchema
         foreach ($subQueries as $alias => $query) {
             $subBuilder = $this->connection->createQueryBuilder();
             $subBuilder
-                ->select($query['function'] .'('. $query['field'] . ')') // e.g.: count(id) / max(date) / avg(rating)
+                ->select($query['function'] . '(' . $query['field'] . ')') // e.g.: count(id) / max(date) / avg(rating)
                 ->from($query['from'], '_' . $alias);
             foreach ($query['conditions'] as $key => $cond) {
                 if (is_array($cond)) {
@@ -84,7 +85,17 @@ readonly class ApplicationSchema
                 $b->andWhere("$key IN (" . implode(',', $val) . ")");
                 continue;
             }
-            $b->andWhere("$key = :$key");
+
+            // todo: configure condition logic
+            if (in_array($key, ['_active'])) {
+                $b->andWhere("`_curr`.`$key` >= :$key");
+            } else {
+                $b->andWhere("`_curr`.`$key` = :$key");
+            }
+        }
+
+        if (($conditions['_active'] ?? 1) < 1) {
+            $sort = ['_active' => 'DESC'] + $sort;
         }
         foreach ($sort as $key => $dir) {
             $b->addOrderBy('_curr.' . $key, $dir);
@@ -156,13 +167,21 @@ readonly class ApplicationSchema
             return;
         }
 
-        $res     = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAllAssociative();
-        $columns = array_column($res, 'Field');
+        $res        = $this->connection->executeQuery('SHOW COLUMNS FROM ' . $this->table)->fetchAllAssociative();
+        $columns    = array_column($res, 'Field');
+        $newColumns = [];
         foreach ($this->fields as $name => $field) {
             $def = $this->getColumnDefinition($name, $field);
             if ($def && !in_array($def['column'], $columns)) {
-                $this->addColumns([$def]);
+                $newColumns[] = $def;
             }
+        }
+        if (!in_array('_active', $columns)) {
+            $newColumns[] = ['fmt' => '`_active` tinyint(1) default 1 not null'];
+        }
+
+        if ($newColumns) {
+            $this->addColumns($newColumns);
         }
     }
 
@@ -177,10 +196,11 @@ readonly class ApplicationSchema
     {
         $cols = [
             '`id` int(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY',
+            '`_active` tinyint(1) default 1 not null',
             //'`_uuid` uuid not null DEFAULT uuid()',
         ];
-        foreach ($this->fields as $name => $col) {
-            if ($def = $this->getColumnDefinition($name, $col)) {
+        foreach ($this->fields as $name => $field) {
+            if ($def = $this->getColumnDefinition($name, $field)) {
                 $cols[] = $def['fmt'];
             }
         }
