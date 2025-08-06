@@ -1,11 +1,15 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: "[BUG]"
+title: "[BUG] "
 labels: ''
 assignees: ''
 
 ---
+
+**Unchained features a lot of configurability. Have you checked all configurations?**
+* [ ]  I have read the full wiki. This is a bug.
+* [ ]  I have checked my own configuration, there are no configuration errors. 
 
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -24,9 +28,9 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Desktop / mobile**
-[ ] This problem only exists on desktop
-[ ] This problem only exists on mobile
-[ ] This problem is universal
+ * [ ] This problem only exists on desktop
+ * [ ] This problem only exists on mobile
+ * [ ] This problem is universal
 
 **Please complete the following information:**
  - OS: [e.g. iOS]
