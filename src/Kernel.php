@@ -89,7 +89,7 @@ class Kernel extends BaseKernel
 
         // LocaleListener needs the default locale
         $services->set(LocaleListener::class)
-            ->arg('$defaultLocale', '%kernel.default_locale%')
+            ->arg('$defaultLocale', '%default_locale%')
             ->autoconfigure();
     }
 
