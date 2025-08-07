@@ -702,6 +702,8 @@ class Field
                 $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
                 $this->moduleConfig['unique'] = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
+                $this->moduleConfig['form']['attr']['data-live-search'] = !empty($config['live_search']) ? 'true' : 'false'; // note: must be string <bool>
+
                 if ($config['group'] ?? null) {
                     $this->moduleConfig['form']['options']['group'] = 'true';
                 }

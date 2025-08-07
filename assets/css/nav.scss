@@ -1,4 +1,5 @@
 @import 'variables';
+@import '~bootstrap/scss/mixins';
 
 .navbar {
     &.navbar-light {
@@ -15,6 +16,16 @@
         padding: 0;
         .dropdown-item.app.plus {
             width: auto;
+        }
+    }
+    @include media-breakpoint-down(lg) {
+        .nav-usermenu {
+            flex-direction: row;
+            gap: 1rem;
+
+            .dropdown-locale {
+                margin-right: auto;
+            }
         }
     }
 }

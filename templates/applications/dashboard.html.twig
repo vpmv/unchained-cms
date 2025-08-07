@@ -10,11 +10,13 @@
     {{ application.meta.title|trans }}
 {% endblock %}
 
-{% block dashboard_links %}
+{% block dashboard_prev %}
     {% if application.category.categoryId != '_default' %}
-        {% include "components/route_button.html.twig" with {route: application.categoryRoute, color:"light", icon: "arrow-left", label: application.category.label} %}
+        {% include "components/route_button.html.twig" with {route: application.categoryRoute, color:"light", icon: "arrow-left", label: application.category.label, label_class: is_granted('IS_AUTHENTICATED_FULLY') ? 'd-none d-md-inline' : ''} %}
     {% endif %}
+{% endblock %}
 
+{% block dashboard_links %}
     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
         {% if not application.frontend.uniqueConstraint %}
             <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}">
@@ -69,16 +71,20 @@
                                         {% set recordID = row.pk.value %}
                                         {% set recordActive = row._active.value %}
 
-                                        {% include "components/button.html.twig" with {url: url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'edit'}), color:"light btn-sm", icon: "edit", title: 'label.edit'|trans } %}
+                                        <div class="d-none d-md-inline-flex">
+                                            {% include "components/button.html.twig" with {url: url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'edit'}), color:"light btn-sm", icon: "edit", title: 'label.edit'|trans } %}
 
+                                            {# show delete button if there is no detail page #}
+                                            {% if row.detail is not defined and not recordActive %}
+                                                <a class="btn btn-danger btn-sm"
+                                                   href="javascript:;" title="{{ 'label.delete'|trans }}"
+                                                   onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
+                                                    <i class="fa fa-trash-alt"></i>
+                                                </a>
+                                            {% endif %}
 
-                                        <a class="btn btn-danger btn-sm"
-                                           href="javascript:;" title="{{ 'label.delete'|trans }}"
-                                           onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
-                                            <i class="fa fa-trash-alt"></i>
-                                        </a>
-
-                                        {% include 'components/admin/active_button.html.twig' %}
+                                            {% include 'components/admin/active_button.html.twig' with {small: true} %}
+                                        </div>
                                     {% endif %}
                                 </div>
                             {% endif %}

@@ -1,5 +1,6 @@
 ### Default translations
 
+theme.toggle: Choose theme
 theme.light: Light
 theme.dark: Dark
 theme.auto: Auto
@@ -9,6 +10,7 @@ action.entity.create.verbose: "Create verbose"
 text.entity.create.verbose: Create
 text.entity.edit.verbose: Edit
 
+label.delete: Delete
 dialog.delete_warning: Are you sure, you want to delete this?
 
 label.new: New

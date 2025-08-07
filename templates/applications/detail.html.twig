@@ -2,6 +2,8 @@
 {% trans_default_domain application.translation_domain %}
 
 {% set exposedField = application.meta.exposes %}
+{% set recordID = application.data.pk.value %}
+{% set recordActive = application.data._active.value %}
 
 {% block title %}
     {{ parent() }} -
@@ -29,40 +31,82 @@
 {% endblock %}
 
 
-{% block dashboard_links %}
-    {% include "components/route_button.html.twig" with {route: application.route, color:"light", icon: "arrow-left", label: 'label.overview' } %}
+{% block dashboard_prev %}
+    {% include "components/route_button.html.twig" with {route: application.route, color:"light", icon: "arrow-left", label: 'label.overview', label_class: 'd-none d-md-inline' } %}
+{% endblock %}
 
+{% block dashboard_links %}
     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
         <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId, uuid: application.data.pk.value, action: 'edit'}) }}">
             <i class="fa fa-edit"></i> {{ 'label.edit'|trans }}
         </a>
 
-        {% include 'components/admin/active_button.html.twig' with { recordID: application.data.pk.value, recordActive: application.data._active.value } %}
+        {% include 'components/admin/active_button.html.twig' with { color: 'link d-md-none',  use_label: true, label_class: 'd-md-none' } %}
 
-        {% include "components/button.html.twig" with {url: url('admin_edit', {app: application.appId, category: application.categoryId}), color:"outline-dark", icon: "plus", title: 'action.entity.create.verbose'|trans({verbose: ('entity.verbose')|trans}) } %}
+        {% if not recordActive %}
+            <a class="btn btn-danger d-md-none"
+               href="javascript:;"
+               onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
+                <i class="fa fa-trash-alt"></i>
+                {{ 'label.delete'|trans }}
+            </a>
+        {% endif %}
+
+        <hr class="d-md-none">
+
+        {% include "components/button.html.twig" with {url: url('admin_edit', {app: application.appId, category: application.categoryId}), color:"outline-dark", icon: "plus", title: 'action.entity.create.verbose'|trans({verbose: ('entity.verbose')|trans}), label: ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}), label_class: 'd-md-none' } %}
+
     {% endif %}
 {% endblock %}
 
 {% block content %}
     {# TODO  #}
-{#    {% block links %}#}
-{#            <div class="row">#}
-{#                <div class="col-sm-12 col-md-6 float-right">#}
+    {#    {% block links %} #}
+    {#            <div class="row"> #}
+    {#                <div class="col-sm-12 col-md-6 float-right"> #}
 
-{#                </div>#}
-{#            </div>#}
-{#    {% endblock %}#}
+    {#                </div> #}
+    {#            </div> #}
+    {#    {% endblock %} #}
 
     {% if application.data %}
         <table class="table">
+            {% set first_visible = true %}
             {% for column in application.data %}
                 {% if column.visible %}
                     <tr>
-                        <td class="font-weight-bold">{{ column.field.labels.default|trans }}</td>
-                        <td class="{{ column.field.type }}">{% include 'applications/blocks/cell.html.twig' with {cell: column} %}</td>
+                        {% if column.field.type == 'image' and first_visible %}
+                            <td colspan="2">{% include 'applications/blocks/cell.html.twig' with {cell: column} %}</td>
+                        {% else %}
+                            <td class="font-weight-bold">{{ column.field.labels.default|trans }}</td>
+                            <td class="{{ column.field.type }}">{% include 'applications/blocks/cell.html.twig' with {cell: column} %}</td>
+                        {% endif %}
                     </tr>
+                    {% set first_visible = false %}
                 {% endif %}
             {% endfor %}
         </table>
+    {% endif %}
+{% endblock %}
+
+{% block content_footer %}
+    {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+        <div class="d-none d-md-block bg-warning-subtle p-4 mt-4">
+            <div class="d-flex justify-content-between">
+                <h5 class="text-warning">Administrative area</h5>
+
+                <div class="btn-group">
+                    {% include 'components/admin/active_button.html.twig' with { use_label: true, color: 'outline-dark' } %}
+                    {% if not recordActive %}
+                        <a class="btn btn-danger"
+                           href="javascript:;"
+                           onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
+                            <i class="fa fa-trash-alt"></i>
+                            {{ 'label.delete'|trans }}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}

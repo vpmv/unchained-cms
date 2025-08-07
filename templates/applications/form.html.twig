@@ -40,7 +40,7 @@
             {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
         </a>
 
-        {% include 'components/admin/active_button.html.twig' with {recordActive: application.data._active.value} %}
+        {% include 'components/admin/active_button.html.twig' with {use_label: true, label_class: 'd-md-none', recordActive: application.data._active.value} %}
     {% endif %}
 {% endblock %}
 
@@ -51,8 +51,8 @@
             {% set source = f.vars.attr['data-source'] is defined ? f.vars.attr['data-source'] : '' %}  {# TODO #}
 
             <div class="form-group row">
-                <div class="col-sm-2">{{ form_label(f) }}</div>
-                <div class="col-10 col-md-{{ source ? '9' : '10' }}">
+                <div class="col-12 col-md-2">{{ form_label(f) }}</div>
+                <div class="col-12 col-md-10">
                     {% if application.data[f.vars.name] is defined %}
                         {% set formField =  application.data[f.vars.name] %}
 

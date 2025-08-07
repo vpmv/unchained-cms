@@ -1,8 +1,8 @@
 FROM php:8.4-fpm-alpine
 
 ARG dir="/var/www/"
-ARG env="prod"
 
+ENV BUILD_ENV="prod"
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV TZ="UTC"
 ENV INCLUDE_EXAMPLES="false"
@@ -60,12 +60,10 @@ RUN mkdir -p var/cache \
     && chown -R www-data: public/media \
 ;
 
-RUN [ ! -f user/assets/user.js ] && cp user/assets/user.js.dist user/assets/user.js;
-
 USER www-data:
 
-RUN bin/composer.sh $env
-RUN yarn install && yarn encore $env
+RUN bin/composer.sh $BUILD_ENV
+RUN yarn install
 
 
 USER root
