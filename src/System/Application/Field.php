@@ -234,7 +234,7 @@ class Field
             $values = $links = [];
             foreach ($value->getJunctions() as $junction) {
                 $values[] = $junction->getValue();
-                $links[] = $application->getRoute($junction->getApplication(), ['slug' => $junction->getSlug()]);
+                $links[]  = $application->getRoute($junction->getApplication(), ['slug' => $junction->getSlug()]);
             }
             $this->setData('value', $values);
             $this->setData('url', $links);
@@ -352,7 +352,7 @@ class Field
                         preg_match_all('/\b[A-Za-z]/', $value, $matches);
                         if ($matches[0] ?? null) {
                             $matches[0][] = '';
-                            $value = implode('. ', $matches[0]);
+                            $value        = implode('. ', $matches[0]);
                         }
                     }
                     if ($transformer['suffix']) {
@@ -413,7 +413,7 @@ class Field
             ],
             'text'   => [
                 'suffix' => ['key' => 'suffix', 'value' => null],
-                'abbr' => ['key' => 'abbr', 'value' => false],
+                'abbr'   => ['key' => 'abbr', 'value' => false],
             ],
         ];
 
@@ -585,8 +585,8 @@ class Field
             $visibleFields    = [];
 
             if (is_array($sourceIdentifier)) {
-                $sourceIdentifier = $sourceIdentifier['source'];
                 $visibleFields    = $sourceIdentifier['fields'] ?? [];
+                $sourceIdentifier = $sourceIdentifier['source'];
             } else {
                 if (strpos($sourceIdentifier, '.')) {
                     [$sourceIdentifier, $visibleFields] = explode('.', $sourceIdentifier);
@@ -613,7 +613,6 @@ class Field
 
             if ($contextSourceConfig['function'] || $contextSourceConfig['join_source']) {
                 $this->extra['ignored'] = true;
-
                 return; // stop reconfiguration
             }
 
@@ -623,25 +622,22 @@ class Field
                 $sourceAppConfig = $configStore->getApplication($sourceAppId);
 
                 if (is_string($visibleFields)) {
-                    $sourceField = $sourceAppConfig->getField($visibleFields);
+                    $sourceField = [$sourceAppConfig->getField($visibleFields)];
                 } elseif (is_array($visibleFields) && count($visibleFields)) {
-                    if ($sourceAppConfig->getMeta('exposes')) {
-                        $sourceField = (array)$sourceAppConfig->getMeta('exposes');
-                    } else {
-                        $sourceField = (array)array_filter($sourceAppConfig->getFields(), function ($field) {
-                            return filter_var($field['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                        })[0];
-                    }
-                    //} else {
-                    //    $sourceField = (array)array_filter($visibleFields, function ($field) use ($sourceAppConfig) {
-                    //        return isset($sourceAppConfig['fields'][$field]) && filter_var($sourceAppConfig['fields'][$field]['public'] ?? true, FILTER_VALIDATE_BOOLEAN);
-                    //    })[0];
-                    //}
-                    if (count($sourceField) > 1) {
-                        return; // combined fields are always textual
-                    }
-                    $sourceField = $sourceField[0];
+                    $sourceFields = $sourceAppConfig->getFields();
+                    $sourceField  = array_filter(array_map(function ($field) use ($sourceFields) {
+                        if (isset($sourceFields[$field]) && $sourceFields[$field]->isVisible(null)) {
+                            return $sourceFields[$field];
+                        }
+                    }, $visibleFields));
+                } else {
+                    $sourceField = $sourceAppConfig->getMeta('exposes');
                 }
+
+                if (count($sourceField) > 1) {
+                    return; // combined fields are always textual
+                }
+                $sourceField          = $sourceField[0];
                 $this->config['type'] = $sourceField->getDisplayType(); // source DisplayType overrules our DisplayType, whilst maintaining the FormType
             }
         }
@@ -657,7 +653,7 @@ class Field
             'form'     => [
                 'required' => filter_var($config['required'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'attr'     => [],
-                'options' => [],
+                'options'  => [],
             ],
         ];
 
@@ -700,17 +696,17 @@ class Field
                 $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
                 $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
                 $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
-                $this->moduleConfig['unique'] = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $this->moduleConfig['unique']           = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
                 if ($config['group'] ?? null) {
                     $this->moduleConfig['form']['options']['group'] = 'true';
                 }
 
                 if ($config['group_source'] ?? null) {
-                    $this->moduleConfig['form']['options']['group'] = [
+                    $this->moduleConfig['form']['options']['group']           = [
                         'source' => $config['group_source'],
                     ];
-                    $this->moduleConfig['form']['attr']['data-group'] = 'true';
+                    $this->moduleConfig['form']['attr']['data-group']         = 'true';
                     $this->moduleConfig['form']['attr']['data-hide-disabled'] = 'true';
                 }
                 if ($config['condition'] ?? null) {
