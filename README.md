@@ -52,7 +52,7 @@ Read the wiki on how to [Configure and use your first app](https://github.com/vp
 Unchained is easily extended with Webpack Encore, Twig and user-defined PHP extensions. The front-end entrypoint is preconfigured at `/user/assets/user.js`. <br> Feel free to add your own scripts and styling.
 
 Unchained comes with the following Icon packs:
-* FontAwesome 5
+* FontAwesome 7
 * Bootstrap Icons 1.13 
 
 Templates are easily overridden. See [the sources](tree/master/templates) for templates you wish to override and put them in `/user/templates`.

@@ -4,6 +4,9 @@
 .navbar {
     &.navbar-light {
         background-color: var(--brand-primary);
+        .navbar-brand h4 {
+            margin: 0;
+        }
         .navbar-nav {
             --bs-nav-link-color: var(--bs-body-color);
         }

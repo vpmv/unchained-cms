@@ -15,7 +15,7 @@
 {% apply spaceless %}
     <a class="{{ class }}" href="{{ url }}" {% if title %}title="{{ title }}"{% endif %}>
         {% if icon %}
-            <i class="{{ icon_font ~ ' ' ~ icon_font ~ '-' ~ icon }}"></i>
+            <i class="{{ (icon_font == 'fa' ? 'fa-solid' : icon_font) ~ ' ' ~ icon_font ~ '-' ~ icon }}"></i>
         {% endif %}
 
         {% if label %}

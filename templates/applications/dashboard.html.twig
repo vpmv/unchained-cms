@@ -20,7 +20,7 @@
     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
         {% if not application.frontend.uniqueConstraint %}
             <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId}) }}">
-                <i class="fa fa-plus"></i>
+                <i class="fa-solid fa-plus"></i>
                 {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
             </a>
         {% endif %}
@@ -34,21 +34,39 @@
                 <thead>
                 <tr>
                     {% for cell in application.data|first %}
-                        {% if cell.visible and cell.field %}
-                            <th class="{{ cell.field.type }} {{ cell.field.module.class }}">{{ cell.field.labels.default|trans }}</th>
-                        {% endif %}
+                        {% if cell.visible and cell.field %}{% apply spaceless %}
+                            <th class="{{ cell.field.type }} {{ cell.field.module.class }}"
+                                {% if not cell.field.module.sortable %}
+                                    data-dt-order="disable"
+                                {% endif %}>{{ cell.field.labels.default|trans }}</th>
+                        {% endapply %}{% endif %}
                     {% endfor %}
 
                     {# Edit column #}
-                    <th class="all"></th>
+                    <th class="all" data-dt-order="disable"></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for row in application.data %}
+                    {% set recordID = row.pk.value %}
+                    {% set recordActive = row._active.value %}
+
                     <tr {% if row.detail is defined %}data-detail-url="{{ route(row.detail.link) }}"{% endif %}>
                         {% for cell in row %}
                             {% if cell.visible %}
-                                <td class="{{ cell.field.type }}">{% include 'applications/blocks/cell.html.twig' with {cell: cell} %}</td>
+                                <td
+                                        class="{{ cell.field.type }}"
+                                        {% apply spaceless %}
+                                            {% if cell.field.type in ["date", "datetime"] and cell.value and not cell.transformed %}
+                                                data-sort="{{ cell.value.format('Ymd') }}"
+                                            {% elseif cell.field.type in ["number", "rating", "range"] %}
+                                                data-sort="{{ cell.value }}"
+                                            {% elseif cell.field.source_id and cell.value %}
+                                                data-filter="{{ dataFilter(cell) }}"
+                                            {% endif %}
+                                        {% endapply %}
+
+                                >{% include 'applications/blocks/cell.html.twig' with {cell: cell} %}</td>
                             {% endif %}
                         {% endfor %}
 
@@ -57,34 +75,43 @@
                         {# edit buttons #}
                         <td>
                             {% if row.detail is defined or is_granted('IS_AUTHENTICATED_FULLY') %}
-                                <div class="btn-group">
-                                    {% if row.detail is defined %}
-                                        {% include "components/route_button.html.twig" with {route: row.detail.link, color:"info btn-sm", icon: "info", title: 'label.details'|trans } %}
-{#                                        <a class="btn btn-primary btn-sm"#}
-{#                                           href="{{ url(row.detail.link.getName(), row.detail.link.getParams()) }}"#}
-{#                                           title="{{  | trans }}">#}
-{#                                            <i class="fa fa-info"></i>#}
-{#                                        </a>#}
-                                    {% endif %}
+                                <div class="btn-group h-25">
+                                    {% if not is_granted('IS_AUTHENTICATED_FULLY') %}
+                                        {% if row.detail is defined %}
+                                            {% include "components/route_button.html.twig" with {route: row.detail.link, color:"info btn-sm", icon: "info", title: 'label.details'|trans } %}
+                                        {% endif %}
+                                    {% else %}
+                                        <div class="dropdown">
+                                            <a role="button" class="btn dropdown-toggle" id="record-{{ recordID }}-actions" data-bs-toggle="dropdown" aria-expanded="false">
+{#                                                <i class="fa-solid fa-ellipsis-vertical"></i>#}
+                                                    <i class="fa-solid fa-wrench"></i>
+                                                <span class="d-none d-md-inline">
+                                                    {{ 'label.actions'|trans }}
+                                                </span>
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="record-{{ recordID }}-actions" style="position: absolute">
+                                                {% if row.detail is defined %}
+                                                {# details link #}
+                                                    {% include "components/route_button.html.twig" with {route: row.detail.link, color:"info dropdown-item", icon: "info", label: 'label.details'|trans } %}
+                                                {% endif %}
 
-                                    {% if is_granted('IS_AUTHENTICATED_FULLY') %}
-                                        {% set recordID = row.pk.value %}
-                                        {% set recordActive = row._active.value %}
+                                                {#  #}
+                                                {% include "components/button.html.twig" with {url: url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'edit'}), color:"light dropdown-item", icon: "pencil", label: 'label.edit'|trans } %}
 
-                                        <div class="d-none d-md-inline-flex">
-                                            {% include "components/button.html.twig" with {url: url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'edit'}), color:"light btn-sm", icon: "edit", title: 'label.edit'|trans } %}
+                                                {# show delete button if there is no detail page #}
+                                                {% if row.detail is not defined and not recordActive %}
+                                                    <a class="btn btn-danger dropdown-item" role="button"
+                                                       onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                        {{ 'label.delete'|trans }}
+                                                    </a>
+                                                {% endif %}
 
-                                            {# show delete button if there is no detail page #}
-                                            {% if row.detail is not defined and not recordActive %}
-                                                <a class="btn btn-danger btn-sm"
-                                                   href="javascript:;" title="{{ 'label.delete'|trans }}"
-                                                   onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
-                                                    <i class="fa fa-trash-alt"></i>
-                                                </a>
-                                            {% endif %}
-
-                                            {% include 'components/admin/active_button.html.twig' with {small: true} %}
+                                                {# activity switch button #}
+                                                {% include 'components/admin/active_button.html.twig' with {use_label: true, color: 'light dropdown-item'} %}
+                                            </div>
                                         </div>
+
                                     {% endif %}
                                 </div>
                             {% endif %}

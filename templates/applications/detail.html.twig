@@ -38,16 +38,15 @@
 {% block dashboard_links %}
     {% if is_granted('IS_AUTHENTICATED_FULLY') %}
         <a class="btn btn-primary" href="{{ url('admin_edit', {app: application.appId, category: application.categoryId, uuid: application.data.pk.value, action: 'edit'}) }}">
-            <i class="fa fa-edit"></i> {{ 'label.edit'|trans }}
+            <i class="fa-solid fa-pencil"></i> {{ 'label.edit'|trans }}
         </a>
 
         {% include 'components/admin/active_button.html.twig' with { color: 'link d-md-none',  use_label: true, label_class: 'd-md-none' } %}
 
         {% if not recordActive %}
-            <a class="btn btn-danger d-md-none"
-               href="javascript:;"
+            <a class="btn btn-danger d-md-none" role="button"
                onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
-                <i class="fa fa-trash-alt"></i>
+                <i class="fa-solid fa-trash-can"></i>
                 {{ 'label.delete'|trans }}
             </a>
         {% endif %}
@@ -98,10 +97,9 @@
                 <div class="btn-group">
                     {% include 'components/admin/active_button.html.twig' with { use_label: true, color: 'outline-dark' } %}
                     {% if not recordActive %}
-                        <a class="btn btn-danger"
-                           href="javascript:;"
+                        <a class="btn btn-danger" role="button"
                            onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
-                            <i class="fa fa-trash-alt"></i>
+                            <i class="fa-solid fa-trash-can"></i>
                             {{ 'label.delete'|trans }}
                         </a>
                     {% endif %}
