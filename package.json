@@ -15,7 +15,7 @@
     },
     "dependencies": {
         "@babel/core": "^7.28.0",
-        "@fortawesome/fontawesome-free": "^5.15.4",
+        "@fortawesome/fontawesome-free": "^7.0.0",
         "@popperjs/core": "^2.11.8",
         "@symfony/webpack-encore": "^0.",
         "bootstrap": "^5.2",

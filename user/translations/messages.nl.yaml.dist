@@ -1,5 +1,6 @@
 ### Default translations
 
+theme.toggle: Thema kiezen
 theme.light: Lichte modus
 theme.dark: Donkere modus
 theme.auto: Automatisch
@@ -9,8 +10,10 @@ action.entity.create.verbose: "verbose aanmaken"
 text.entity.create.verbose: Aanmaken
 text.entity.edit.verbose: Bewerken
 
+label.delete: Verwijder
 dialog.delete_warning: Weet je zeker dat je dit wil verwijderen?
 
+label.actions: Acties
 label.new: Nieuw
 label.details: Details
 label.edit: Bewerk

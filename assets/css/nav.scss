@@ -1,8 +1,12 @@
 @import 'variables';
+@import '~bootstrap/scss/mixins';
 
 .navbar {
     &.navbar-light {
         background-color: var(--brand-primary);
+        .navbar-brand h4 {
+            margin: 0;
+        }
         .navbar-nav {
             --bs-nav-link-color: var(--bs-body-color);
         }
@@ -15,6 +19,16 @@
         padding: 0;
         .dropdown-item.app.plus {
             width: auto;
+        }
+    }
+    @include media-breakpoint-down(lg) {
+        .nav-usermenu {
+            flex-direction: row;
+            gap: 1rem;
+
+            .dropdown-locale {
+                margin-right: auto;
+            }
         }
     }
 }
