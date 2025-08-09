@@ -129,7 +129,7 @@ class Repository extends Cacheable
         $this->primaryKey = 0;
         $this->activeRow  = $this->remember('record.' . $id, function () use ($id) {
             if (!$this->data) {
-                $this->fetchData(['_active' => -1]);
+                $this->fetchData([new QueryParam('_active', -1, operator: '>=')]);
             }
 
             return $this->dataByPk[$id] ?? [];
@@ -146,7 +146,7 @@ class Repository extends Cacheable
     {
         $this->activeRow  = $this->remember('record.slug.' . $slug, function () use ($slug) {
             if (!$this->data) {
-                $this->fetchData(['_active' => -1]);
+                $this->fetchData([new QueryParam('_active', -1, operator: '>=')]);
             }
 
             return $this->dataBySlug[$slug] ?? [];
@@ -372,13 +372,18 @@ class Repository extends Cacheable
         return $result;
     }
 
+    /**
+     * @param \App\System\Application\Database\QueryParam[] $conditions
+     *
+     * @return void
+     */
     public function filterData(array $conditions): void
     {
         $pk = $conditions['id'] ?? ($conditions['pk'] ?? null);
-        if ($pk) {
-            $this->data = $this->getRecord($pk);
+        if ($pk && null !== $pk->value) {
+            $this->data = $this->getRecord($pk->value);
         } elseif (isset($conditions[$this->slugField])) {
-            $this->data = $this->getRecordBySlug($conditions[$this->slugField]);
+            $this->data = $this->getRecordBySlug($conditions[$this->slugField]->value);
         } else {
             $this->filterUnknownColumns($conditions);
             $this->fetchData($conditions);
@@ -399,17 +404,23 @@ class Repository extends Cacheable
 
     /**
      * @param string $column
-     * @param mixed  $value
+     * @param array  $params
      *
      * @return int
      * @todo Implement conditional
      */
-    public function getCount(string $column, mixed $value): int
+    /**
+     * @param string                                        $column
+     * @param \App\System\Application\Database\QueryParam[] $params
+     *
+     * @return int
+     */
+    public function getCount(string $column, array $params = []): int
     {
         if (!empty($column)) {
             throw new \LogicException('count by param not implemented');
         }
-        return $this->schema->countRecords();
+        return $this->schema->countRecords(...$params);
     }
 
     public function getDistinctCount(string $column, $value)
@@ -533,7 +544,7 @@ class Repository extends Cacheable
             throw new InvalidArgumentException('Could not delete records with given params');
         }
 
-        $this->clearCacheKeys($this->getCacheKeys(['_active'=>-1]));
+        $this->clearCacheKeys($this->getCacheKeys(['_active' => -1]));
     }
 
     public function deleteRecord(int $primaryKey): void
@@ -546,7 +557,7 @@ class Repository extends Cacheable
             throw new InvalidArgumentException('Could not delete records with given params');
         }
 
-        $this->clearCacheKeys($this->getCacheKeys(['_active'=>-1]));
+        $this->clearCacheKeys($this->getCacheKeys(['_active' => -1]));
     }
 
     public function updateRecordActive(int $primaryKey, bool $status)
@@ -556,7 +567,7 @@ class Repository extends Cacheable
         }
         $this->schema->persist(['_active' => (int)$status], $primaryKey);
 
-        $this->clearCacheKeys($this->getCacheKeys(['_active'=>-1]));
+        $this->clearCacheKeys($this->getCacheKeys(['_active' => -1]));
     }
 
     /**
@@ -578,17 +589,22 @@ class Repository extends Cacheable
         return $cacheKeys;
     }
 
+    /**
+     * @param \App\System\Application\Database\QueryParam[] $conditions
+     *
+     * @return void
+     */
     private function fetchData(array $conditions = []): void
     {
         $key = 'data';
         if ($conditions) {
-            $key .= '.cond.' . md5(json_encode($conditions));
+            $key .= '.cond.' . md5(serialize($conditions));
         }
 
         $data = $this->remember($key, function () use ($conditions) {
             // note: keep inside scope to maintain clean cacheKey
             if (!array_key_exists('_active', $conditions)) {
-                $conditions['_active'] = 1;
+                $conditions['_active'] = new QueryParam('_active', 1, operator: '>=');
             }
 
             $result = [

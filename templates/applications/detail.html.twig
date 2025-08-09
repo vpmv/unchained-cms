@@ -1,5 +1,5 @@
 {% extends 'main/dashboard.html.twig' %}
-{% trans_default_domain application.translation_domain %}
+{% trans_default_domain application.domain %}
 
 {% set exposedField = application.meta.exposes %}
 {% set recordID = application.data.pk.value %}
@@ -41,14 +41,12 @@
             <i class="fa-solid fa-pencil"></i> {{ 'label.edit'|trans }}
         </a>
 
-        {% include 'components/admin/active_button.html.twig' with { color: 'link d-md-none',  use_label: true, label_class: 'd-md-none' } %}
+        {% if application.frontend.deactivate %}
+            {% include 'components/admin/activate_button.html.twig' with { color: 'link d-md-none',  use_label: true, label_class: 'd-md-none' } %}
+        {% endif %}
 
-        {% if not recordActive %}
-            <a class="btn btn-danger d-md-none" role="button"
-               onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
-                <i class="fa-solid fa-trash-can"></i>
-                {{ 'label.delete'|trans }}
-            </a>
+        {% if not recordActive or not application.frontend.deactivate %}
+            {% include 'components/admin/delete_button.html.twig' with {class: 'd-md-none'}  %}
         {% endif %}
 
         <hr class="d-md-none">
@@ -95,13 +93,11 @@
                 <h5 class="text-warning">Administrative area</h5>
 
                 <div class="btn-group">
-                    {% include 'components/admin/active_button.html.twig' with { use_label: true, color: 'outline-dark' } %}
-                    {% if not recordActive %}
-                        <a class="btn btn-danger" role="button"
-                           onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
-                            <i class="fa-solid fa-trash-can"></i>
-                            {{ 'label.delete'|trans }}
-                        </a>
+                    {% if application.frontend.deactivate %}
+                        {% include 'components/admin/activate_button.html.twig' with { use_label: true, color: 'outline-dark' } %}
+                    {% endif %}
+                    {% if not recordActive or not application.frontend.deactivate %}
+                        {% include 'components/admin/delete_button.html.twig' %}
                     {% endif %}
                 </div>
             </div>

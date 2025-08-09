@@ -1,5 +1,5 @@
 {% extends 'main/dashboard.html.twig' %}
-{% trans_default_domain application.translation_domain %}
+{% trans_default_domain application.domain %}
 
 {% set recordID = application.data.pk.value %}
 
@@ -40,7 +40,7 @@
             {{ ('action.entity.create.verbose')|trans({verbose: ('entity.verbose')|trans}) }}
         </a>
 
-        {% include 'components/admin/active_button.html.twig' with {use_label: true, label_class: 'd-md-none', recordActive: application.data._active.value} %}
+        {% include 'components/admin/activate_button.html.twig' with {use_label: true, label_class: 'd-md-none', recordActive: application.data._active.value} %}
     {% endif %}
 {% endblock %}
 

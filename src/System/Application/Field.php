@@ -243,7 +243,7 @@ class Field
             $values = $links = [];
             foreach ($value->getJunctions() as $junction) {
                 $values[] = $junction->getValue();
-                $links[] = $application->getRoute($junction->getApplication(), ['slug' => $junction->getSlug()]);
+                $links[]  = $application->getRoute($junction->getApplication(), ['slug' => $junction->getSlug()]);
             }
             $this->setData('value', $values);
             $this->setData('url', $links);
@@ -361,7 +361,7 @@ class Field
                         preg_match_all('/\b[A-Za-z]/', $value, $matches);
                         if ($matches[0] ?? null) {
                             $matches[0][] = '';
-                            $value = implode('. ', $matches[0]);
+                            $value        = implode('. ', $matches[0]);
                         }
                     }
                     if ($transformer['suffix']) {
@@ -422,7 +422,7 @@ class Field
             ],
             'text'   => [
                 'suffix' => ['key' => 'suffix', 'value' => null],
-                'abbr' => ['key' => 'abbr', 'value' => false],
+                'abbr'   => ['key' => 'abbr', 'value' => false],
             ],
         ];
 
@@ -666,7 +666,7 @@ class Field
             'form'     => [
                 'required' => filter_var($config['required'] ?? false, FILTER_VALIDATE_BOOLEAN),
                 'attr'     => [],
-                'options' => [],
+                'options'  => [],
             ],
         ];
 
@@ -709,7 +709,7 @@ class Field
                 $this->moduleConfig['form']['multiple'] = !empty($config['multiple']);
                 $this->moduleConfig['form']['expanded'] = !empty($config['expanded']);
                 $this->moduleConfig['form']['choices']  = $this->config['options'] ?? [];
-                $this->moduleConfig['unique'] = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                $this->moduleConfig['unique']           = filter_var($config['unique'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
                 $this->moduleConfig['form']['attr']['data-live-search'] = !empty($config['live_search']) ? 'true' : 'false'; // note: must be string <bool>
 
@@ -718,10 +718,10 @@ class Field
                 }
 
                 if ($config['group_source'] ?? null) {
-                    $this->moduleConfig['form']['options']['group'] = [
+                    $this->moduleConfig['form']['options']['group']           = [
                         'source' => $config['group_source'],
                     ];
-                    $this->moduleConfig['form']['attr']['data-group'] = 'true';
+                    $this->moduleConfig['form']['attr']['data-group']         = 'true';
                     $this->moduleConfig['form']['attr']['data-hide-disabled'] = 'true';
                 }
                 if ($config['condition'] ?? null) {
@@ -802,7 +802,7 @@ class Field
         if (!is_array($v = $config['dashboard'] ?? 'all')) {
             $config['dashboard'] = ['visibility' => $v];
         }
-        $this->moduleConfig['dashboard']['class'] = $classes[$config['dashboard']['visibility']] ?? 'all';
+        $this->moduleConfig['dashboard']['class']    = $classes[$config['dashboard']['visibility']] ?? 'all';
         $this->moduleConfig['dashboard']['sortable'] = !in_array($this->getDisplayType(), ['image', 'file']);
     }
 }

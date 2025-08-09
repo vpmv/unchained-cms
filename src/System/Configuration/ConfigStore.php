@@ -18,7 +18,6 @@ class ConfigStore extends ConfigStoreBase
 
     protected $paths = [];
 
-    protected bool $authenticated = false;
     /** @var \App\System\Configuration\ApplicationConfig[] */
     protected $applications = [];
 
@@ -32,25 +31,24 @@ class ConfigStore extends ConfigStoreBase
         private readonly RequestStack $requestStack,
         //private readonly LoggerInterface $logger,
         //private readonly Timer $timer,
-        Security $security,
+        private Security $security,
         protected readonly string $projectDir,
         private readonly string $publicDir,
     ) {
         parent::__construct($this->projectDir);
 
         $this->basePath = $this->projectDir . '/user/config/';
-        $this->paths = [
+        $this->paths    = [
             'root'   => $this->projectDir,
             'public' => $this->publicDir,
         ];
 
         $this->locale = $this->requestStack->getMainRequest()->getLocale();
-        $this->authenticated = !empty($security->getToken()?->getRoleNames());
     }
 
     public function isAuthenticated(): bool
     {
-        return $this->authenticated;
+        return !empty($this->security->getToken()?->getRoleNames());
     }
 
     public function configureApplications(): void

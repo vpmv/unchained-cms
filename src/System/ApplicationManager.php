@@ -4,6 +4,7 @@ namespace App\System;
 
 use App\System\Application\Application;
 use App\System\Application\Category;
+use App\System\Application\Database as DB;
 use App\System\Application\Property;
 use App\System\Configuration\ApplicationType;
 use App\System\Configuration\ConfigStore;
@@ -87,14 +88,14 @@ class ApplicationManager extends Cacheable
                 }
 
                 $applications[$category->getCategoryId()]['applications'][$appId] = [
-                    'appId'              => $appId,
-                    'order'              => $app->getConfig('order', 0),
-                    'public'             => $app->isPublic(),
-                    'visible'            => $this->isAuthorizedFully() || (!$this->isAuthorizedFully() && ($app->isPublic())),
-                    'config'             => $config,
-                    'route'              => $this->configStore->router->matchApp($category->getCategoryId(), $appId),
-                    'translation_domain' => Property::schemaName($appId),
-                    'entry_count'        => -1,
+                    'appId'       => $appId,
+                    'domain'      => Property::domain($appId),
+                    'order'       => $app->getConfig('order', 0),
+                    'public'      => $app->isPublic(),
+                    'visible'     => $this->isAuthorizedFully() || (!$this->isAuthorizedFully() && ($app->isPublic())),
+                    'config'      => $config,
+                    'route'       => $this->configStore->router->matchApp($category->getCategoryId(), $appId),
+                    'entry_count' => -1,
                 ];
             }
 
@@ -131,7 +132,15 @@ class ApplicationManager extends Cacheable
             mkdir($filesPath, 0777, true);
         }
 
-        $app = new Application($appId, $this->requestStack, $this->configStore, $this->repositoryManager->getRepository($appId), $this->getFormBuilder($appId), $this->translator);
+        $app = new Application(
+            $appId,
+            $this->configStore->getApplication($appId),
+            $this->configStore,
+            $this->requestStack,
+            $this->repositoryManager->getRepository($appId),
+            $this->getFormBuilder($appId),
+            $this->translator,
+        );
         $this->loadApplicationExtension($appId);
 
         return $app;
@@ -178,7 +187,7 @@ class ApplicationManager extends Cacheable
         if (!$config) {
             throw new NotFoundHttpException('Category does not exist');
         }
-        return new Category($categoryId, $this->requestStack, $this->configStore, $this->translator);
+        return new Category($categoryId, $this->configStore->getCategoryConfig($categoryId), $this->requestStack, $this->translator, $this->configStore->router);
     }
 
     /**
@@ -197,7 +206,6 @@ class ApplicationManager extends Cacheable
 
     /**
      * @param \App\System\Configuration\Route $route
-     * @param string                          $module
      *
      * @return array
      */
@@ -216,10 +224,6 @@ class ApplicationManager extends Cacheable
             $params = ['_slug' => $params['slug']];
         }
 
-        if (filter_var($route->getQuery('showHidden', true), FILTER_VALIDATE_BOOL)) {
-            $params['_active'] = -1;
-        }
-
         $this->activeApp->boot($module);
         $this->activeApp->apply($params);
         $data = $this->activeApp->run();
@@ -232,12 +236,20 @@ class ApplicationManager extends Cacheable
 
     public function addRecordCount(array &$applications, ?string $onlyCategoryId = null): array
     {
+        $params = [
+            '_active' => new DB\QueryParam('_active', -1, DB\ParamType::Integer, '>='),
+        ];
+
+        if (!$this->isAuthorizedFully() && false === $this->configStore->getUnchainedConfig()->getDashboard('show_inactive', true)) {
+            $params['_active']->value = 1;
+        }
+
         foreach ($applications as $categoryId => &$category) {
             if ($onlyCategoryId && $onlyCategoryId != $categoryId) {
                 continue;
             }
             foreach ($category['applications'] as $appId => &$app) {
-                $app['entry_count'] = $this->getApplication($appId, $categoryId)->getRepository()->getCount('', null);
+                $app['entry_count'] = $this->getApplication($appId, $categoryId)->getRepository()->getCount('', $params);
             }
         }
 
@@ -252,7 +264,7 @@ class ApplicationManager extends Cacheable
     private function getFormBuilder(string $applicationId): \Symfony\Component\Form\FormBuilderInterface
     {
         return $this->forms->createBuilder(FormType::class, [], [
-            'translation_domain' => Property::schemaName($applicationId),
+            'translation_domain' => Property::domain($applicationId),
         ]);
     }
 

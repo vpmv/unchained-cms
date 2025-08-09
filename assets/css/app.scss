@@ -216,6 +216,9 @@ img.media {
       vertical-align: middle;
     }
   }
+  tr.inactive td:not(:last-child) {
+    opacity: 0.5;
+  }
 
   td.image {
     position: relative;
@@ -247,6 +250,14 @@ img.media {
 
   td.rating {
     font-size: 0.8em;
+  }
+
+  @include media-breakpoint-down(md) {
+    .dropdown.record-actions {
+      .dropdown-toggle::after {
+        display: none;
+      }
+    }
   }
 }
 

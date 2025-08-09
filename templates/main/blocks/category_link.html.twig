@@ -2,7 +2,7 @@
 {% set title = title is defined ? title : category.label %}
 {% set links = links is defined ? links : [] %}
 {% set include_apps = include_apps is defined ? include_apps : unchained.dashboard.show_app_stack %}
-{% set domain = domain ?? category.translation_domain ?? ('category.'~catId) %}
+{% set domain = domain ?? category.domain ?? ('category.'~catId) %}
 
 {% if catId != '_default' and category.route %}
     <div class="cat-link cat-{{ catId }} d-flex">

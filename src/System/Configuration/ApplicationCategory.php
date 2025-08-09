@@ -15,7 +15,9 @@ class ApplicationCategory
 
     private $routes = [];
 
-    public function __construct(private string $categoryId, private array $config, public ?Route $route = null)
+    public Route $route;
+
+    public function __construct(private string $categoryId, private array $config)
     {
         $this->description = Property::displayLabel($this->categoryId, 'category') . '.description';
         $this->label       = Property::displayLabel($this->categoryId, 'title.category');

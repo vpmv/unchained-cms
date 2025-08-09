@@ -56,9 +56,11 @@ $(function () {
         }
     });
 
+    // redraw table when turning screen; slight delay to allow DOM to catch up
     screen.orientation.addEventListener("change", (event) => {
-        table.draw();
-        table.columns().draw();
+        setTimeout(() => {
+            table.draw(false); // do not recalculate pager
+        }, 100);
     });
 
     if (window.location.search) {

@@ -55,6 +55,8 @@ class UnchainedExtension extends AbstractExtension
             }, $cellData['raw']->getJunctions());
         } elseif ($cellData['raw'] instanceof Junction) {
             $result = (array)$cellData['raw']->getExposed();
+        } else {
+            $result = (array)$cellData['value'];
         }
 
         return implode('; ', $result);

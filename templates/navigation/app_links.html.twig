@@ -9,7 +9,7 @@
     <span class="d-flex justify-content-between">
 
         <a class="{{ class }} app app-{{ application.appId }} {{ active_app == appId ? 'active' : '' }}" href="{{ route(application.route) }}">
-            {{ application.config.meta.title|trans([], application.translation_domain) }}
+            {{ application.config.meta.title|trans([], application.domain) }}
         </a>
 
         {# show "add item" link #}

@@ -2,21 +2,23 @@
 
 namespace App\System\Application;
 
-use App\System\Configuration\ConfigStore;
+use App\System\Configuration\ApplicationCategory;
+use App\System\Configuration\ApplicationConfig;
+use App\System\Router;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class Category extends Application
 {
-    private \App\System\Configuration\ApplicationCategory $config;
-
-    public function __construct(string $categoryId, RequestStack $requestStack, ConfigStore $configStore, TranslatorInterface $translator)
-    {
-        $this->appId        = $categoryId;
+    public function __construct(
+        public string $appId,
+        protected ApplicationConfig|ApplicationCategory $config,
+        RequestStack $requestStack,
+        TranslatorInterface $translator,
+        private Router $router,
+    ) {
         $this->requestStack = $requestStack;
-        $this->configStore  = $configStore;
         $this->translator   = $translator;
-        $this->config       = $configStore->getCategoryConfig($categoryId);
     }
 
     public function boot(?string $module = null): void
@@ -36,11 +38,11 @@ class Category extends Application
         }
 
         $data = [
-            'categoryId'         => $this->appId,
-            'translation_domain' => 'category_' . preg_replace('/\W+/', '_', $this->appId),
-            'route' => $this->configStore->router->matchApp($this->appId),
-            'description'        => $this->config->getDescription(),
-            'label'              => $this->config->getLabel(),
+            'categoryId'  => $this->appId,
+            'domain'      => Property::domain($this->appId, 'category_'),
+            'route'       => $this->router->matchApp($this->appId),
+            'description' => $this->config->getDescription(),
+            'label'       => $this->config->getLabel(),
         ];
 
         return $data;

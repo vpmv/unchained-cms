@@ -46,6 +46,7 @@ class UnchainedConfig
         'style'          => 'default',
         'show_app_stack' => true,
         'show_count'     => true,
+        'show_inactive'  => true,
     ];
     protected const DEFAULT_NAVIGATION = [
         'style'               => NavigationStyle::Default,
