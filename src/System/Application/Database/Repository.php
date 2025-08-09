@@ -129,7 +129,7 @@ class Repository extends Cacheable
         $this->primaryKey = 0;
         $this->activeRow  = $this->remember('record.' . $id, function () use ($id) {
             if (!$this->data) {
-                $this->fetchData([new QueryParam('_active', -1, operator: '>=')]);
+                $this->fetchData(['_active' => new QueryParam('_active', -1, operator: '>=')]);
             }
 
             return $this->dataByPk[$id] ?? [];
@@ -146,7 +146,7 @@ class Repository extends Cacheable
     {
         $this->activeRow  = $this->remember('record.slug.' . $slug, function () use ($slug) {
             if (!$this->data) {
-                $this->fetchData([new QueryParam('_active', -1, operator: '>=')]);
+                $this->fetchData(['_active' => new QueryParam('_active', -1, operator: '>=')]);
             }
 
             return $this->dataBySlug[$slug] ?? [];

@@ -190,10 +190,6 @@ body {
   }
 }
 
-img.media {
-  width: 500px;
-  max-width: 100%;
-}
 
 .dt-container {
   .dt-layout-full, .dt-layout-start {
@@ -202,23 +198,29 @@ img.media {
   }
 }
 
-.table.dashboard img.media {
-  width: 100px;
-}
-
 .table {
+  .media-box, img.media, .media-title {
+    width: 500px;
+    max-width: 100%;
+  }
+
   &.dashboard {
     .media-box {
       max-width: 100px;
+    }
+    img.media {
+      width: 100px;
+    }
+
+    tr.inactive td:not(:last-child) {
+      opacity: 0.5;
     }
 
     td {
       vertical-align: middle;
     }
   }
-  tr.inactive td:not(:last-child) {
-    opacity: 0.5;
-  }
+
 
   td.image {
     position: relative;
