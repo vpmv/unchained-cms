@@ -55,7 +55,7 @@ Unchained comes with the following Icon packs:
 * FontAwesome 7
 * Bootstrap Icons 1.13 
 
-Templates are easily overridden. See [the sources](tree/master/templates) for templates you wish to override and put them in `/user/templates`.
+Templates are easily overridden. See [the sources](templates) for templates you wish to override and put them in `/user/templates`.
 
 Read the wiki on how to [extend your applications](https://github.com/vpmv/unchained-cms/wiki/configuration#pointers)
 
