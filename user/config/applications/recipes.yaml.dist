@@ -1,6 +1,9 @@
 application:
     name: cooking
 
+    # Disable deactivating records
+    deactivate: false
+
     fields:
         photo:
             type: image
