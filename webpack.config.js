@@ -10,6 +10,13 @@ Encore
 
     .addEntry('app', './user/assets/user.js')
 
+    // Add favicon from user dir
+    .copyFiles([{
+        from: './user/assets/images',
+        to: 'images/[path][name].[ext]',
+        pattern: /favicon\.webp$/,
+    }])
+
     /*
      * For a full list of features, see:
      * https://symfony.com/doc/current/frontend.html#adding-more-features
