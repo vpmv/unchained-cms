@@ -14,16 +14,22 @@
 
     {% elseif cell.field.type == 'file' and cell.value %}
         <a href="{{ absolute_url(cell.value) }}" title="Download {{ cell.field.labels.default }}" target="_blank">
-            <i class="fa fa-file-pdf"></i> {#fixme filetype#}
+            <i class="fa-solid fa-file"></i> {#fixme filetype#}
         </a>
 
-    {% elseif cell.field.type == 'date' or cell.field.type == 'datetime' %}
+    {% elseif cell.field.type in ['date', 'datetime'] %}
         {# fixme: twig pretty date filter #}
         {% if cell.transformed %}
             {{ cell.value }}
         {% elseif cell.value is not null %}
             <span title="{{ ('time.dow.'~cell.value.format('l')|lower)|trans }}">
-                {{ ('value.date.year-mo-MO-day')|trans({year: cell.value.format('Y'), mo: cell.value.format('m'), MO: ('time.month.'~cell.value.format('M'))|lower|trans, day: cell.value.format('d'), DAY: ('time.dow.'~cell.value.format('D'))|lower|trans}) }}
+                {{ ('value.date.year-mo-MO-day')|trans({
+                    year: cell.value.format('Y'),
+                    mo: cell.value.format('m'),
+                    MO: ('time.month.'~cell.value.format('M'))|lower|trans,
+                    day: cell.value.format('d'),
+                    DAY: ('time.dow.'~cell.value.format('D'))|lower|trans})
+                }}
             </span>
 
         {% endif %}
@@ -37,12 +43,13 @@
         {% endif %}
 
     {% elseif cell.field.type == 'boolean' %}
-        <span class="text-center"><i class="fa fa-{{ cell.value ? 'check' : 'times' }}"></i></span>
+        <span class="text-center"><i class="fa-solid fa-{{ cell.value ? 'check' : 'xmark' }}"></i></span>
         <span class="d-none">{{ cell.value }}</span> {# hidden value for sorting #}
 
     {% elseif cell.field.type == 'rating' %}
+        {# todo: half stars #}
         {% for i in 1..cell.value %}
-            <i class="fa fa-star"></i>
+            <i class="fa-solid fa-star"></i>
         {% endfor %}
 
     {% elseif cell.field.type == 'textbox' %}
@@ -59,7 +66,7 @@
                 {% include 'applications/blocks/cell_link.html.twig' with {text: cell.value, link: cell.link} %}
             {% endif %}
         {% elseif cell.reference %}
-            {% include 'applications/blocks/cell_link.html.twig' with {text: cell.value, link: cell.reference, icon: 'fa fa-search'} %}
+            {% include 'applications/blocks/cell_link.html.twig' with {text: cell.value, link: cell.reference, icon: 'fa-solid fa-magnifying-glass'} %}
         {% else %}
             {#  todo: choice translations -> dash builder #}
             {% if cell.value is iterable %}

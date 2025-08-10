@@ -1,6 +1,6 @@
 {% set appId = appId is defined ? appId : application.appId %}
 {% set title = title is defined ? title : application.config.meta.title %}
-{% set domain = application is defined ? application.translation_domain  : 'messages' %}
+{% set domain = application is defined ? application.domain  : 'messages' %}
 {% set class = class ?? "col" %}
 {% set with_image = with_image ?? false %}
 {% set links = links is defined ? links : [] %}

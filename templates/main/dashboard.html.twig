@@ -2,12 +2,27 @@
 
 {% block content_header %}
     {% if app.request.pathinfo != '/' %}
-    <div class="d-flex justify-content-between">
-        <h2>{% block dashboard_title %}{% endblock %}</h2>
-        <div>
-            {% block dashboard_links %}{% endblock %}
+        <div class="d-flex justify-content-between">
+            <h2>{% block dashboard_title %}{% endblock %}</h2>
+            <div class="btn-group h-50">
+                {% block dashboard_prev %}{% endblock %}
+
+                {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                    <div class="d-none d-md-inline-flex">
+                        {% block dashboard_links %}{% endblock %}
+                    </div>
+
+                    <div class="dropdown d-md-none">
+                        <a class="dropdown-toggle btn btn-primary" data-bs-toggle="dropdown" aria-labelledby="dropdown-dashboard" role="button" title="{{ 'label.tools'|trans }}">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                        </a>
+                        <div id="dropdown-dashboard" class="dropdown-menu">
+                            {{ block('dashboard_links') }}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
     {% endif %}
 {% endblock %}
 

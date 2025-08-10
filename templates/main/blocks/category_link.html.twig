@@ -2,7 +2,7 @@
 {% set title = title is defined ? title : category.label %}
 {% set links = links is defined ? links : [] %}
 {% set include_apps = include_apps is defined ? include_apps : unchained.dashboard.show_app_stack %}
-{% set domain = domain ?? category.translation_domain ?? ('category.'~catId) %}
+{% set domain = domain ?? category.domain ?? ('category_'~catId) %}
 
 {% if catId != '_default' and category.route %}
     <div class="cat-link cat-{{ catId }} d-flex">
@@ -11,7 +11,7 @@
             <small class="subtitle">{{ category.description | trans([], domain) }}</small>
         </h3>
         <a class="btn" href="{{ route(category.route) }}">
-            <i class="fa fa-arrow-right"></i>
+            <i class="fa-solid fa-arrow-right"></i>
         </a>
     </div>
 {% else %}

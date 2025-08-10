@@ -10,9 +10,11 @@ class ConfigStoreBase extends Cacheable
 
     protected const BASE_KEYS = [
         'category',
+        'label',
         'order',
         'public',
         'routes',
+        'deactivate',
     ];
 
     protected $systemConfig = [];

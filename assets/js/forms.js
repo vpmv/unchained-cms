@@ -5,11 +5,17 @@ function updateOptgroup($select, value)
 {
     $select.selectpicker('destroy');
 
-    let label = '[label="' + value + '"]';
-    $('optgroup', $select).not(label).prop('disabled', true).children('option').prop({disabled: true, selected: false});
-    $('optgroup' + label, $select).prop('disabled', false).children('option').prop({disabled: false, selected: false});
+    let label           = '[label="' + value + '"]';
+    let $activeOptGroup = $('optgroup' + label, $select);
+    let $otherOptGroups = $('optgroup', $select).not(label);
 
+    $otherOptGroups.prop('disabled', true);
+    $activeOptGroup.prop('disabled', false);
+    if ($activeOptGroup.children('option').length === 1) {
+        $activeOptGroup.children('option').prop('selected', true);
+    }
 
+    // disable <select> elem if no active optgroups
     $select.prop('disabled', $('optgroup', $select).length === $('optgroup:disabled', $select).length);
 
     $select.selectpicker();

@@ -3,7 +3,7 @@
     {{ ('value.date.year-mo-MO-day')|trans({year: value.format('Y'), mo: value.format('m'), MO: ('time.month.'~value.format('M'))|lower|trans, day: value.format('d'), DAY: ('time.dow.'~value.format('D'))|lower|trans}) }}
 
     {# time values #}
-{% elseif type == 'time' %}
+{% elseif type == 'time' and value %}
     {{ value.format('H:i') }}
 
     {# textual values #}

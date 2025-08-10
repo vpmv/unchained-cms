@@ -58,9 +58,6 @@ class FormModule extends AbstractModule
                     if (!isset($fieldOptions['attr']['data-group']) || $fieldOptions['attr']['data-group'] === 'true') {
                         $fieldOptions['attr']['class'] = 'selectpicker';
                     }
-                    if ($field->getSourceIdentifier()) {
-                        $fieldOptions['attr']['data-live-search'] = 'true';
-                    }
                     if ($fieldOptions['required']) {
                         $fieldOptions['attr']['required'] = 'required';
                     }

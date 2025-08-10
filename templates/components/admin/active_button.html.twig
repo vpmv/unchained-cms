@@ -1,1 +1,0 @@
-{% include "components/button.html.twig" with {url: url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'activate', value: not recordActive }), color:"link btn-sm", icon: recordActive ? "eye" : "eye-slash", title: ('label.'~ (recordActive ? 'deactivate' : 'activate'))|trans } %}

@@ -1,4 +1,4 @@
-{% set domain = application.translation_domain ?: 'messages' %}
+{% set domain = application.domain ?: 'messages' %}
 {% set appId = appId is defined ? appId : application.appId %}
 {% set title = title is defined ? title : application.config.meta.title %}
 {% set path = path is defined ? path : application.route %}

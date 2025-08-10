@@ -1,7 +1,7 @@
 {% set catId = catId is defined ? catId : category.catId %}
 {% set title = title is defined ? title : category.label %}
 {% set with_image = with_image ?? false %}
-{% set domain = domain ?? category.translation_domain ?? ('category.'~catId) %}
+{% set domain = domain ?? category.domain ?? ('category.'~catId) %}
 
 {% set include_apps = include_apps is defined ? include_apps : unchained.dashboard.show_app_stack %}
 {% set class = class ?? (include_apps ? 'col-12' : 'col') %}

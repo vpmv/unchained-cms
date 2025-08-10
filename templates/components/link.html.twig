@@ -3,6 +3,8 @@
 {% set label = label ?? null %}
 {% set title = title ?? null %}
 
+{% set label_class = label_class ?? '' %}
+
 {% set icon = icon ?? false %}
 {% set icon_font = icon_font ?? 'fa' %}
 
@@ -13,15 +15,23 @@
 {% apply spaceless %}
     <a class="{{ class }}" href="{{ url }}" {% if title %}title="{{ title }}"{% endif %}>
         {% if icon %}
-            <i class="{{ icon_font ~ ' ' ~ icon_font ~ '-' ~ icon }}"></i>
+            <i class="{{ (icon_font == 'fa' ? 'fa-solid' : icon_font) ~ ' ' ~ icon_font ~ '-' ~ icon }}"></i>
         {% endif %}
 
         {% if label %}
+            {% if label_class %}
+                <span class="{{ label_class }}">
+            {% endif %}
+
             {% if trans %}
                 {{ label|trans(trans_params, trans_domain) }}
+            {% else %}
+                {{ label }}
             {% endif %}
-        {% else %}
-            {{ label }}
+
+            {% if label_class %}
+                </span>
+            {% endif %}
         {% endif %}
     </a>
 

@@ -46,11 +46,12 @@ class UnchainedConfig
         'style'          => 'default',
         'show_app_stack' => true,
         'show_count'     => true,
+        'show_inactive'  => true,
     ];
     protected const DEFAULT_NAVIGATION = [
         'style'               => NavigationStyle::Default,
         'show_home'           => true,
-        'home_icon'           => 'fa fa-home',
+        'home_icon'           => 'fa-solid fa-house',
         'home_icon_only'      => false,
         'show_quicklinks'     => true,
         'show_theme_switcher' => true,
@@ -59,7 +60,7 @@ class UnchainedConfig
 
     public function __construct(
         protected readonly string $title = 'Unchained',
-        private string $title_icon = 'fa fa-link',
+        private string $title_icon = 'fa-solid fa-link',
         protected string $theme = 'auto',
         protected array $dashboard = [],
         protected array $navigation = [],
