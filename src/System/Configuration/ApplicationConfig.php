@@ -13,8 +13,6 @@ class ApplicationConfig
 
     /** @var string Application identifier */
     public string $appId;
-    /** @var array Configuration */
-    private array $config = [];
 
     /** @var Field[] */
     public array $fields  = [];
@@ -23,15 +21,12 @@ class ApplicationConfig
     public array $modules = [];
     public array $meta    = [];
 
-    /** @var array Raw config */
-    private array $raw;
-
-    public function __construct(private readonly ConfigStore $configStore, protected ApplicationCategory $category, array $configuration, string $appId, string $projectDir)
+    public function __construct(private readonly ConfigStore $configStore, protected ApplicationCategory $category, private array $config, string $appId, string $projectDir)
     {
         $this->basePath = $projectDir . '/config/';
 
-        $this->appId = $appId;
-        $this->raw   = $configuration + ['appId' => $appId, 'name' => $appId];
+        $this->appId  = $appId;
+        $this->config += ['appId' => $appId, 'name' => $appId]; // set default values
 
         $this->setSources();
         $this->setModules();
@@ -41,7 +36,7 @@ class ApplicationConfig
 
     public function isPublic(): bool
     {
-        return $this->raw['public'] ?? true;
+        return $this->config['public'] ?? true;
     }
 
     /**
@@ -68,7 +63,7 @@ class ApplicationConfig
      */
     public function getConfig(string $key, mixed $default = null): mixed
     {
-        return $this->raw[$key] ?? $default;
+        return $this->config[$key] ?? $default;
     }
 
     /**
@@ -113,8 +108,8 @@ class ApplicationConfig
         $routes = [
             '_default' => $this->appId,
         ];
-        if (isset($this->raw['routes'])) {
-            $routes += $this->raw['routes'];
+        if (isset($this->config['routes'])) {
+            $routes += $this->config['routes'];
         }
         if ($locale) {
             return $routes[$locale] ?? $routes['_default'];
@@ -199,7 +194,7 @@ class ApplicationConfig
 
     protected function setSources(): void
     {
-        $sources = $this->raw['sources'] ?? [];
+        $sources = $this->config['sources'] ?? [];
         foreach ($sources as $name => &$source) {
             if (empty($source['application'])) {
                 continue;
@@ -246,8 +241,8 @@ class ApplicationConfig
         ];
 
         $modules = $this->prepareConfig([], $modules, 'default/modules.yaml');
-        if ($this->raw['modules'] ?? []) {
-            $modules = array_replace_recursive($modules, $this->raw['modules']);
+        if ($this->config['modules'] ?? []) {
+            $modules = array_replace_recursive($modules, $this->config['modules']);
         }
         $modules['form']                 = ['enabled' => true]; // fixme: this shouldn't be necessary
         $modules['dashboard']['enabled'] = true; // fixme: dito
@@ -257,7 +252,7 @@ class ApplicationConfig
 
     protected function prepareFields(): void
     {
-        foreach ($this->raw['fields'] as $id => $config) {
+        foreach ($this->config['fields'] as $id => $config) {
             $this->fields[$id] = new Field($this->appId, $id, $config ?? [], $this->configStore, $this);
         }
     }
@@ -265,11 +260,11 @@ class ApplicationConfig
     protected function prepareFrontend(): void
     {
         $this->meta = [
-            'title'   => $this->raw['label'] ?? Property::displayLabel($this->raw['name'], 'title'),
-            'exposes' => $this->raw['meta']['exposes'] ?? null, // <= slugs output
-            'icon'    => $this->raw['meta']['icon'] ?? null,
-            'sort'    => $this->raw['meta']['sort'] ?? null,
-            'slug'    => $this->raw['meta']['slug'] ?? null,
+            'title'   => $this->config['label'] ?? Property::displayLabel($this->config['name'], 'title'),
+            'exposes' => $this->config['meta']['exposes'] ?? null, // <= slugs output
+            'icon'    => $this->config['meta']['icon'] ?? null,
+            'sort'    => $this->config['meta']['sort'] ?? null,
+            'slug'    => $this->config['meta']['slug'] ?? null,
         ];
 
         foreach ($this->fields as $field) {
@@ -327,8 +322,8 @@ class ApplicationConfig
      */
     private function getSortConfiguration(): array
     {
-        if (!empty($this->raw['sort'])) {
-            return $this->raw['sort'];
+        if (!empty($this->config['sort'])) {
+            return $this->config['sort'];
         } elseif (!empty($this->meta['sort'])) {
             return $this->meta['sort'];
         } elseif (!empty($this->modules['dashboard']['sort'])) {

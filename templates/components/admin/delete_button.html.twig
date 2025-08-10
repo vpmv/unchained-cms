@@ -1,0 +1,7 @@
+{% set class = class ?? '' %}
+
+<a class="btn btn-danger {{ class }}" role="button"
+   onclick="if (confirm('{{ ('dialog.delete_warning')|trans }}')) { window.location.href = '{{ url('admin_edit', {category: application.categoryId, app: application.appId, uuid: recordID, action: 'delete'}) }}'; }">
+    <i class="fa-solid fa-trash-can"></i>
+    {{ 'label.delete'|trans }}
+</a>

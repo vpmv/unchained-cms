@@ -2,6 +2,7 @@
 
 USER_DIR="/var/www/user"
 CHECK_FILES="
+/assets/user.js
 /config/config.yaml
 /config/applications.yaml
 /config/framework/security.yaml
@@ -29,5 +30,8 @@ for FILE in $CHECK_FILES; do
     fi
   fi
 done
+
+echo "Compiling front-end in $BUILD_ENV mode..."
+yarn encore $BUILD_ENV
 
 exec "$@"

@@ -2,6 +2,8 @@
 
 namespace App\Twig;
 
+use App\System\Application\Database\Junction;
+use App\System\Application\Database\JunctionList;
 use App\System\Configuration\Route;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
@@ -41,6 +43,25 @@ class UnchainedExtension extends AbstractExtension
         return $message;
     }
 
+    public function tableDataFilter(array $cellData): ?string
+    {
+        if (!$cellData['value']) {
+            return null;
+        }
+
+        if ($cellData['raw'] instanceof JunctionList) {
+            $result = array_map(function (Junction $junction) {
+                return $junction->getExposed();
+            }, $cellData['raw']->getJunctions());
+        } elseif ($cellData['raw'] instanceof Junction) {
+            $result = (array)$cellData['raw']->getExposed();
+        } else {
+            $result = (array)$cellData['value'];
+        }
+
+        return implode('; ', $result);
+    }
+
     public function getFilters(): array
     {
         return [
@@ -53,6 +74,7 @@ class UnchainedExtension extends AbstractExtension
         return [
             new TwigFunction('route', $this->route(...)),
             new TwigFunction('routeAuthenticated', $this->routeAuthenticated(...)),
+            new TwigFunction('dataFilter', $this->tableDataFilter(...)),
         ];
     }
 }

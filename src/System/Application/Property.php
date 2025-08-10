@@ -4,9 +4,14 @@ namespace App\System\Application;
 
 class Property
 {
+    public static function domain(string $applicationIdentifier, string $prefix = 'app_'): string
+    {
+        return $prefix . preg_replace('/\W+/', '_', $applicationIdentifier);
+    }
+
     public static function schemaName(string $applicationIdentifier): string
     {
-        return 'app_' . preg_replace('/\W+/', '_', $applicationIdentifier);
+        return self::domain($applicationIdentifier);
     }
 
     public static function foreignKey(string $applicationIdentifier): string

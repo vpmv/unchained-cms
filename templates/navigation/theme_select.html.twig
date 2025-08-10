@@ -6,14 +6,15 @@
 } %}
 
 <li class="nav-item {{ theme_dropdown }}">
-    <button class="btn btn-link nav-link px-0 px-lg-2 py-2 dropdown-toggle d-flex align-items-center"
+    <a role="button" class="nav-link px-0 px-lg-2 py-2 dropdown-toggle d-flex align-items-center"
             id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown"
             data-bs-display="static" aria-label="Toggle theme ({{ unchained.theme }})">
         <span class="theme-icon-active">
             <i class="{{ themes[unchained.theme] }}"></i>
         </span>
-        <span class="d-lg-none ms-2" id="bd-theme-text">Toggle theme</span></button>
-    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme-text">
+        <span class="d-none d-md-inline d-lg-none ms-2" id="bd-theme-text">{{ 'theme.toggle'|trans }}</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme-text" style="position: absolute">
         {% for theme, icon in themes %}
             <li>
                 <button type="button" class="dropdown-item d-flex align-items-center {{ unchained.theme == theme ? 'active ' : '' }}" data-bs-theme-value="{{ theme }}" aria-pressed="false">

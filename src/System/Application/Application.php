@@ -8,6 +8,7 @@ use App\System\Application\Module\DashboardModule;
 use App\System\Application\Module\DetailModule;
 use App\System\Application\Module\FormModule;
 use App\System\Application\Module\RedirectModule;
+use App\System\Configuration\ApplicationCategory;
 use App\System\Configuration\ApplicationConfig;
 use App\System\Configuration\ConfigStore;
 use App\System\Configuration\Route;
@@ -15,16 +16,14 @@ use App\System\Helpers\Hash;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use App\System\Application\Database as DB;
 
 class Application
 {
-    /** @var \App\System\Configuration\ApplicationConfig */
-    private ApplicationConfig $config;
-    protected array           $data = [];
+    protected array $data;
+
     /** @var bool Requested module accepted */
     protected bool $accepted = true;
-
-    protected bool $isAuthenticated = false;
 
     /** @var \App\System\Application\Module\ApplicationModuleInterface */
     protected ApplicationModuleInterface $module;
@@ -41,14 +40,13 @@ class Application
      */
     public function __construct(
         public string $appId,
-        protected RequestStack $requestStack,
+        protected ApplicationConfig|ApplicationCategory $config,
         protected ConfigStore $configStore,
+        protected RequestStack $requestStack,
         protected Repository $repository,
         public FormBuilderInterface $formBuilder, // fixme: ?
         protected TranslatorInterface $translator,
     ) {
-        $this->config          = $configStore->getApplication($this->appId);
-        $this->isAuthenticated = $configStore->isAuthenticated();
     }
 
     public function getRepository(): Repository
@@ -269,10 +267,20 @@ class Application
                 return;
             case 'duplicate':
                 throw new \LogicException('Can\'t duplicate yet');
-            case 'edit':
-            default: // dashboard / detail
+            default: // dashboard / detail / form
+                // show inactive records
+                foreach ($params as $k => &$param) {
+                    $param = DB\QueryParam::create($k, $param);
+                }
+
+                // fixme: separation of concerns
+                $params['_active'] ??= new DB\QueryParam('_active', -1, DB\ParamType::Integer, '>=');
+                if (!$this->configStore->isAuthenticated() && !$this->configStore->getUnchainedConfig()->getDashboard('show_inactive', true)) {
+                    $params['_active']->value = 1;
+                }
+
                 if ($query = $this->getRequest()->query->get('q')) {
-                    $this->repository->filterData(['_exposed' => $query]); // fixme
+                    $this->repository->filterData([DB\QueryParam::create('_exposed', $query)]); // fixme
                 } else {
                     $this->repository->filterData($params);
                 }
@@ -301,17 +309,22 @@ class Application
             }
         }
 
+        // todo
+        $category = $this->config->getCategory();
+        if ($category->getCategoryId() != '_default') {
+            $category->route = $this->configStore->router->matchApp($this->config->getCategory()->getCategoryId());
+        }
         $data       = [
-            'appId'              => $this->appId,
-            'category'           => $this->config->getCategory(),
-            'categoryId'         => $this->config->getCategory()->getCategoryId(),
-            // todo: remove
-            'translation_domain' => Property::schemaName($this->appId),
-            'meta'               => $this->config->meta,
-            'frontend'           => compact('uniqueConstraint'),
-            'route'              => $this->configStore->getApplicationRoute($this->appId),
-            // fixme
-            'categoryRoute'      => $this->configStore->router->matchApp($this->config->getCategory()->getCategoryId()),
+            'appId'      => $this->appId,
+            'domain'     => Property::domain($this->appId),
+            'category'   => $category,
+            'categoryId' => $category->getCategoryId(),
+            'frontend'   => [
+                'uniqueConstraint' => $uniqueConstraint,
+                'deactivate'       => $this->config->getConfig('deactivate', true),
+            ],
+            'meta'       => $this->config->meta,
+            'route'      => $this->configStore->getApplicationRoute($this->appId),
         ];
         $moduleData = $this->module->getData();
         if ($moduleData && ctype_alpha(key($moduleData))) {

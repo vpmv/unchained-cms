@@ -2,6 +2,8 @@
 
 namespace App\System\Application;
 
+use App\System\Application\Database\ParamType;
+use App\System\Application\Database\QueryParam;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
@@ -17,11 +19,18 @@ readonly class ApplicationSchema
         $this->validateTable(); // fixme: cache
     }
 
-    public function countRecords(): int
+
+    public function countRecords(QueryParam ...$params): int
     {
-        $b     = $this->connection->createQueryBuilder()
+        $b = $this->connection->createQueryBuilder()
             ->from($this->table, '_curr')
             ->select('COUNT(_curr.id)');
+
+        foreach ($params as $param) {
+            $b->andWhere($param->getSQL());
+            $b->setParameter($param->column, $param->value);
+        }
+
         $count = $b->executeQuery()->fetchOne();
         if (!$count) {
             return 0;
@@ -30,6 +39,16 @@ readonly class ApplicationSchema
         return (int)$count;
     }
 
+    /**
+     * @param QueryParam[] $conditions
+     * @param array        $columns
+     * @param array        $sort
+     * @param array        $joins
+     * @param array        $subQueries
+     *
+     * @return array
+     * @throws \Doctrine\DBAL\Exception
+     */
     public function getData(array $conditions = [], array $columns = [], array $sort = [], array $joins = [], array $subQueries = []): array
     {
         $columns = $columns ?: ['*'];
@@ -80,28 +99,17 @@ readonly class ApplicationSchema
             }
         }
 
-        foreach ($conditions as $key => $val) {
-            if (is_array($val)) {
-                $b->andWhere("$key IN (" . implode(',', $val) . ")");
-                continue;
-            }
-
-            // todo: configure condition logic
-            if (in_array($key, ['_active'])) {
-                $b->andWhere("`_curr`.`$key` >= :$key");
-            } else {
-                $b->andWhere("`_curr`.`$key` = :$key");
-            }
+        foreach ($conditions as $param) {
+            $param->parse($b);
         }
 
-        if (($conditions['_active'] ?? 1) < 1) {
+        if (isset($conditions['_active']) && $conditions['_active']->value < 1) {
             $sort = ['_active' => 'DESC'] + $sort;
         }
         foreach ($sort as $key => $dir) {
             $b->addOrderBy('_curr.' . $key, $dir);
         }
 
-        $b->setParameters($conditions);
         $rows = $b->executeQuery()->fetchAllAssociative() ?: [];
 
         return $rows;
