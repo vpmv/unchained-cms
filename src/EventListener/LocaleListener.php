@@ -30,7 +30,7 @@ readonly class LocaleListener implements EventSubscriberInterface
      */
     public function onKernelRequest(RequestEvent $event)
     {
-        $request  = $event->getRequest();
+        $request = $event->getRequest();
         if ($locale = $request->attributes->get('_locale')) {
             $this->setRequestLocale($request, $locale);
             return;
@@ -44,7 +44,7 @@ readonly class LocaleListener implements EventSubscriberInterface
             array_pop($uriParts);
         }
 
-        $uri    = '/'.implode('/', $uriParts);
+        $uri    = '/' . implode('/', $uriParts);
         $locale = $request->getSession()->get('_locale', $this->defaultLocale);
         try {
             $route  = $this->configStore->router->match($uri);

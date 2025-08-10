@@ -1,9 +1,9 @@
 services:
   php:
     # use the image instead of build context for production
-    #image: unchained-cms:latest
-    build:
-      context: .
+    #image: ghcr.io/vpmv/unchained-cms:latest
+    #build:
+    #  context: .
     environment:
       INCLUDE_EXAMPLES: "true"
     networks:
