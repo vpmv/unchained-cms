@@ -512,8 +512,10 @@ class Repository extends Cacheable
                 if ($slugFieldData instanceof DateTime) {
                     switch ($field->getFormType()) {
                         case 'date':
-                        case 'datetime':
                             $slugFieldData = $slugFieldData->format('Y-m-d');
+                            break;
+                        case 'dateTime':
+                            $slugFieldData = $slugFieldData->format('Y-m-d-H-i');
                             break;
                         case 'time':
                             $slugFieldData = $slugFieldData->format('H-i-s');
@@ -696,7 +698,7 @@ class Repository extends Cacheable
                     continue; // note to self: no need to nest If control statement
                 }
 
-                if (in_array($source['function'], ['avg', 'average'])) {
+                if (in_array($source['function'], ['avg', 'average', 'sum'])) {
                     if (empty($source['field'])) {
                         throw new \InvalidArgumentException('Missing attribute <field> for source configuration');
                     }
@@ -705,8 +707,8 @@ class Repository extends Cacheable
                         'conditions' => [
                             'id' => $source['column'],
                         ],
-                        'alias'      => 'avg',
-                        'function'   => 'avg',
+                        'alias'      => $source['function'],
+                        'function'   => str_replace('average', 'avg', $source['function']),
                         'field'      => $source['field'],
                     ];
                     continue; // note to self: no need to nest If control statement

@@ -496,6 +496,8 @@ class Field
             'image'    => 'file',
             'textbox'  => 'textarea',
             'url'      => 'text',
+            'decimal'  => 'number',
+            'float'    => 'number',
         ];
         if (isset($formTypes[$this->config['type']])) {
             $this->config['form_type'] = $formTypes[$this->config['type']];
@@ -536,6 +538,8 @@ class Field
             'time'     => 'time',
             'choice'   => 'int',
             'number'   => 'int',
+            'decimal'  => 'decimal',
+            'float'    => 'float',
             'boolean'  => 'tinyint',
             'checkbox' => 'tinyint',
             'rating'   => 'int',
@@ -548,7 +552,7 @@ class Field
             'type'      => $schemaTypes[$config['type'] ?? 'text'],
             'type_meta' => null,
             'nullable'  => !filter_var($config['required'] ?? false, FILTER_VALIDATE_BOOLEAN),
-            'default'   => ($config['type'] ?? 'text') == 'uuid' ? 'uuid()' : ($config['default'] ?? ($config['required'] ?? false) ? '' : null),
+            'default'   => ($config['type'] ?? 'text') == 'uuid' ? 'uuid()' : ((array_key_exists('default', $config) ? $config['default'] : ($config['required'] ?? false)) ? '' : null),
             'options'   => [],
             'column'    => $this->id,
         ];
@@ -580,9 +584,6 @@ class Field
             case 'range':
                 $this->schema['type']   = 'int';
                 $this->schema['length'] = strlen($config['max'] ?? 11);
-                break;
-            case 'float':
-                $this->schema['type'] = 'float';
                 break;
         }
     }

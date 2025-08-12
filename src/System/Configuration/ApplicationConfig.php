@@ -280,6 +280,15 @@ class ApplicationConfig
                     break;
                 }
             }
+        } else {
+            foreach ((array)$this->meta['exposes'] as $field) {
+                if (!isset($this->fields[$field])) {
+                    throw new \InvalidArgumentException(sprintf('Unknown field "%s" in meta.exposes; in %s', $field, $this->appId));
+                }
+                if (!$this->fields[$field]->isVisible(null)) {
+                    throw new \InvalidArgumentException(sprintf('Exposed field "%s" is not visible; in %s', $field, $this->appId));
+                }
+            }
         }
 
         // add slug field
